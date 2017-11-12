@@ -39,4 +39,11 @@ export const admin = () => get({url: config.MOCK_AUTH_ADMIN});
 export const guest = () => get({url: config.MOCK_AUTH_VISITOR});
 
 // 安检图片获取
-export const fetchScPic = () => axios.get('./pic-example.json').then(res => res.data).catch(err => console.log(err));
+export const fetchScPic = (filter={}) => {
+    let url = SECURITY_PIC_URL
+    if(filter.picName !== undefined) url = `${SECURITY_PIC_URL}?picName=${filter.picName}`
+    console.log('url...', url)
+    return axios.get(url ,{picName:filter.picName}).then(res => res.data).catch(err => console.log(err));
+}
+
+const SECURITY_PIC_URL = 'http://localhost:8081/pic'

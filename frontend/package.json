@@ -69,6 +69,7 @@
   },
   "scripts": {
     "analyze": "source-map-explorer build/static/js/main.*",
+    "mock": "node mock/http-server.js",
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom"

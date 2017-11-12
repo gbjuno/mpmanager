@@ -18,9 +18,11 @@ class SearchForm extends Component {
     }
     handleSubmit = (e) => {
         e.preventDefault();
+        
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                console.log('Received values of form: ', values);
+                const { fetchData } = this.props
+                fetchData({funcName: 'fetchScPic', stateName: 'picData', params: {picName: values.fileName}});
             }
         });
     };
@@ -29,27 +31,27 @@ class SearchForm extends Component {
         const { style } = this.props
 
         // Only show error after a field is touched.
-        const userNameError = isFieldTouched('userName') && getFieldError('userName');
+        const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
             <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
                 <FormItem
-                    validateStatus={userNameError ? 'error' : ''}
-                    help={userNameError || ''}
+                    validateStatus={fileNameError ? 'error' : ''}
+                    help={fileNameError || ''}
                 >
-                    {getFieldDecorator('userName', {
-                        rules: [{ required: true, message: '请输入文件名!' }],
+                    {getFieldDecorator('fileName', {
                     })(
-                        <Search
-                            placeholder="请输入文件名"
+                        <Input
+                            suffix={<Icon type="search"/>}
+                            placeholder="请输入关键字"
                             style={{ width: 200 }}
-                            onSearch={value => console.log(value)}
+                            onPressEnter={value => console.log(value)}
                         />
                     )}
                 </FormItem>
                 <FormItem>
                     <Button
                         type="primary"
-                        htmlType="button"
+                        htmlType="submit"
                     >
                        搜索
                     </Button>
