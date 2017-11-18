@@ -1,0 +1,851 @@
+#必要字段！Swagger规范版本，必须填2.0，否则该YAML将不能用于Swagger其他组件
+swagger: '2.0'
+#必要字段！描述API接口信息的元数据
+info:
+  #接口标题
+  title: 安监局接口文档
+  #接口文档的描述
+  description: 统一接口定义文档，以此为基准
+  #版本号
+  version: 1.0.0
+  contact:
+    name: sea3pi2e@gmail.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+#Swagger会提供测试用例，host指定测试时的主机名，如果没有指定就是当前主机,可以指定端口．
+host: 127.0.0.1
+#定义的api的前缀，必须已/开头,测试用例的主机则为:host＋bashPath
+basePath: /mpm
+#指定调用接口的协议，必须是:"http", "https", "ws", "wss"．默认是http.-表示是个数组元素，即schemes接受一个数组参数
+schemes:
+  - http
+  - https
+#对应与http协议头request的Accept，调用者可接受类型,默认是*/*,定义的类型必须是http协议定义的 Mime Types,RestfulAPI一般定义成application/json
+#这两个是对所有接口的全局设置，在细化的接口中是还可以对应这两个属性来覆盖全局属性
+produces:
+  - application/json
+consumers:
+  - application/json
+#必要字段!定义可有可操作的API
+paths:
+  /dict/{dictType}:
+   #必要字段!定义HTTP操作方法，必须是http协议定义的方法
+    get:
+      #接口概要
+      summary: 查询字典表
+      #接口描述
+      description: 查询出所有某个字典项以下的所有值，例如所有的监控地点类型
+      parameters:
+        - name: dictType
+          in: path
+          description: 字典项类型
+          required: true
+          type: string
+      #标签，方便快速过滤出User相关的接口
+      tags:
+        - Dict
+      #返回值描述，必要自动
+      responses:
+        #返回的http状态码
+        200:
+          description: 某个字典项类型所有字典项
+          #描述返回值
+          schema:
+            #返回值格式，可选的有array,integer,string,boolean
+            type: array
+            #针对array,每个条目的格式,type定义为array．必要填写items
+            items:
+              #引用在definitions下定义的Users
+              $ref: '#/definitions/Dict'
+        #执行出错的处理
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+            #值类型
+            type: object
+            #定义属性
+            properties:
+            #属性名
+              message:
+                #类型
+                type: string
+    #即对于同一个url定义两个不同的方法，表示两个接口
+    post:
+      description: 登记一个字典项
+      #请求参数
+      parameters:
+        - name: dictType
+          in: path
+          description: 字典项类型
+          required: true
+          type: string
+          #参数key
+        - name: dictItemId
+          #传递方法，formData表示表单传输，还有query表示url拼接传输，path表示作为url的一部分
+          #body表示http头承载参数(body只能有一个,有body不能在有其他的)
+          in: formData
+          #参数描述
+          description: 字典项id
+          #参数是否必要，默认false
+          required: true
+          #参数类型，可选的包括array,integer,boolean,string.使用array必须使用items
+          type: string
+        - name: dictItemName
+          in: formData
+          description: 字典项名称
+          required: true
+          type: string
+      responses:
+        #返回的http状态码
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+             #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                status:
+                  #类型
+                  type: boolean
+                  #描述
+                  description: 是否成功
+        #执行出错的处理
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+            #值类型
+            type: object
+            #定义属性
+            properties:
+            #属性名
+              message:
+                #类型
+                type: string
+  /countries:
+    #{id}表示id为请求参数，例如/users/1,/users/2都是对该API的请求，此时id即为１和2
+    get:
+      summary: 村镇信息列表
+      description: 查询出村镇信息
+      tags:
+        - Country
+      parameters:
+        #上面接口中定义了{id}，则参数列表中必须包含参数id,并且请求类型为path
+        - name: district
+          in: query
+          description: 根据区/镇查询村信息
+          required: false
+          type: string
+      responses:
+        200:
+          description: 所有村镇集合信息
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Country'
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+  /country/{id}:
+    #http定义的delete方法,删除一个资源
+    delete:
+      summary: 删除村镇
+      description: 删除某个id的村镇
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 村镇的唯一标示符
+      tags:
+        - Country
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+             #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                status:
+                  #类型
+                  type: boolean
+                  #描述
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+                  #描述错误信息
+    #http定义的patch方法，表示修改一个资源
+    patch:
+      summary: 村镇信息修改
+      description: 修改村镇信息，村名或者镇名
+      parameters: 
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 村镇的唯一标示符
+        - name: district
+          in: formData
+          description: 新的区名
+          required: false
+          type: string
+        - name: countryName
+          in: formData
+          description: 新的村名
+          required: false
+          type: string
+      tags:
+        - Country
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+            #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                status:
+                  #类型
+                  type: boolean
+                  #描述
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+                  #描述错误信息
+  /companies:
+    get:
+      summary: 公司列表
+      description: 查询出公司集合信息
+      tags:
+        - Company
+      parameters:
+        #上面接口中定义了{id}，则参数列表中必须包含参数id,并且请求类型为path
+        - name: countryId
+          in: query
+          description: 根据村镇id查询公司信息
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: 根据公司名查询公司信息
+          required: false
+          type: string
+      responses:
+        200:
+          description: 公司集合信息
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Company'
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+  /company/{id}:
+    #http定义的delete方法,删除一个资源
+    delete:
+      summary: 删除公司
+      description: 删除某个id的公司
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 公司的唯一标示符
+      tags:
+        - Company
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+             #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                status:
+                  #类型
+                  type: boolean
+                  #描述
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+                  #描述错误信息
+    #http定义的patch方法，表示修改一个资源
+    patch:
+      summary: 公司信息修改
+      description: 修改村镇信息，村名或者镇名
+      parameters: 
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 公司的唯一标示符
+        - name: name
+          in: formData
+          description: 新的公司名
+          required: false
+          type: string
+        - name: address
+          in: formData
+          description: 新的地址
+          required: false
+          type: string
+      tags:
+        - Company
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+            #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                status:
+                  #类型
+                  type: boolean
+                  #描述
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+                  #描述错误信息
+  /places:
+    get:
+      summary: 地点列表
+      description: 查询出地点集合信息
+      tags:
+        - Place
+      parameters:
+        #上面接口中定义了{id}，则参数列表中必须包含参数id,并且请求类型为path
+        - name: companyId
+          in: query
+          description: 根据公司id查询地点信息
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: 根据地点名查询地点信息
+          required: false
+          type: string
+      responses:
+        200:
+          description: 地点集合信息
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Place'
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+  /place/{id}:
+    #http定义的delete方法,删除一个资源
+    delete:
+      summary: 删除地点
+      description: 删除某个id的地点
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 地点的唯一标示符
+      tags:
+        - Place
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+             #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                status:
+                  #类型
+                  type: boolean
+                  #描述
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+                  #描述错误信息
+    #http定义的patch方法，表示修改一个资源
+    patch:
+      summary: 地点信息修改
+      description: 修改地点信息
+      parameters: 
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 地点的唯一标示符
+        - name: name
+          in: formData
+          description: 新的地点名
+          required: false
+          type: string
+      tags:
+        - Place
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+            #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                status:
+                  #类型
+                  type: boolean
+                  #描述
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              #值类型
+              type: object
+              #定义属性
+              properties:
+              #属性名
+                message:
+                  #类型
+                  type: string
+                  #描述错误信息
+  /users:
+    get:
+      summary: 用户列表
+      description: 查询出用户集合信息
+      tags:
+        - User
+      parameters:
+        - name: companyId
+          in: query
+          description: 根据公司id查询用户信息
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: 根据用户名查询用户信息
+          required: false
+          type: string
+        - name: wxOpenId
+          in: query
+          description: 根据微信id查询用户信息
+          required: false
+          type: string
+      responses:
+        200:
+          description: 地点集合信息
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/User'
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              type: object
+              properties:
+                message:
+                  type: string
+  /user/{id}:
+    delete:
+      summary: 删除用户
+      description: 删除某个id的用户
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 用户的唯一标示符
+      tags:
+        - User
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              type: object
+              properties:
+                message:
+                  type: string
+    patch:
+      summary: 用户信息修改
+      description: 修改用户信息
+      parameters: 
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 用户的唯一标示符
+        - name: name
+          in: formData
+          description: 新的用户名
+          required: false
+          type: string
+        - name: companyId
+          in: formData
+          description: 新的所在公司id
+          required: false
+          type: string
+        - name: wxOpenId
+          in: formData
+          description: 新的微信id
+          required: false
+          type: string
+      tags:
+        - User
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              type: object
+              properties:
+                message:
+                  type: string
+  /pictures:
+    get:
+      summary: 图片列表
+      description: 查询出图片集合信息
+      tags:
+        - Picture
+      parameters:
+        - name: placeName
+          in: query
+          description: 根据地点名查询图片信息
+          required: false
+          type: string
+        - name: corrective
+          in: query
+          description: 根据整改状态查询图片信息
+          required: false
+          type: boolean
+      responses:
+        200:
+          description: 图片集合信息
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Picture'
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              type: object
+              properties:
+                message:
+                  type: string
+  /picture/{id}:
+    delete:
+      summary: 删除图片
+      description: 删除某个id的图片
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 图片的唯一标示符
+      tags:
+        - Picture
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              type: object
+              properties:
+                message:
+                  type: string
+    patch:
+      summary: 图片信息修改
+      description: 修改图片信息
+      parameters: 
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 图片的唯一标示符
+        - name: corrective
+          in: formData
+          description: 整改状态
+          required: false
+          type: boolean
+      tags:
+        - Picture
+      responses:
+        200:
+          description: 通过返回值来标示执行结果　返回true表示执行成功
+          schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                  description: 是否成功
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              type: object
+              properties:
+                message:
+                  type: string
+  /reports:
+    get:
+      summary: 统计报表
+      description: 查询出用户集合信息
+      tags:
+        - Report
+      parameters:
+        - name: companyId
+          in: query
+          description: 根据公司id查询报表信息
+          required: false
+          type: string
+      responses:
+        200:
+          description: 统计报表信息
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Report'
+        default:
+          description: 操作异常,执行失败.返回信息描述错误详情
+          schema:
+              type: object
+              properties:
+                message:
+                  type: string
+definitions:
+  User:
+    #值类型
+    type: object
+    #定义属性
+    properties:
+    #属性名
+      id:
+        #类型
+        type: string
+        #描述
+        description: 用户的唯一id
+      username:
+        type: string
+        description: 用户名
+      phone:
+        type: string
+        description: 手机号
+      companyId:
+        type: string
+        description: 所在公司id
+      companyName:
+        type: string
+        description: 所在公司名
+      wxOpenId:
+        type: string
+        description: 微信OpenId
+      wxUsername:
+        type: string
+        description: 微信用户名称
+      createAt:
+        type: string
+        description: 创建时间
+  Dict:
+    type: Object
+    properties:
+      id:
+        type: string
+        description: 字典表唯一id
+      dictType:
+        type: string
+        description: 字典项类型
+      dictItemId:
+        type: string
+        description: 字典项id
+      dictItemName:
+        type: string
+        description: 字典项名称
+  Country:
+    type: Object
+    properties:
+      id:
+        type: string
+        description: 村镇表唯一id
+      district:
+        type: string
+        description: 区/镇
+      countryName:
+        type: string
+        description: 村
+  Company:
+    type: Object
+    properties:
+      id:
+        type: string
+        description: 公司唯一id
+      name:
+        type: string
+        description: 公司名
+      countryId:
+        type: string
+        description: 公司所在村镇id
+      countryName:
+        type: string
+        description: 公司所在村镇名
+      address:
+        type: string
+        description: 详细地址
+      createDate:
+        type: string
+        description: 创建时间
+  Place:
+    type: object
+    properties:
+      id:
+        type: string
+        description: 地点id
+      name:
+        type: string
+        description: 监控地点名称
+      type:
+        type: string
+        description: 监控地点类型
+      companyId:
+        type: string
+        description: 所在公司id
+      companyName:
+        type: string
+        description: 所在公司名
+  Picture:
+    type: object
+    properties:
+      id:
+        type: string
+        description: 图片表id
+      placeId:
+        type: string
+        description: 图片所拍地点id
+      placeName:
+        type: string
+        description: 图片所拍地点名
+      url:
+        type: string
+        description: 图片内容url
+      createAt:
+        type: string
+        description: 图片所拍时间
+      corrective:
+        type: boolean
+        descrpiton: 是否需要整改
+  Report:
+    type: object
+    properties:
+      section:
+        type: string
+        description: 统计区间
+      date:
+        type: string
+        description: 统计日期
+      companyId:
+        type: string
+        description: 所统计公司id
+      companyName:
+        type: string
+        description: 所统计公司名
+      finish:
+        type: boolean
+        description: 是否完成
+      progress:
+        type: number
+        description: 完成进度
+
+

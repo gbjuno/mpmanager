@@ -3,31 +3,31 @@ const http = require('http')
 const fs = require('fs')
 const path = require('path');
 
-const chokidar = require('chokidar');
+// const chokidar = require('chokidar');
 
-const watcher = chokidar.watch(path.join(__dirname, '/mock'));
+// const watcher = chokidar.watch(path.join(__dirname, '/mock'));
 
-watcher.on('ready', () => {
+// watcher.on('ready', () => {
 
-        watcher.on('change', (path) => {
+//         watcher.on('change', (path) => {
 
-                console.log('<---- watched file change, do something ---->');
+//                 console.log('<---- watched file change, do something ---->');
 
-        });
+//         });
 
-        watcher.on('add', (path) => {
+//         watcher.on('add', (path) => {
 
-                console.log('<---- watched new file add, do something ---->');
+//                 console.log('<---- watched new file add, do something ---->');
 
-        });
+//         });
 
-        watcher.on('unlink', (path) => {
+//         watcher.on('unlink', (path) => {
 
-                console.log('<---- watched file remove, do something ---->');
+//                 console.log('<---- watched file remove, do something ---->');
 
-        });
+//         });
 
-});
+// });
 
 const app = new express()
 
@@ -91,5 +91,6 @@ function filter(picName, result){
             filterRes.push(item)
         }
     }
+    if(filterRes.length === 0) filterRes=result
     return filterRes
 }
