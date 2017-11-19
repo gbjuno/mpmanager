@@ -15,7 +15,8 @@ type SummaryList struct {
 
 func (s Summary) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/summary/").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path("/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Route(ws.GET("/").To(s.findSummary))
 	ws.Route(ws.GET("/{summary_id}").To(s.findSummary))
 	ws.Route(ws.POST("/{summary_id}").To(s.updateSummary))
 	ws.Route(ws.PUT("").To(s.createSummary))
@@ -38,7 +39,7 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 
 	id, err := strconv.Atoi(summary_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot get summary, summary_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot get summary, summary_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -46,7 +47,7 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 	summary := Summary{}
 	db.First(&summary, id)
 	if summary.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find summary with id %s", summary.ID)
+		errmsg := fmt.Sprintf("cannot find summary with id %s", summary_id)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	} else {
@@ -56,6 +57,7 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 }
 
 func (s Summary) createSummary(request *restful.Request, response *restful.Response) {
+	glog.Infof("PUT %s", request.Request.URL)
 	summary := Summary{}
 	err := request.ReadEntity(&summary)
 	if err == nil {
@@ -70,6 +72,7 @@ func (s Summary) createSummary(request *restful.Request, response *restful.Respo
 }
 
 func (s Summary) updateSummary(request *restful.Request, response *restful.Response) {
+	glog.Infof("POST %s", request.Request.URL)
 	summary_id := request.PathParameter("summary_id")
 	summary := Summary{}
 	err := request.ReadEntity(&summary)
@@ -106,10 +109,11 @@ func (s Summary) updateSummary(request *restful.Request, response *restful.Respo
 }
 
 func (s Summary) deleteSummary(request *restful.Request, response *restful.Response) {
+	glog.Infof("DELETE %s", request.Request.URL)
 	summary_id := request.PathParameter("summary_id")
 	id, err := strconv.Atoi(summary_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete summary, summary_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot delete summary, summary_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}

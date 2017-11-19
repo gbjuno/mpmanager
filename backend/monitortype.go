@@ -21,7 +21,9 @@ type MonitorPlaceWithMonitorType struct {
 
 func (m MonitorType) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/monitor_type/").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path("/monitor_type").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Route(ws.GET("").To(m.findMonitorType))
+	ws.Route(ws.GET("/{monitor_type_id}").To(m.findMonitorType))
 	ws.Route(ws.GET("/{monitor_type_id}/{scope}").To(m.findMonitorType))
 	ws.Route(ws.POST("/{monitor_type_id}").To(m.updateMonitorType))
 	ws.Route(ws.PUT("").To(m.createMonitorType))
@@ -45,7 +47,7 @@ func (m MonitorType) findMonitorType(request *restful.Request, response *restful
 
 	id, err := strconv.Atoi(monitor_type_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot get monitor_type, monitor_type_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot get monitor_type, monitor_type_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -53,7 +55,7 @@ func (m MonitorType) findMonitorType(request *restful.Request, response *restful
 	monitor_type := MonitorType{}
 	db.First(&monitor_type, id)
 	if monitor_type.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find monitor_type with id %s", monitor_type.ID)
+		errmsg := fmt.Sprintf("cannot find monitor_type with id %s", monitor_type_id)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -79,6 +81,7 @@ func (m MonitorType) findMonitorType(request *restful.Request, response *restful
 }
 
 func (m MonitorType) createMonitorType(request *restful.Request, response *restful.Response) {
+	glog.Infof("PUT %s", request.Request.URL)
 	monitor_type := MonitorType{}
 	err := request.ReadEntity(&monitor_type)
 	if err == nil {
@@ -91,6 +94,7 @@ func (m MonitorType) createMonitorType(request *restful.Request, response *restf
 }
 
 func (m MonitorType) updateMonitorType(request *restful.Request, response *restful.Response) {
+	glog.Infof("POST %s", request.Request.URL)
 	monitor_type_id := request.PathParameter("monitor_type_id")
 	monitor_type := MonitorType{}
 	err := request.ReadEntity(&monitor_type)
@@ -126,10 +130,11 @@ func (m MonitorType) updateMonitorType(request *restful.Request, response *restf
 }
 
 func (m MonitorType) deleteMonitorType(request *restful.Request, response *restful.Response) {
+	glog.Infof("DELETE %s", request.Request.URL)
 	monitor_type_id := request.PathParameter("monitor_type_id")
 	id, err := strconv.Atoi(monitor_type_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete monitor_type, monitor_type_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot delete monitor_type, monitor_type_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}

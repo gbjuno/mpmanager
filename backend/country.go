@@ -21,7 +21,9 @@ type CompanyListWithCountryID struct {
 
 func (c Country) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/country/").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path("/country").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Route(ws.GET("").To(c.findCountry))
+	ws.Route(ws.GET("/{country_id}").To(c.findCountry))
 	ws.Route(ws.GET("/{country_id}/{scope}").To(c.findCountry))
 	ws.Route(ws.POST("/{country_id}").To(c.updateCountry))
 	ws.Route(ws.PUT("").To(c.createCountry))
@@ -45,7 +47,7 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 
 	id, err := strconv.Atoi(country_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot get country, country_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot get country, country_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -53,7 +55,7 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 	country := Country{}
 	db.First(&country, id)
 	if country.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find country with id %s", country.ID)
+		errmsg := fmt.Sprintf("cannot find country with id %s", country_id)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -79,6 +81,7 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 }
 
 func (c Country) createCountry(request *restful.Request, response *restful.Response) {
+	glog.Infof("PUT %s", request.Request.URL)
 	country := Country{}
 	err := request.ReadEntity(&country)
 	if err == nil {
@@ -91,6 +94,7 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 }
 
 func (c Country) updateCountry(request *restful.Request, response *restful.Response) {
+	glog.Infof("POST %s", request.Request.URL)
 	country_id := request.PathParameter("country_id")
 	country := Country{}
 	err := request.ReadEntity(&country)
@@ -126,10 +130,11 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 }
 
 func (c Country) deleteCountry(request *restful.Request, response *restful.Response) {
+	glog.Infof("DELETE %s", request.Request.URL)
 	country_id := request.PathParameter("country_id")
 	id, err := strconv.Atoi(country_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete country, country_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot delete country, country_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}

@@ -22,7 +22,9 @@ type PictureWithMonitorPlace struct {
 
 func (m MonitorPlace) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/monitor_place/").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path("/monitor_place").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Route(ws.GET("").To(m.findMonitorPlace))
+	ws.Route(ws.GET("/{monitor_place_id}").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}/{scope}?after={after}&limit={limit}").To(m.findMonitorPlace))
 	ws.Route(ws.POST("/{monitor_place_id}").To(m.updateMonitorPlace))
 	ws.Route(ws.PUT("").To(m.createMonitorPlace))
@@ -48,7 +50,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 
 	id, err := strconv.Atoi(monitor_place_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot get monitor_place, monitor_place_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot get monitor_place, monitor_place_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -56,7 +58,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 	monitor_place := MonitorPlace{}
 	db.First(&monitor_place, id)
 	if monitor_place.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find monitor_place with id %s", monitor_place.ID)
+		errmsg := fmt.Sprintf("cannot find monitor_place with id %s", monitor_place_id)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -128,6 +130,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 }
 
 func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *restful.Response) {
+	glog.Infof("PUT %s", request.Request.URL)
 	monitor_place := MonitorPlace{}
 	err := request.ReadEntity(&monitor_place)
 	if err == nil {
@@ -140,6 +143,7 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 }
 
 func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *restful.Response) {
+	glog.Infof("POST %s", request.Request.URL)
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	monitor_place := MonitorPlace{}
 	err := request.ReadEntity(&monitor_place)
@@ -175,10 +179,11 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 }
 
 func (m MonitorPlace) deleteMonitorPlace(request *restful.Request, response *restful.Response) {
+	glog.Infof("DELETE %s", request.Request.URL)
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	id, err := strconv.Atoi(monitor_place_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete monitor_place, monitor_place_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot delete monitor_place, monitor_place_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}

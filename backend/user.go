@@ -15,7 +15,8 @@ type UserList struct {
 
 func (u User) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/user/").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path("/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Route(ws.GET("").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.POST("/{user_id}").To(u.updateUser))
 	ws.Route(ws.PUT("").To(u.createUser))
@@ -54,14 +55,14 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 
 	id, err := strconv.Atoi(user_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot get user, user_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot get user, user_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
 
 	db.First(&user, id)
 	if user.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find user with id %s", user.ID)
+		errmsg := fmt.Sprintf("cannot find user with id %s", user_id)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	} else {
@@ -71,6 +72,7 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 }
 
 func (u User) createUser(request *restful.Request, response *restful.Response) {
+	glog.Infof("PUT %s", request.Request.URL)
 	user := User{}
 	err := request.ReadEntity(&user)
 	if err == nil {
@@ -85,6 +87,7 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 }
 
 func (u User) updateUser(request *restful.Request, response *restful.Response) {
+	glog.Infof("POST %s", request.Request.URL)
 	user_id := request.PathParameter("user_id")
 	user := User{}
 	err := request.ReadEntity(&user)
@@ -121,10 +124,11 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 }
 
 func (u User) deleteUser(request *restful.Request, response *restful.Response) {
+	glog.Infof("DELETE %s", request.Request.URL)
 	user_id := request.PathParameter("user_id")
 	id, err := strconv.Atoi(user_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete user, user_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot delete user, user_id %s is not integer, err %s", user_id, err)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}

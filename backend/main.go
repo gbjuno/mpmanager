@@ -1,13 +1,17 @@
 package main
 
 import (
+	"flag"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"gopkg.in/chanxuehong/wechat.v2/mp/core"
 	"net/http"
 )
 
 func main() {
+	flag.Parse()
+
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{})
 
@@ -36,6 +40,9 @@ func main() {
 	summary.Register(wsContainer)
 
 	glog.Infof("starting webserver on localhost:8000")
+
+	mux := core.NewServeMux()
+
 	server := &http.Server{Addr: ":8000", Handler: wsContainer}
 	server.ListenAndServe()
 }

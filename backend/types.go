@@ -15,7 +15,7 @@ type Town struct {
 	CreateAt  time.Time `gorm:"column:create_at;not null" json:"create_at"`
 	UpdateAt  time.Time `gorm:"column:update_at;not null" json:"update_at"`
 	Name      string    `gorm:"column:name;size:20;not null;unique_index" json:"name"`
-	Countries []Country `gorm:"ForeignKey:TownId"`
+	Countries []Country `gorm:"ForeignKey:TownId" json:"-"`
 }
 
 func (Town) TableName() string {
@@ -28,7 +28,7 @@ type Country struct {
 	UpdateAt  time.Time `gorm:"column:update_at;not null" json:"update_at"`
 	Name      string    `gorm:"column:name;size:20;not null" json:"name"`
 	TownId    int       `gorm:"column:town_id" json:"town_id"`
-	Companies []Company `gorm:"ForeignKey:CountryId"`
+	Companies []Company `gorm:"ForeignKey:CountryId" json:"-"`
 }
 
 func (Country) TableName() string {
@@ -42,9 +42,9 @@ type Company struct {
 	Name          string         `gorm:"column:name;size:60;not null;unique_index" json:"name"`
 	Address       string         `gorm:"column:address;size:100;not null" json:"address"`
 	CountryId     int            `gorm:"column:country_id" json:"country_id"`
-	Users         []User         `gorm:"ForeignKey:CompanyId"`
-	MonitorPlaces []MonitorPlace `gorm:"ForeignKey:CompanyId"`
-	Summaries     []Summary      `gorm:"ForeignKey:CompanyId"`
+	Users         []User         `gorm:"ForeignKey:CompanyId" json:"-"`
+	MonitorPlaces []MonitorPlace `gorm:"ForeignKey:CompanyId" json:"-"`
+	Summaries     []Summary      `gorm:"ForeignKey:CompanyId" json:"-"`
 }
 
 func (Company) TableName() string {
@@ -62,7 +62,7 @@ type User struct {
 	CompanyId int       `gorm:"column:company_id;not null" json:"company_id"`
 	WxOpenId  string    `gorm:"column:wx_openid;size:50" json:"wx_openid"`
 	Enable    string    `gorm:"column:enable;size:1;not null" json:"enable"`
-	Pictures  []Picture `gorm:"ForeignKey:UserId"`
+	Pictures  []Picture `gorm:"ForeignKey:UserId" json:"-"`
 }
 
 func (User) TableName() string {
@@ -75,7 +75,7 @@ type MonitorType struct {
 	UpdateAt      time.Time      `gorm:"column:update_at;not null" json:"update_at"`
 	Name          string         `gorm:"column:name;size:20;not null;unique_index" json:"name"`
 	Comment       string         `gorm:"column:comment" json:"comment"`
-	MonitorPlaces []MonitorPlace `gorm:"ForeignKey:MonitorTypeId"`
+	MonitorPlaces []MonitorPlace `gorm:"ForeignKey:MonitorTypeId" json:"-"`
 }
 
 func (MonitorType) TableName() string {
@@ -89,9 +89,9 @@ type MonitorPlace struct {
 	Name          string    `gorm:"column:name;size:20;not null" json:"name"`
 	CompanyId     int       `gorm:"column:company_id;not null;index" json:"company_id"`
 	MonitorTypeId int       `gorm:"column:monitor_type_id;index" json:"monitor_type_id"`
-	Qrcode        string    `gorm:"column:qrcode"`
+	Qrcode        string    `gorm:"column:qrcode" json:"-"`
 	QrcodePath    string    `gorm:"-" json:"qrcode_path"`
-	Pictures      []Picture `gorm:"ForeignKey:MonitorPlaceId"`
+	Pictures      []Picture `gorm:"ForeignKey:MonitorPlaceId" json:"-"`
 }
 
 func (MonitorPlace) TableName() string {
@@ -103,8 +103,8 @@ type Picture struct {
 	CreateAt       time.Time `gorm:"column:create_at;not null" json:"create_at"`
 	UpdateAt       time.Time `gorm:"column:update_at;not null" json:"update_at"`
 	MonitorPlaceId int       `gorm:"column:monitor_place_id;not null;index" json:"monitor_place_id"`
-	Thumb          string    `gorm:"column:thumb"`
-	Full           string    `gorm:"column:full"`
+	Thumb          string    `gorm:"column:thumb" json:"-"`
+	Full           string    `gorm:"column:full" json:"-"`
 	ThumbPath      string    `gorm:"-" json:"thumb_path"`
 	FullPath       string    `gorm:"-" json:"full_path"`
 	Corrective     string    `gorm:"column:corrective;size:1;not null" json:"corrective"`
@@ -134,7 +134,7 @@ type Response struct {
 
 func init() {
 	var err error
-	db, err = gorm.Open("mysql", "root:gf37888676@tcp(10.2.117.8:3306)/mpmanager?charset=utf8&parseTime=True&loc=Local")
+	db, err = gorm.Open("mysql", "root:gf37888676@tcp(192.168.102.134:3306)/mpmanager?charset=utf8&parseTime=True&loc=Local")
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}

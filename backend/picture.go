@@ -15,8 +15,9 @@ type PictureList struct {
 
 func (p Picture) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/picture/").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
-	ws.Route(ws.GET("/{picture_id}").Doc("get picture object").To(p.findPicture))
+	ws.Path("/picture").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Route(ws.GET("").To(p.findPicture))
+	ws.Route(ws.GET("/{picture_id}").To(p.findPicture))
 	ws.Route(ws.POST("/{picture_id}").To(p.updatePicture))
 	ws.Route(ws.PUT("").To(p.createPicture))
 	ws.Route(ws.DELETE("/{picture_id}").To(p.deletePicture))
@@ -38,7 +39,7 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 
 	id, err := strconv.Atoi(picture_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot get picture, picture_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot get picture, picture_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -46,7 +47,7 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 	picture := Picture{}
 	db.First(&picture, id)
 	if picture.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find picture with id %s", picture.ID)
+		errmsg := fmt.Sprintf("cannot find picture with id %s", picture_id)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	} else {
@@ -56,6 +57,7 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 }
 
 func (p Picture) createPicture(request *restful.Request, response *restful.Response) {
+	glog.Infof("PUT %s", request.Request.URL)
 	picture := Picture{}
 	err := request.ReadEntity(&picture)
 	if err == nil {
@@ -70,6 +72,7 @@ func (p Picture) createPicture(request *restful.Request, response *restful.Respo
 }
 
 func (p Picture) updatePicture(request *restful.Request, response *restful.Response) {
+	glog.Infof("POST %s", request.Request.URL)
 	picture_id := request.PathParameter("picture_id")
 	picture := Picture{}
 	err := request.ReadEntity(&picture)
@@ -106,10 +109,11 @@ func (p Picture) updatePicture(request *restful.Request, response *restful.Respo
 }
 
 func (p Picture) deletePicture(request *restful.Request, response *restful.Response) {
+	glog.Infof("DELETE %s", request.Request.URL)
 	picture_id := request.PathParameter("picture_id")
 	id, err := strconv.Atoi(picture_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete picture, picture_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot delete picture, picture_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}

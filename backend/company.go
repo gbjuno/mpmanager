@@ -27,7 +27,9 @@ type MonitorPlaceWithCompany struct {
 
 func (c Company) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/company/").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path("/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Route(ws.GET("").To(c.findCompany))
+	ws.Route(ws.GET("/{company_id}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}/{scope}").To(c.findCompany))
 	ws.Route(ws.POST("/{company_id}").To(c.updateCompany))
 	ws.Route(ws.PUT("").To(c.createCompany))
@@ -51,7 +53,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 
 	id, err := strconv.Atoi(company_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot get company, company_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot get company, company_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -59,7 +61,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 	company := Company{}
 	db.First(&company, id)
 	if company.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find company with id %s", company.ID)
+		errmsg := fmt.Sprintf("cannot find company with id %s", company_id)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -95,6 +97,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 }
 
 func (c Company) createCompany(request *restful.Request, response *restful.Response) {
+	glog.Infof("PUT %s", request.Request.URL)
 	company := Company{}
 	err := request.ReadEntity(&company)
 	if err == nil {
@@ -107,6 +110,7 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 }
 
 func (c Company) updateCompany(request *restful.Request, response *restful.Response) {
+	glog.Infof("POST %s", request.Request.URL)
 	company_id := request.PathParameter("company_id")
 	company := Company{}
 	err := request.ReadEntity(&company)
@@ -142,10 +146,11 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 }
 
 func (c Company) deleteCompany(request *restful.Request, response *restful.Response) {
+	glog.Infof("DELETE %s", request.Request.URL)
 	company_id := request.PathParameter("company_id")
 	id, err := strconv.Atoi(company_id)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete company, company_id is not integer, err %", err)
+		errmsg := fmt.Sprintf("cannot delete company, company_id is not integer, err %s", err)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}
