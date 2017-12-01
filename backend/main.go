@@ -5,12 +5,24 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"gopkg.in/chanxuehong/wechat.v2/mp/core"
+	//	"gopkg.in/chanxuehong/wechat.v2/mp/core"
 	"net/http"
 )
 
+var dbuser string
+var dbpass string
+var dbip string
+var dbport string
+
 func main() {
+	flag.StringVar(&dbuser, "user", "root", "database user")
+	flag.StringVar(&dbpass, "pass", "123456", "database password")
+	flag.StringVar(&dbip, "ip", "127.0.0.1", "database ip address")
+	flag.StringVar(&dbport, "port", "3306", "database port")
+	flag.Set("logtostderr", "true")
 	flag.Parse()
+
+	InitializeDB()
 
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{})
@@ -40,8 +52,6 @@ func main() {
 	summary.Register(wsContainer)
 
 	glog.Infof("starting webserver on localhost:8000")
-
-	mux := core.NewServeMux()
 
 	server := &http.Server{Addr: ":8000", Handler: wsContainer}
 	server.ListenAndServe()
