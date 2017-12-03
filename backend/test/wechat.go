@@ -320,7 +320,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	obj1.Timestamp = fmt.Sprintf("%d", time1)
 	obj1.Noncestr = str1
 	obj1.Wxappid = wxAppId
-	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("http://www.juntengshoes.cn%s", r.URL))
+	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("https://www.juntengshoes.cn/backend%s", r.URL))
 
 	log.Printf("%s", ticket)
 	log.Printf("%s", obj1.Signature)

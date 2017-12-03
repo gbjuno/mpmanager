@@ -50,15 +50,34 @@ const PHOTO = `<!DOCTYPE html>
 	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
 </head>
 <body>
-    <input type="button" id="takephoto" accept="image/*">
+    <img id="preview" src="/html/pic_article.png"/>
     <div class="weui-btn-area">
+        <a class="weui-btn weui-btn_primary" href="javascript:" id="takephoto">take</a>
         <a class="weui-btn weui-btn_primary" href="javascript:" id="upload">upload</a>
     </div>
 	<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
 	<script src="https://www.juntengshoes.cn/html/my.js"></script>
-    <script type="text/javascript"> 
+    <script type="text/javascript">
+    if(!wx){//验证是否存在微信的js组件
+        alert("微信接口调用失败，请检查是否引入微信js！");
+    }
+    wx.config({
+        debug: true,
+        appId: '{{ .Wxappid }}',
+        timestamp: {{ .Timestamp }},
+        nonceStr: '{{ .Noncestr }}',
+        signature: '{{ .Signature }}',
+        jsApiList: [
+            "chooseImage",
+            "previewImage",
+            "uploadImage"
+        ]
+    });
+    wx.error(function(res){
+        alert("wx init failed")
+    });
     var uploadImageId;
     $(function(){
             $("#takephoto").click(function(){
@@ -66,9 +85,9 @@ const PHOTO = `<!DOCTYPE html>
                     count: 1,
                     sizeType: ['original', 'compressed'], 
                     sourceType: ['camera'], 
-                    success: function (res) {
+                    success: function(res) {
                         var localIds = res.localIds; 
-                        $("#takephone").style="background-image:"+localIds[0];
+                        $("#preview").attr('src',localIds[0]);
                         uploadImageId = localIds[0];
                     }
                 });
@@ -78,9 +97,9 @@ const PHOTO = `<!DOCTYPE html>
     $(function(){
         $("#upload").click(function(){
             wx.uploadImage({
-                localId: uploadImageId; // 需要上传的图片的本地ID，由chooseImage接口获得
+                localId: uploadImageId, // 需要上传的图片的本地ID，由chooseImage接口获得
                 isShowProgressTips: 1, // 默认为1，显示进度提示
-                success: function (res) {
+                success: function(res) {
                     var serverId = res.serverId;
                     alert("upload success");
                 }
