@@ -22,12 +22,13 @@ import Banners from '../components/ui/banners';
 import Drags from '../components/ui/Draggable';
 import Dashboard from '../components/dashboard/Dashboard';
 import Gallery from '../components/ui/Gallery';
-import SecurityCheckPic from '../components/ui/SecurityCheckPic';
 import NotFound from '../components/pages/NotFound';
 import BasicAnimations from '../components/animation/BasicAnimations';
 import ExampleAnimations from '../components/animation/ExampleAnimations';
 import AuthBasic from '../components/auth/Basic';
 import RouterEnter from '../components/auth/RouterEnter';
+import PictureManager from '../components/ux/PictureManager';
+import CountryManager from '../components/ux/CountryManager';
 
 const Wysiwyg = (location, cb) => {     // 按需加载富文本配置
     require.ensure([], require => {
@@ -60,6 +61,10 @@ export default class CRouter extends Component {
                             <Route path={'echarts'} component={Echarts} />
                             <Route path={'recharts'} component={Recharts} />
                         </Route>
+                        <Route path={'ux'}>
+                            <Route path={'cz'} component={CountryManager} />
+                            <Route path={'tp'} component={PictureManager} />
+                        </Route>
                         <Route path={'ui'}>
                             <Route path={'icons'} component={Icons} />
                             <Route path={'buttons'} component={Buttons} />
@@ -71,7 +76,6 @@ export default class CRouter extends Component {
                             <Route path={'wysiwyg'} getComponent={Wysiwyg} />
                             <Route path={'drags'} component={Drags} />
                             <Route path={'gallery'} component={Gallery} />
-                            <Route path={'scp'} component={SecurityCheckPic} />
                         </Route>
                         <Route path={'animation'}>
                             <Route path={'basicAnimations'} component={BasicAnimations} />
