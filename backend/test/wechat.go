@@ -62,7 +62,7 @@ func createMenu() {
 	photoButton := &menu.Button{}
 	photo_redirect_url := url.PathEscape("https://www.juntengshoes.cn/backend/photo")
 	photo_url := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&state=test#wechat_redirect", wxAppId, photo_redirect_url)
-	photoButton.SetAsViewButton("拍  照", photo_url)
+	photoButton.SetAsViewButton("拍    照", photo_url)
 
 	checkButton := &menu.Button{}
 	checkButton.SetAsClickButton("check", "CL_01")

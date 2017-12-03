@@ -53,7 +53,7 @@ const PHOTO = `<!DOCTYPE html>
     <div class="page article js_show">
         <article class="weui-article">
             <p>
-                <img src="./images/pic_article.png" alt="">
+                <img src="/html/pic_article.png" alt="">
             </p>
         </article>
         <div class="weui-btn-area">
