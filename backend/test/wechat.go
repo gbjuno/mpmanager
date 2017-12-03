@@ -15,12 +15,13 @@ import (
 	"os"
 	"time"
 
-	"gopkg.in/chanxuehong/rand"
-	"gopkg.in/chanxuehong/session"
-	"gopkg.in/chanxuehong/sid"
+	"github.com/chanxuehong/rand"
+	"github.com/chanxuehong/session"
+	"github.com/chanxuehong/sid"
+	"github.com/emicklei/go-restful"
+	myTemplate "github.com/gbjuno/mpmanager/backend/templates"
 	mpoauth2 "gopkg.in/chanxuehong/wechat.v2/mp/oauth2"
 	"gopkg.in/chanxuehong/wechat.v2/oauth2"
-	"gopkg.in/emicklei/go-restful"
 )
 
 type WxResponse struct {
@@ -54,14 +55,14 @@ var (
 
 func createMenu() {
 	bindButton := &menu.Button{}
-	bind_redirect_url := url.PathEscape("http://59.41.16.190/session")
+	bind_redirect_url := url.PathEscape("https://www.juntengshoes.cn/backend/session")
 	bind_url := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&state=test#wechat_redirect", wxAppId, bind_redirect_url)
-	bindButton.SetAsViewButton("binding", bind_url)
+	bindButton.SetAsViewButton("绑定账户", bind_url)
 
 	photoButton := &menu.Button{}
-	photo_redirect_url := url.PathEscape("http://59.41.16.190/photo")
+	photo_redirect_url := url.PathEscape("https://www.juntengshoes.cn/backend/photo")
 	photo_url := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&state=test#wechat_redirect", wxAppId, photo_redirect_url)
-	photoButton.SetAsViewButton("take photo", photo_url)
+	photoButton.SetAsViewButton("拍  照", photo_url)
 
 	checkButton := &menu.Button{}
 	checkButton.SetAsClickButton("check", "CL_01")
@@ -128,9 +129,9 @@ func defaultEventHandler(ctx *core.Context) {
 func init() {
 	http.HandleFunc("/wx_callback", wxCallbackHandler)
 	http.HandleFunc("/session", sessionHandler)
-	http.HandleFunc("/binding", bindingHandler)
+	http.HandleFunc("/bind", bindingHandler)
 	http.HandleFunc("/confirm", confirmHandler)
-	http.HandleFunc("/picture", pictureHandler)
+	//http.HandleFunc("/picture", pictureHandler)
 	http.HandleFunc("/photo", photoHandler)
 }
 
@@ -142,6 +143,7 @@ func wxCallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sessionHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("session handler")
 	sid := sid.New()
 	state := string(rand.NewHex())
 
@@ -158,7 +160,7 @@ func sessionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &cookie)
 
-	oauth2RedirectURI := "http://59.41.16.190/binding"
+	oauth2RedirectURI := "https://www.juntengshoes.cn/backend/bind"
 	oauth2Scope := "snsapi_base"
 
 	AuthCodeURL := mpoauth2.AuthCodeURL(wxAppId, oauth2RedirectURI, oauth2Scope, state)
@@ -214,22 +216,25 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 	oauth2Client := oauth2.Client{
 		Endpoint: oauth2Endpoint,
 	}
+
 	token, err := oauth2Client.ExchangeToken(code)
 	if err != nil {
 		io.WriteString(w, err.Error())
 		log.Println(err)
 		return
 	}
+
 	log.Printf("token: %+v\r\n", token)
 	log.Printf("openid: %s", token.OpenId)
 
-	bind_tmpl := template.Must(template.New("bind").Parse(myTemplate.Binding_html))
+	bind_tmpl := template.Must(template.New("bind").Parse(myTemplate.BIND))
 	bind_tmpl.Execute(w, nil)
 
 	return
 }
 
 func confirmHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("confirmHandler")
 	cookie, err := r.Cookie("sid")
 	if err != nil {
 		io.WriteString(w, err.Error())
@@ -244,17 +249,21 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.ParseForm()
-	log.Printf("form value %s", r.Form)
-	user := r.Form.Get("user")
+	log.Printf("form value %s\n", r.Form)
+	phone := r.Form.Get("phone")
 	password := r.Form.Get("password")
 
-	if user == "fanjunlun" && password == "123456" {
+	log.Printf("phone %s\n", phone)
+	log.Printf("password %s\n", password)
+
+	if phone == "123456" && password == "123456" {
 		io.WriteString(w, "YES")
 	} else {
 		io.WriteString(w, "NO")
 	}
 }
 
+/*
 func pictureHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.RequestURI)
 
@@ -276,11 +285,11 @@ func pictureHandler(w http.ResponseWriter, r *http.Request) {
 	obj1.Timestamp = fmt.Sprintf("%d", time1)
 	obj1.Noncestr = str1
 	obj1.Wxappid = wxAppId
-	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("http://59.41.16.190%s", r.URL))
+	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("http://www.juntengshoes.cn%s", r.URL))
 
 	log.Printf("%s", ticket)
 	log.Printf("%s", obj1.Signature)
-	log.Printf("http://59.41.16.190%s", r.URL)
+	log.Printf("http://www.juntengshoes.cn%s", r.URL)
 
 	picture_tmpl := template.Must(template.New("picture").Parse(myTemplate.Picture_html))
 	log.Println("send html to weixin")
@@ -289,7 +298,7 @@ func pictureHandler(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
-
+*/
 func photoHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.RequestURI)
 
@@ -311,13 +320,13 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	obj1.Timestamp = fmt.Sprintf("%d", time1)
 	obj1.Noncestr = str1
 	obj1.Wxappid = wxAppId
-	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("http://59.41.16.190%s", r.URL))
+	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("http://www.juntengshoes.cn%s", r.URL))
 
 	log.Printf("%s", ticket)
 	log.Printf("%s", obj1.Signature)
-	log.Printf("http://59.41.16.190%s", r.URL)
+	log.Printf("https://www.juntengshoes.cn%s", r.URL)
 
-	photo_tmpl := template.Must(template.New("photo").Parse(myTemplate.Photo_html))
+	photo_tmpl := template.Must(template.New("photo").Parse(myTemplate.PHOTO))
 	log.Println("send html to weixin")
 	photo_tmpl.Execute(w, obj1)
 	photo_tmpl.Execute(os.Stdout, obj1)
