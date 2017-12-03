@@ -14,7 +14,7 @@ import { fetchData, receiveData } from '../../action';
 import 'photoswipe/dist/photoswipe.css';
 import 'photoswipe/dist/default-skin/default-skin.css';
 
-class SecurityCheckPic extends React.Component {
+class PictureManager extends React.Component {
     state = {
         gallery: null,
         rate: 1,
@@ -181,7 +181,7 @@ class SecurityCheckPic extends React.Component {
         ));
         return (
             <div id="scPic" className="gutter-example button-demo">
-                <BreadcrumbCustom first="UI" second="画廊(图片来自花瓣网，仅学习，若侵权请联系删除)" />
+                <BreadcrumbCustom first="安监管理" second="图片管理(图片来自花瓣网，仅学习，若侵权请联系删除)" />
                 <SearchForm style={{paddingBottom: 13}} fetchData={fetchData}/>
                 <Row gutter={20}>
                     <Col className="gutter-row" md={4}>
@@ -274,4 +274,4 @@ const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch)
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SecurityCheckPic);
+export default connect(mapStateToProps, mapDispatchToProps)(PictureManager);
