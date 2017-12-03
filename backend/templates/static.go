@@ -50,10 +50,16 @@ const PHOTO = `<!DOCTYPE html>
 	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
 </head>
 <body>
-    <img id="preview" src="/html/pic_article.png"/>
-    <div class="weui-btn-area">
-        <a class="weui-btn weui-btn_primary" href="javascript:" id="takephoto">take</a>
-        <a class="weui-btn weui-btn_primary" href="javascript:" id="upload">upload</a>
+    <div class="page article js_show">
+        <article class="weui-article">
+            <p>
+                <img src="./images/pic_article.png" alt="">
+            </p>
+        </article>
+        <div class="weui-btn-area">
+            <a class="weui-btn weui-btn_primary" href="javascript:" id="takephoto">选择图片</a>
+            <a class="weui-btn weui-btn_primary" href="javascript:" id="upload">上传图片</a>
+        </div>
     </div>
 	<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
@@ -84,7 +90,7 @@ const PHOTO = `<!DOCTYPE html>
                 wx.chooseImage({
                     count: 1,
                     sizeType: ['original', 'compressed'], 
-                    sourceType: ['camera'], 
+                    sourceType: ['album', 'camera'], 
                     success: function(res) {
                         var localIds = res.localIds; 
                         $("#preview").attr('src',localIds[0]);
