@@ -9,7 +9,9 @@ $(function(){
 		password:passwordVal
 	},
 	function(data,status) {
-        window.location.href="./bindsuccess.html"
+        console.log('data', data)
+        console.log('status', status)
+        window.location.href="https://www.juntengshoes.cn/html/bindsuccess.html"
 	});
     });
 });
