@@ -41,7 +41,7 @@ const PHOTO = `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>绑定企业</title>
+    <title>拍照上传</title>
     <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
 	<link rel="stylesheet" href="/html/weui.css">
 	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
@@ -51,41 +51,41 @@ const PHOTO = `<!DOCTYPE html>
 </head>
 <body>
     <div class="page article js_show">
-        <article class="weui-article">
+        <div class="weui-article">
             <p>
-                <img src="/html/pic_article.png" alt="">
+                <img id="previewImg" src="/html/pic_article.png" alt="">
             </p>
-        </article>
+        </div>
         <div class="weui-btn-area">
             <a class="weui-btn weui-btn_primary" href="javascript:" id="takephoto">选择图片</a>
             <a class="weui-btn weui-btn_primary" href="javascript:" id="upload">上传图片</a>
         </div>
     </div>
-	<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+	<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
 	<script src="https://www.juntengshoes.cn/html/my.js"></script>
     <script type="text/javascript">
-    if(!wx){//验证是否存在微信的js组件
-        alert("微信接口调用失败，请检查是否引入微信js！");
-    }
-    wx.config({
-        debug: true,
-        appId: '{{ .Wxappid }}',
-        timestamp: {{ .Timestamp }},
-        nonceStr: '{{ .Noncestr }}',
-        signature: '{{ .Signature }}',
-        jsApiList: [
-            "chooseImage",
-            "previewImage",
-            "uploadImage"
-        ]
-    });
-    wx.error(function(res){
-        alert("wx init failed")
-    });
-    var uploadImageId;
-    $(function(){
+        if(!wx){//验证是否存在微信的js组件
+            alert("微信接口调用失败，请检查是否引入微信js！");
+        }
+        wx.config({
+            debug: true,
+            appId: '{{ .Wxappid }}',
+            timestamp: {{ .Timestamp }},
+            nonceStr: '{{ .Noncestr }}',
+            signature: '{{ .Signature }}',
+            jsApiList: [
+                "chooseImage",
+                "previewImage",
+                "uploadImage"
+            ]
+        });
+        wx.error(function(res){
+            alert("wx init failed")
+        });
+
+        $(function(){
             $("#takephoto").click(function(){
                 wx.chooseImage({
                     count: 1,
@@ -93,33 +93,38 @@ const PHOTO = `<!DOCTYPE html>
                     sourceType: ['album', 'camera'], 
                     success: function(res) {
                         var localIds = res.localIds; 
-                        $("#preview").attr('src',localIds[0]);
-                        uploadImageId = localIds[0];
+                        $("#previewImg").attr('src', localIds[0]);
+                        _global_uploadImageId = localIds[0];
                     }
                 });
             });
-    });
-
-    $(function(){
-        $("#upload").click(function(){
-            wx.uploadImage({
-                localId: uploadImageId, // 需要上传的图片的本地ID，由chooseImage接口获得
-                isShowProgressTips: 1, // 默认为1，显示进度提示
-                success: function(res) {
-                    var serverId = res.serverId;
-                    alert(serverId);
-                    $.post("/backend/download", {
-                        serverId: res.serverId
-                    },
-                    function(data, status) {
-                        console.log(status);
-                        console.log(data);
-                        });
-                    alert("upload success");
-                }
+        
+            $("#upload").click(function(){
+                wx.uploadImage({
+                    localId: _global_uploadImageId, // 需要上传的图片的本地ID，由chooseImage接口获得
+                    isShowProgressTips: 1, // 默认为1，显示进度提示
+                    success: function(res) {
+                        var serverId = res.serverId;
+                        alert(serverId);
+                        $.post("/backend/download", {
+                            serverId: res.serverId
+                        },
+                        function(data, status) {
+                            console.log(status);
+                            console.log(data);
+                            });
+                        alert("upload success");
+                    }
+                });
             });
+
+            $("#previewImg").click(function(){
+                wx.previewImage({
+                    current: this.src, // 当前显示图片的http链接
+                    urls: [] // 需要预览的图片http链接列表
+                })
+            })
         });
-    });
     </script>
 </body>
 `
