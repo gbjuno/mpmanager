@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/chanxuehong/wechat.v2/mp/core"
 	"gopkg.in/chanxuehong/wechat.v2/mp/jssdk"
+	"gopkg.in/chanxuehong/wechat.v2/mp/media"
 	"gopkg.in/chanxuehong/wechat.v2/mp/menu"
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/callback/request"
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/callback/response"
@@ -133,6 +134,7 @@ func init() {
 	http.HandleFunc("/confirm", confirmHandler)
 	//http.HandleFunc("/picture", pictureHandler)
 	http.HandleFunc("/photo", photoHandler)
+	http.HandleFunc("/download", downloadHandler)
 }
 
 // wxCallbackHandler 是处理回调请求的 http handler.
@@ -331,6 +333,19 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	photo_tmpl.Execute(w, obj1)
 	photo_tmpl.Execute(os.Stdout, obj1)
 
+	return
+}
+
+func downloadHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	serverId := r.Form.Get("serverId")
+	log.Printf("serverId: %s\n", serverId)
+	written, err := media.Download(wechatClient, serverId, fmt.Sprintf("/opt/%s.jpg", serverId))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Printf("%d bytes written\n", written)
 	return
 }
 
