@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/golang/glog"
 	"gopkg.in/chanxuehong/wechat.v2/mp/core"
 	"gopkg.in/chanxuehong/wechat.v2/mp/jssdk"
 	"gopkg.in/chanxuehong/wechat.v2/mp/media"
@@ -10,7 +11,6 @@ import (
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/callback/response"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -122,49 +122,63 @@ func wxCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	msgServer.ServeHTTP(w, r, nil)
 }
 
+// sessionHandler, give user a session cookie "sid"
 func sessionHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("session handler")
-	sid := sid.New()
-	state := string(rand.NewHex())
+	prefix := fmt.Sprintf("[%s] [%s]", r.RemoteAddr, "SessionHandler")
+	glog.Infof("%s %s %s", prefix, r.Method, r.RequestURI)
 
-	if err := sessionStorage.Add(sid, state); err != nil {
-		io.WriteString(w, err.Error())
-		log.Println(err)
-		return
+	cookie, _ := r.Cookie("sid")
+	if cookie == "" {
+		//set cookie
+		sid := sid.New()
+		state := string(rand.NewHex())
+		if err := sessionStorage.Add(sid, state); err != nil {
+			io.WriteString(w, err.Error())
+			glog.Errorf("%s add session id to sessionStorage failed, err %s", prefix, err)
+			return
+		}
+
+		cookie := http.Cookie{
+			Name:     "sid",
+			Value:    sid,
+			HttpOnly: true,
+		}
+
+		http.SetCookie(w, &cookie)
 	}
 
-	cookie := http.Cookie{
-		Name:     "sid",
-		Value:    sid,
-		HttpOnly: true,
-	}
-	http.SetCookie(w, &cookie)
-	oauth2RedirectURI := "https://www.juntengshoes.cn/backend/bind"
+	//redirect to bind page
+	oauth2RedirectURI := "https://www.juntengshoes.cn/backend/binding"
 	oauth2Scope := "snsapi_base"
 	AuthCodeURL := mpoauth2.AuthCodeURL(wxAppId, oauth2RedirectURI, oauth2Scope, state)
 	log.Println("AuthCodeURL:", AuthCodeURL)
 	http.Redirect(w, r, AuthCodeURL, http.StatusFound)
 }
 
+// if a user has already bind to a company, return a notify page
+// if a user hasn't binded before, send a login page to bind
 func bindingHandler(w http.ResponseWriter, r *http.Request) {
+	prefix := fmt.Sprintf("[%s] [%s]", r.RemoteAddr, "BindingHandler")
 	log.Println(r.RequestURI)
 	cookie, err := r.Cookie("sid")
 	if err != nil {
+		glog.Errorf("%s cannot read cookie sid, err %s", prefix, err)
 		io.WriteString(w, err.Error())
-		log.Println(err)
 		return
 	}
 
 	session, err := sessionStorage.Get(cookie.Value)
+	// user session is outdated or
+	// user doesn't get session and authorized app in wechat
 	if err != nil {
 		io.WriteString(w, err.Error())
-		log.Println(err)
+		glog.Errorf("%s fail to get cookie sid from sessionStorage, err %s", prefix, err)
 		return
 	}
 
-	savedState := session.(string) // 一般是要序列化的, 这里保存在内存所以可以这么做
-
+	savedState := session.(string)
 	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+
 	if err != nil {
 		io.WriteString(w, err.Error())
 		log.Println(err)
@@ -182,6 +196,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("state 参数为空")
 		return
 	}
+
 	if savedState != queryState {
 		str := fmt.Sprintf("state 不匹配, session 中的为 %q, url 传递过来的是 %q", savedState, queryState)
 		io.WriteString(w, str)
@@ -200,11 +215,20 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("token: %+v\r\n", token)
-	log.Printf("openid: %s", token.OpenId)
+	glog.Infof("%s user token: %v ", token)
+	glog.Infof("%s user openid: %v ", token.OpenId)
 
-	bind_tmpl := template.Must(template.New("bind").Parse(myTemplate.BIND))
-	bind_tmpl.Execute(w, nil)
+	//check if openid related to a user
+	related := false
+
+	if related {
+		// openid is related to a user
+
+	} else {
+		// openid isn't related to a user
+		bind_tmpl := template.Must(template.New("bind").Parse(myTemplate.BIND))
+		bind_tmpl.Execute(w, nil)
+	}
 
 	return
 }

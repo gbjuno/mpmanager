@@ -61,7 +61,7 @@ type User struct {
 	Password  string    `gorm:"column:password;size:30;not null"`
 	Job       string    `gorm:"column:job;size:20" json:"job"`
 	CompanyId int       `gorm:"column:company_id;not null" json:"company_id"`
-	WxOpenId  string    `gorm:"column:wx_openid;size:50" json:"wx_openid"`
+	WxOpenId  string    `gorm:"column:wx_openid;size:50;index" json:"wx_openid"`
 	Enable    string    `gorm:"column:enable;size:1;not null" json:"enable"`
 	Pictures  []Picture `gorm:"ForeignKey:UserId" json:"-"`
 }
