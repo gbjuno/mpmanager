@@ -128,13 +128,13 @@ func defaultEventHandler(ctx *core.Context) {
 }
 
 func init() {
-	http.HandleFunc("/wx_callback", wxCallbackHandler)
-	http.HandleFunc("/session", sessionHandler)
-	http.HandleFunc("/bind", bindingHandler)
-	http.HandleFunc("/confirm", confirmHandler)
-	//http.HandleFunc("/picture", pictureHandler)
-	http.HandleFunc("/photo", photoHandler)
-	http.HandleFunc("/download", downloadHandler)
+	http.HandleFunc("/backend/wx_callback", wxCallbackHandler)
+	http.HandleFunc("/backend/session", sessionHandler)
+	http.HandleFunc("/backend/bind", bindingHandler)
+	http.HandleFunc("/backend/confirm", confirmHandler)
+	//http.HandleFunc("/backend/picture", pictureHandler)
+	http.HandleFunc("/backend/photo", photoHandler)
+	http.HandleFunc("/backend/download", downloadHandler)
 }
 
 // wxCallbackHandler 是处理回调请求的 http handler.
@@ -322,7 +322,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	obj1.Timestamp = fmt.Sprintf("%d", time1)
 	obj1.Noncestr = str1
 	obj1.Wxappid = wxAppId
-	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("https://www.juntengshoes.cn/backend%s", r.URL))
+	obj1.Signature = jssdk.WXConfigSign(ticket, str1, obj1.Timestamp, fmt.Sprintf("https://www.juntengshoes.cn%s", r.URL))
 
 	log.Printf("%s", ticket)
 	log.Printf("%s", obj1.Signature)

@@ -31,8 +31,8 @@ func (t Town) Register(container *restful.Container) {
 	ws.Route(ws.GET("").To(t.findTown))
 	ws.Route(ws.GET("/{town_id}").To(t.findTown))
 	ws.Route(ws.GET("/{town_id}/{scope}").To(t.findTown))
-	ws.Route(ws.POST("/{town_id}").To(t.updateTown))
-	ws.Route(ws.PUT("").To(t.createTown))
+	ws.Route(ws.POST("").To(t.createTown))
+	ws.Route(ws.PUT("/{town_id}").To(t.updateTown))
 	ws.Route(ws.DELETE("/{town_id}").To(t.deleteTown))
 	container.Add(ws)
 }
@@ -106,7 +106,7 @@ func (t Town) findTown(request *restful.Request, response *restful.Response) {
 }
 
 func (t Town) createTown(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	glog.Infof("POST %s", request.Request.URL)
 	town := Town{}
 	err := request.ReadEntity(&town)
 	if err == nil {
@@ -120,7 +120,7 @@ func (t Town) createTown(request *restful.Request, response *restful.Response) {
 }
 
 func (t Town) updateTown(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	glog.Infof("PUT %s", request.Request.URL)
 	town_id := request.PathParameter("town_id")
 	town := Town{}
 	err := request.ReadEntity(&town)

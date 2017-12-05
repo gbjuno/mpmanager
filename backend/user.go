@@ -18,8 +18,8 @@ func (u User) Register(container *restful.Container) {
 	ws.Path("/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
-	ws.Route(ws.POST("/{user_id}").To(u.updateUser))
-	ws.Route(ws.PUT("").To(u.createUser))
+	ws.Route(ws.POST("").To(u.createUser))
+	ws.Route(ws.PUT("/{user_id}").To(u.updateUser))
 	ws.Route(ws.DELETE("/{user_id}").To(u.deleteUser))
 	container.Add(ws)
 }
@@ -72,7 +72,7 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 }
 
 func (u User) createUser(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	glog.Infof("POST %s", request.Request.URL)
 	user := User{}
 	err := request.ReadEntity(&user)
 	if err == nil {
@@ -87,7 +87,7 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 }
 
 func (u User) updateUser(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	glog.Infof("PUT %s", request.Request.URL)
 	user_id := request.PathParameter("user_id")
 	user := User{}
 	err := request.ReadEntity(&user)

@@ -25,8 +25,8 @@ func (c Country) Register(container *restful.Container) {
 	ws.Route(ws.GET("").To(c.findCountry))
 	ws.Route(ws.GET("/{country_id}").To(c.findCountry))
 	ws.Route(ws.GET("/{country_id}/{scope}").To(c.findCountry))
-	ws.Route(ws.POST("/{country_id}").To(c.updateCountry))
-	ws.Route(ws.PUT("").To(c.createCountry))
+	ws.Route(ws.POST("").To(c.createCountry))
+	ws.Route(ws.PUT("/{country_id}").To(c.updateCountry))
 	ws.Route(ws.DELETE("/{country_id}").To(c.deleteCountry))
 	container.Add(ws)
 }
@@ -81,7 +81,7 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 }
 
 func (c Country) createCountry(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	glog.Infof("POST %s", request.Request.URL)
 	country := Country{}
 	err := request.ReadEntity(&country)
 	if err == nil {
@@ -94,7 +94,7 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 }
 
 func (c Country) updateCountry(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	glog.Infof("PUT %s", request.Request.URL)
 	country_id := request.PathParameter("country_id")
 	country := Country{}
 	err := request.ReadEntity(&country)

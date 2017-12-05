@@ -18,8 +18,8 @@ func (p Picture) Register(container *restful.Container) {
 	ws.Path("/picture").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(p.findPicture))
 	ws.Route(ws.GET("/{picture_id}").To(p.findPicture))
-	ws.Route(ws.POST("/{picture_id}").To(p.updatePicture))
-	ws.Route(ws.PUT("").To(p.createPicture))
+	ws.Route(ws.POST("").To(p.createPicture))
+	ws.Route(ws.PUT("/{picture_id}").To(p.updatePicture))
 	ws.Route(ws.DELETE("/{picture_id}").To(p.deletePicture))
 	container.Add(ws)
 }
@@ -57,7 +57,7 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 }
 
 func (p Picture) createPicture(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	glog.Infof("POST %s", request.Request.URL)
 	picture := Picture{}
 	err := request.ReadEntity(&picture)
 	if err == nil {
@@ -72,7 +72,7 @@ func (p Picture) createPicture(request *restful.Request, response *restful.Respo
 }
 
 func (p Picture) updatePicture(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	glog.Infof("PUT %s", request.Request.URL)
 	picture_id := request.PathParameter("picture_id")
 	picture := Picture{}
 	err := request.ReadEntity(&picture)

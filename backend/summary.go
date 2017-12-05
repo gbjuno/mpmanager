@@ -18,8 +18,8 @@ func (s Summary) Register(container *restful.Container) {
 	ws.Path("/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("/").To(s.findSummary))
 	ws.Route(ws.GET("/{summary_id}").To(s.findSummary))
-	ws.Route(ws.POST("/{summary_id}").To(s.updateSummary))
-	ws.Route(ws.PUT("").To(s.createSummary))
+	ws.Route(ws.POST("").To(s.createSummary))
+	ws.Route(ws.PUT("/{summary_id}").To(s.updateSummary))
 	ws.Route(ws.DELETE("/{summary_id}").To(s.deleteSummary))
 	container.Add(ws)
 }
@@ -57,7 +57,7 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 }
 
 func (s Summary) createSummary(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	glog.Infof("POST %s", request.Request.URL)
 	summary := Summary{}
 	err := request.ReadEntity(&summary)
 	if err == nil {
@@ -72,7 +72,7 @@ func (s Summary) createSummary(request *restful.Request, response *restful.Respo
 }
 
 func (s Summary) updateSummary(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	glog.Infof("PUT %s", request.Request.URL)
 	summary_id := request.PathParameter("summary_id")
 	summary := Summary{}
 	err := request.ReadEntity(&summary)

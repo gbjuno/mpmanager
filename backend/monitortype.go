@@ -25,8 +25,8 @@ func (m MonitorType) Register(container *restful.Container) {
 	ws.Route(ws.GET("").To(m.findMonitorType))
 	ws.Route(ws.GET("/{monitor_type_id}").To(m.findMonitorType))
 	ws.Route(ws.GET("/{monitor_type_id}/{scope}").To(m.findMonitorType))
-	ws.Route(ws.POST("/{monitor_type_id}").To(m.updateMonitorType))
-	ws.Route(ws.PUT("").To(m.createMonitorType))
+	ws.Route(ws.POST("").To(m.createMonitorType))
+	ws.Route(ws.PUT("/{monitor_type_id}").To(m.updateMonitorType))
 	ws.Route(ws.DELETE("/{monitor_type_id}").To(m.deleteMonitorType))
 	container.Add(ws)
 }
@@ -81,7 +81,7 @@ func (m MonitorType) findMonitorType(request *restful.Request, response *restful
 }
 
 func (m MonitorType) createMonitorType(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	glog.Infof("POST %s", request.Request.URL)
 	monitor_type := MonitorType{}
 	err := request.ReadEntity(&monitor_type)
 	if err == nil {
@@ -94,7 +94,7 @@ func (m MonitorType) createMonitorType(request *restful.Request, response *restf
 }
 
 func (m MonitorType) updateMonitorType(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	glog.Infof("PUT %s", request.Request.URL)
 	monitor_type_id := request.PathParameter("monitor_type_id")
 	monitor_type := MonitorType{}
 	err := request.ReadEntity(&monitor_type)

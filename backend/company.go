@@ -31,8 +31,8 @@ func (c Company) Register(container *restful.Container) {
 	ws.Route(ws.GET("").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}/{scope}").To(c.findCompany))
-	ws.Route(ws.POST("/{company_id}").To(c.updateCompany))
-	ws.Route(ws.PUT("").To(c.createCompany))
+	ws.Route(ws.POST("").To(c.createCompany))
+	ws.Route(ws.PUT("/{company_id}").To(c.updateCompany))
 	ws.Route(ws.DELETE("/{company_id}").To(c.deleteCompany))
 	container.Add(ws)
 }
@@ -97,7 +97,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 }
 
 func (c Company) createCompany(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	glog.Infof("POST %s", request.Request.URL)
 	company := Company{}
 	err := request.ReadEntity(&company)
 	if err == nil {
@@ -110,7 +110,7 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 }
 
 func (c Company) updateCompany(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	glog.Infof("PUT %s", request.Request.URL)
 	company_id := request.PathParameter("company_id")
 	company := Company{}
 	err := request.ReadEntity(&company)
