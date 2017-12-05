@@ -128,3 +128,6 @@ const PHOTO = `<!DOCTYPE html>
     </script>
 </body>
 `
+
+const PICTURE = `
+`

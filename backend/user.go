@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -15,7 +17,7 @@ type UserList struct {
 
 func (u User) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.POST("").To(u.createUser))
@@ -83,6 +85,8 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [createUser]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	user := User{}
 	err := request.ReadEntity(&user)
 	if err == nil {
@@ -112,6 +116,8 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [updateCompany]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	user_id := request.PathParameter("user_id")
 	user := User{}
 	err := request.ReadEntity(&user)

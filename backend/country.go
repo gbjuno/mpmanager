@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -21,7 +23,7 @@ type CompanyListWithCountryID struct {
 
 func (c Country) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/country").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/country").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(c.findCountry))
 	ws.Route(ws.GET("/{country_id}").To(c.findCountry))
 	ws.Route(ws.GET("/{country_id}/{scope}").To(c.findCountry))
@@ -95,6 +97,8 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [createCountry]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	country := Country{}
 	err := request.ReadEntity(&country)
 	if err == nil {
@@ -107,7 +111,7 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 			return
 		} else {
 			//create country on database
-			glog.Info("%s create country with id %d succesfully", prefix, company.ID)
+			glog.Info("%s create country with id %d succesfully", prefix, country.ID)
 			response.WriteHeaderAndEntity(http.StatusOK, country)
 			return
 		}
@@ -123,6 +127,8 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [updateCountry]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	country_id := request.PathParameter("country_id")
 	country := Country{}
 	err := request.ReadEntity(&country)
@@ -164,7 +170,7 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 
 	//find country and update
 	db.Model(&realCountry).Update(country)
-	glog.Infof("%s update country with id %d successfully and return", prefix, realCompany.ID)
+	glog.Infof("%s update country with id %d successfully and return", prefix, realCountry.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, realCountry)
 }
 
@@ -184,7 +190,7 @@ func (c Country) deleteCountry(request *restful.Request, response *restful.Respo
 	db.First(&country, id)
 	if country.ID == 0 {
 		//country with id doesn't exist
-		glog.Infof("%s country with id %s doesn't exist, return ok", prefix, company_id)
+		glog.Infof("%s country with id %s doesn't exist, return ok", prefix, country_id)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
 	}
@@ -202,7 +208,7 @@ func (c Country) deleteCountry(request *restful.Request, response *restful.Respo
 		return
 	} else {
 		//delete country successfully
-		glog.Infof("%s delete country with id %s successfully", prefix, company_id)
+		glog.Infof("%s delete country with id %s successfully", prefix, country_id)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
 	}

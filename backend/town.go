@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -27,7 +29,7 @@ type CompanyListWithTownID struct {
 
 func (t Town) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/town").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/town").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(t.findTown))
 	ws.Route(ws.GET("/{town_id}").To(t.findTown))
 	ws.Route(ws.GET("/{town_id}/{scope}").To(t.findTown))
@@ -123,6 +125,8 @@ func (t Town) createTown(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [createTown]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	town := Town{}
 	err := request.ReadEntity(&town)
 	if err == nil {
@@ -152,6 +156,8 @@ func (t Town) updateTown(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [updateTown]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	town_id := request.PathParameter("town_id")
 	town := Town{}
 	err := request.ReadEntity(&town)
@@ -191,7 +197,7 @@ func (t Town) updateTown(request *restful.Request, response *restful.Response) {
 		return
 	}
 	//find town and update
-	db.Model(&realTown).Upate(town)
+	db.Model(&realTown).Update(town)
 	glog.Infof("%s update town with id %d successfully and return", prefix, realTown.ID)
 	response.WriteHeaderAndEntity(http.StatusCreated, realTown)
 	return

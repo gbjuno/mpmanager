@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -21,7 +23,7 @@ type MonitorPlaceWithMonitorType struct {
 
 func (m MonitorType) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/monitor_type").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/monitor_type").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(m.findMonitorType))
 	ws.Route(ws.GET("/{monitor_type_id}").To(m.findMonitorType))
 	ws.Route(ws.GET("/{monitor_type_id}/{scope}").To(m.findMonitorType))
@@ -95,6 +97,8 @@ func (m MonitorType) createMonitorType(request *restful.Request, response *restf
 	prefix := fmt.Sprintf("[%s] [createMonitorType]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	monitor_type := MonitorType{}
 	err := request.ReadEntity(&monitor_type)
 	if err == nil {
@@ -107,7 +111,7 @@ func (m MonitorType) createMonitorType(request *restful.Request, response *restf
 			return
 		} else {
 			//create monitor_type on database
-			glog.Info("%s create monitor_type with id %d succesfully", prefix, company.ID)
+			glog.Info("%s create monitor_type with id %d succesfully", prefix, monitor_type.ID)
 			response.WriteHeaderAndEntity(http.StatusOK, monitor_type)
 			return
 		}
@@ -123,6 +127,8 @@ func (m MonitorType) updateMonitorType(request *restful.Request, response *restf
 	prefix := fmt.Sprintf("[%s] [updateMonitorType]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	monitor_type_id := request.PathParameter("monitor_type_id")
 	monitor_type := MonitorType{}
 	err := request.ReadEntity(&monitor_type)
@@ -186,7 +192,7 @@ func (m MonitorType) deleteMonitorType(request *restful.Request, response *restf
 	db.First(&monitor_type, id)
 	if monitor_type.ID == 0 {
 		//monitor_place with id doesn't exist, return ok
-		glog.Infof("%s company with id %s doesn't exist, return ok", prefix, company_id)
+		glog.Infof("%s company with id %s doesn't exist, return ok", prefix, monitor_type.ID)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
 	}

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -15,7 +17,7 @@ type PictureList struct {
 
 func (p Picture) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/picture").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/picture").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(p.findPicture))
 	ws.Route(ws.GET("/{picture_id}").To(p.findPicture))
 	ws.Route(ws.POST("").To(p.createPicture))
@@ -70,6 +72,8 @@ func (p Picture) createPicture(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [createPicture]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	picture := Picture{}
 	err := request.ReadEntity(&picture)
 	if err == nil {
@@ -98,6 +102,8 @@ func (p Picture) updatePicture(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [updatePicture]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	picture_id := request.PathParameter("picture_id")
 	picture := Picture{}
 	err := request.ReadEntity(&picture)

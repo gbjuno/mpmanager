@@ -19,24 +19,14 @@ import (
 	"github.com/chanxuehong/rand"
 	"github.com/chanxuehong/session"
 	"github.com/chanxuehong/sid"
-	"github.com/emicklei/go-restful"
 	myTemplate "github.com/gbjuno/mpmanager/backend/templates"
 	mpoauth2 "gopkg.in/chanxuehong/wechat.v2/mp/oauth2"
 	"gopkg.in/chanxuehong/wechat.v2/oauth2"
 )
 
-type WxResponse struct {
-}
-
-func (w WxResponse) Register(container *restful.Container) {
-	ws := new(restful.WebService)
-	container.Add(ws)
-}
-
 const (
-	wxAppId     = "wx6eb571f36f6b1c10"
-	wxAppSecret = "555210c557802c8a0c6a930cf2e4c159"
-
+	wxAppId         = "wx6eb571f36f6b1c10"
+	wxAppSecret     = "555210c557802c8a0c6a930cf2e4c159"
 	wxOriId         = "gh_75a8e6a73da5"
 	wxToken         = "wechatcms"
 	wxEncodedAESKey = "aeskeyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
@@ -54,27 +44,6 @@ var (
 	msgServer  *core.Server
 )
 
-func createMenu() {
-	bindButton := &menu.Button{}
-	bind_redirect_url := url.PathEscape("https://www.juntengshoes.cn/backend/session")
-	bind_url := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&state=test#wechat_redirect", wxAppId, bind_redirect_url)
-	bindButton.SetAsViewButton("绑定账户", bind_url)
-
-	photoButton := &menu.Button{}
-	photo_redirect_url := url.PathEscape("https://www.juntengshoes.cn/backend/photo")
-	photo_url := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&state=test#wechat_redirect", wxAppId, photo_redirect_url)
-	photoButton.SetAsViewButton("拍    照", photo_url)
-
-	checkButton := &menu.Button{}
-	checkButton.SetAsClickButton("check", "CL_01")
-	wechatMenu := &menu.Menu{Buttons: []menu.Button{*bindButton, *photoButton, *checkButton}}
-
-	if err := menu.Create(wechatClient, wechatMenu); err != nil {
-		log.Fatalf("cannot connect with weixin server, err %s\n", err)
-	}
-	log.Printf("create menu succeed")
-}
-
 func init() {
 	if wechatMenu, _, err := menu.Get(wechatClient); err != nil {
 		log.Printf("cannot get menu, err %s", err)
@@ -82,7 +51,7 @@ func init() {
 			createMenu()
 		}
 	} else {
-		log.Printf("Menu: %s", wechatMenu)
+		log.Printf("Menu: %v", wechatMenu)
 		if err := menu.Delete(wechatClient); err != nil {
 			log.Fatalf("cannot delete menu, err %s", err)
 		}
@@ -99,9 +68,29 @@ func init() {
 	msgServer = core.NewServer(wxOriId, wxAppId, wxToken, wxEncodedAESKey, msgHandler, nil)
 }
 
+func createMenu() {
+	bindButton := &menu.Button{}
+	bind_redirect_url := url.PathEscape("https://www.juntengshoes.cn/backend/session")
+	bind_url := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&state=test#wechat_redirect", wxAppId, bind_redirect_url)
+	bindButton.SetAsViewButton("绑定账户", bind_url)
+
+	photoButton := &menu.Button{}
+	photo_redirect_url := url.PathEscape("https://www.juntengshoes.cn/backend/photo")
+	photo_url := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&state=test#wechat_redirect", wxAppId, photo_redirect_url)
+	photoButton.SetAsViewButton("拍    照", photo_url)
+
+	checkButton := &menu.Button{}
+	checkButton.SetAsClickButton("检查进度", "CL_CHECKPROGRESS")
+	wechatMenu := &menu.Menu{Buttons: []menu.Button{*bindButton, *photoButton, *checkButton}}
+
+	if err := menu.Create(wechatClient, wechatMenu); err != nil {
+		log.Fatalf("cannot connect with weixin server, err %s\n", err)
+	}
+	log.Printf("create menu succeed")
+}
+
 func textMsgHandler(ctx *core.Context) {
 	log.Printf("收到文本消息:\n%s\n", ctx.MsgPlaintext)
-
 	msg := request.GetText(ctx.MixedMsg)
 	resp := response.NewText(msg.FromUserName, msg.ToUserName, msg.CreateTime, msg.Content)
 	ctx.RawResponse(resp) // 明文回复
@@ -115,7 +104,6 @@ func defaultMsgHandler(ctx *core.Context) {
 
 func menuClickEventHandler(ctx *core.Context) {
 	log.Printf("收到菜单 click 事件:\n%s\n", ctx.MsgPlaintext)
-
 	event := menu.GetClickEvent(ctx.MixedMsg)
 	resp := response.NewText(event.FromUserName, event.ToUserName, event.CreateTime, "收到 click 类型的事件")
 	ctx.RawResponse(resp) // 明文回复
@@ -125,16 +113,6 @@ func menuClickEventHandler(ctx *core.Context) {
 func defaultEventHandler(ctx *core.Context) {
 	log.Printf("收到事件:\n%s\n", ctx.MsgPlaintext)
 	ctx.NoneResponse()
-}
-
-func init() {
-	http.HandleFunc("/backend/wx_callback", wxCallbackHandler)
-	http.HandleFunc("/backend/session", sessionHandler)
-	http.HandleFunc("/backend/bind", bindingHandler)
-	http.HandleFunc("/backend/confirm", confirmHandler)
-	//http.HandleFunc("/backend/picture", pictureHandler)
-	http.HandleFunc("/backend/photo", photoHandler)
-	http.HandleFunc("/backend/download", downloadHandler)
 }
 
 // wxCallbackHandler 是处理回调请求的 http handler.
@@ -161,19 +139,15 @@ func sessionHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
-
 	oauth2RedirectURI := "https://www.juntengshoes.cn/backend/bind"
 	oauth2Scope := "snsapi_base"
-
 	AuthCodeURL := mpoauth2.AuthCodeURL(wxAppId, oauth2RedirectURI, oauth2Scope, state)
 	log.Println("AuthCodeURL:", AuthCodeURL)
-
 	http.Redirect(w, r, AuthCodeURL, http.StatusFound)
 }
 
 func bindingHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.RequestURI)
-
 	cookie, err := r.Cookie("sid")
 	if err != nil {
 		io.WriteString(w, err.Error())
@@ -265,7 +239,6 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*
 func pictureHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.RequestURI)
 
@@ -293,14 +266,14 @@ func pictureHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s", obj1.Signature)
 	log.Printf("http://www.juntengshoes.cn%s", r.URL)
 
-	picture_tmpl := template.Must(template.New("picture").Parse(myTemplate.Picture_html))
+	picture_tmpl := template.Must(template.New("picture").Parse(myTemplate.PICTURE))
 	log.Println("send html to weixin")
 	picture_tmpl.Execute(w, obj1)
 	picture_tmpl.Execute(os.Stdout, obj1)
 
 	return
 }
-*/
+
 func photoHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.RequestURI)
 
@@ -336,6 +309,8 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// URL: /backend/download
+// Used for download image from backend server
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	serverId := r.Form.Get("serverId")
@@ -347,8 +322,4 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("%d bytes written\n", written)
 	return
-}
-
-func main() {
-	log.Println(http.ListenAndServe(":8000", nil))
 }

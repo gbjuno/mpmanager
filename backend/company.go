@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -27,7 +29,7 @@ type MonitorPlaceWithCompany struct {
 
 func (c Company) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}/{scope}").To(c.findCompany))
@@ -106,7 +108,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 
 	errmsg := fmt.Sprintf("cannot find object with scope %s", scope)
 	glog.Errorf("%s %s", prefix, errmsg)
-	responsr.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+	response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 	return
 }
 
@@ -114,6 +116,8 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [createCompany]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	company := Company{}
 	err := request.ReadEntity(&company)
 	if err == nil {
@@ -143,6 +147,8 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [updateCompany]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	company_id := request.PathParameter("company_id")
 	company := Company{}
 	err := request.ReadEntity(&company)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/gbjuno/mpmanager/backend/utils"
@@ -9,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -26,7 +26,7 @@ type PictureWithMonitorPlace struct {
 
 func (m MonitorPlace) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/monitor_place").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/monitor_place").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}/{scope}?after={after}&limit={limit}").To(m.findMonitorPlace))
@@ -87,6 +87,8 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 		pictureList := PictureWithMonitorPlace{}
 		pictureList.MonitorPlaceId = monitor_place.ID
 		pictureList.Pictures = make([]Picture, 0)
+		var after_str string
+		var limit_trans int
 		if after != "" {
 			loc, _ := time.LoadLocation("Asia/Shanghai")
 			const shortFormat = "20160102"
@@ -97,7 +99,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 				response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 				return
 			}
-			after_str := fmt.Sprintf("%d-%d-%d", after_trans.Year(), after_trans.Month(), after_trans.Day())
+			after_str = fmt.Sprintf("%d-%d-%d", after_trans.Year(), after_trans.Month(), after_trans.Day())
 			if limit == "" {
 				db.Where("create_at >= ?", after_str).Model(&monitor_place).Related(&pictureList.Pictures)
 				pictureList.Count = len(pictureList.Pictures)
@@ -105,7 +107,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 				glog.Infof("%s return pictureList after %s with monitor_place id %d", prefix, after_str, monitor_place_id)
 				return
 			} else {
-				limit_trans, err := strconv.Atoi(limit)
+				limit_trans, err = strconv.Atoi(limit)
 				if err != nil {
 					errmsg := fmt.Sprintf("cannot find object with limit %s, err", limit, err)
 					glog.Errorf("%s %s", prefix, errmsg)
@@ -123,7 +125,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 				db.Model(&monitor_place).Related(&pictureList.Pictures)
 				pictureList.Count = len(pictureList.Pictures)
 				response.WriteHeaderAndEntity(http.StatusOK, pictureList)
-				glog.Infof("%s return pictureList with monitor_place id %d and limit ", prefix, after_str, limit, monitor_place_id)
+				glog.Infof("%s return pictureList after %s with limit %s with monitor_place id %d and limit ", prefix, after_str, limit, monitor_place_id)
 				return
 			} else {
 				limit_trans, err := strconv.Atoi(limit)
@@ -157,6 +159,8 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 	prefix := fmt.Sprintf("[%s] [createMonitorPlace]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	monitor_place := MonitorPlace{}
 	err := request.ReadEntity(&monitor_place)
 	if err == nil {
@@ -174,14 +178,14 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 			company := Company{}
 			db.First(&company, monitor_place.CompanyId)
 			companyName := company.Name
-			qrcodeUrl := fmt.Sprintf("https://www.juntengshoes.cn/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
+			qrcodePath := fmt.Sprintf("https://www.juntengshoes.cn/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
 			//create monitor_place qrcode image
 			if err := utils.GenerateQrcodeImage(qrcodePath, companyName+monitor_place.Name, monitor_place.Qrcode); err != nil {
 				errmsg := fmt.Sprintf("cannot create qrcode for monitor_place %d, err %s", monitor_place.ID, err)
 				glog.Errorf("%s %s", prefix, errmsg)
 			}
 			glog.Infof("%s create monitor_place, id %d", prefix, monitor_place.ID)
-			response.WriteHeaderAndEntity(http.StatusOK, realMonitorPlace)
+			response.WriteHeaderAndEntity(http.StatusOK, monitor_place)
 			return
 		}
 	} else {
@@ -198,6 +202,8 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 	prefix := fmt.Sprintf("[%s] [updateMonitorPlace]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	monitor_place := MonitorPlace{}
 	err := request.ReadEntity(&monitor_place)

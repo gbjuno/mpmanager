@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -15,7 +17,7 @@ type SummaryList struct {
 
 func (s Summary) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path("/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("/").To(s.findSummary))
 	ws.Route(ws.GET("/{summary_id}").To(s.findSummary))
 	ws.Route(ws.POST("").To(s.createSummary))
@@ -69,6 +71,8 @@ func (s Summary) createSummary(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [createSummary]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	summary := Summary{}
 	err := request.ReadEntity(&summary)
 	if err == nil {
@@ -99,6 +103,8 @@ func (s Summary) updateSummary(request *restful.Request, response *restful.Respo
 	prefix := fmt.Sprintf("[%s] [updateSummary]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
+	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
+	request.Request.Body = newContent
 	summary_id := request.PathParameter("summary_id")
 	summary := Summary{}
 	err := request.ReadEntity(&summary)
@@ -179,7 +185,7 @@ func (s Summary) deleteSummary(request *restful.Request, response *restful.Respo
 		return
 	} else {
 		//delete summary successfully
-		glog.Infof("%s delete summary with id %s successfully", prefix, company_id)
+		glog.Infof("%s delete summary with id %s successfully", prefix, summary.ID)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
 	}
