@@ -14,12 +14,14 @@ var dbpass string
 var dbip string
 var dbport string
 var debug bool
+var imgRepo string
 
 func main() {
 	flag.StringVar(&dbuser, "user", "root", "database user")
 	flag.StringVar(&dbpass, "pass", "123456", "database password")
 	flag.StringVar(&dbip, "ip", "127.0.0.1", "database ip address")
 	flag.StringVar(&dbport, "port", "3306", "database port")
+	flag.StringVar(&imgRepo, "imgRepo", "/opt/static", "image save Path")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.Set("logtostderr", "true")
 	flag.Parse()

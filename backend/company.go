@@ -38,39 +38,49 @@ func (c Company) Register(container *restful.Container) {
 }
 
 func (c Company) findCompany(request *restful.Request, response *restful.Response) {
-	glog.Infof("GET %s", request.Request.URL)
+	prefix := fmt.Sprintf("[%s] [findCompany]", request.Request.RemoteAddr)
+	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	company_id := request.PathParameter("company_id")
 	scope := request.PathParameter("scope")
 
+	//get company list
 	if company_id == "" {
 		companyList := CompanyList{}
 		companyList.Companies = make([]Company, 0)
 		db.Find(&companyList.Companies)
 		companyList.Count = len(companyList.Companies)
 		response.WriteHeaderAndEntity(http.StatusOK, companyList)
+		glog.Infof("%s return company list", prefix)
 		return
 	}
 
 	id, err := strconv.Atoi(company_id)
+	//fail to parse company id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot get company, company_id is not integer, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
 
 	company := Company{}
 	db.First(&company, id)
+	//cannot find company
 	if company.ID == 0 {
 		errmsg := fmt.Sprintf("cannot find company with id %s", company_id)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
 
+	//find company
 	if scope == "" {
+		glog.Infof("%s return company with id %d", prefix, company.ID)
 		response.WriteHeaderAndEntity(http.StatusOK, company)
 		return
 	}
 
+	//find user related to company
 	if scope == "user" {
 		userList := UserListWithCompany{}
 		userList.CompanyId = company.ID
@@ -78,9 +88,11 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		db.Model(&company).Related(&userList.Users)
 		userList.Count = len(userList.Users)
 		response.WriteHeaderAndEntity(http.StatusOK, userList)
+		glog.Infof("%s return users related company with id %d", prefix, company.ID)
 		return
 	}
 
+	//find monitor_place related to company
 	if scope == "monitorplace" {
 		monitorPlaceList := MonitorPlaceWithCompany{}
 		monitorPlaceList.CompanyId = company.ID
@@ -88,69 +100,104 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		db.Model(&company).Related(&monitorPlaceList)
 		monitorPlaceList.Count = len(monitorPlaceList.MonitorPlaces)
 		response.WriteHeaderAndEntity(http.StatusOK, monitorPlaceList)
+		glog.Infof("%s return monitor_places related company with id %d", prefix, company.ID)
 		return
 	}
 
 	errmsg := fmt.Sprintf("cannot find object with scope %s", scope)
-	response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+	glog.Errorf("%s %s", prefix, errmsg)
+	responsr.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 	return
 }
 
 func (c Company) createCompany(request *restful.Request, response *restful.Response) {
-	glog.Infof("POST %s", request.Request.URL)
+	prefix := fmt.Sprintf("[%s] [createCompany]", request.Request.RemoteAddr)
+	content, _ := ioutil.ReadAll(request.Request.Body)
+	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
 	company := Company{}
 	err := request.ReadEntity(&company)
 	if err == nil {
 		db.Create(&company)
+		if company.ID == 0 {
+			//fail to create company on database
+			errmsg := fmt.Sprintf("cannot create company on database")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		} else {
+			//create company on database
+			glog.Info("%s create company with id %d succesfully", prefix, company.ID)
+			response.WriteHeaderAndEntity(http.StatusOK, company)
+			return
+		}
 	} else {
+		//fail to parse company entity
 		errmsg := fmt.Sprintf("cannot create company, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}
 }
 
 func (c Company) updateCompany(request *restful.Request, response *restful.Response) {
-	glog.Infof("PUT %s", request.Request.URL)
+	prefix := fmt.Sprintf("[%s] [updateCompany]", request.Request.RemoteAddr)
+	content, _ := ioutil.ReadAll(request.Request.Body)
+	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
 	company_id := request.PathParameter("company_id")
 	company := Company{}
 	err := request.ReadEntity(&company)
+
+	//fail to parse company entity
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update company, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}
 
+	//fail to parse company id
 	id, err := strconv.Atoi(company_id)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update company, path company_id is %s, err %s", company_id, err)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}
 
 	if id != company.ID {
 		errmsg := fmt.Sprintf("cannot update company, path company_id %d is not equal to id %d in body content", id, company.ID)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}
 
 	realCompany := Company{}
 	db.First(&realCompany, company.ID)
+
+	//cannot find company
 	if realCompany.ID == 0 {
-		errmsg := fmt.Sprintf("cannot update company, company_id %d is not exist", company.ID)
+		errmsg := fmt.Sprintf("cannot update company, company_id %d does not exist", company.ID)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}
 
+	//find comopany and update
 	db.Model(&realCompany).Update(company)
-	response.WriteHeaderAndEntity(http.StatusCreated, &realCompany)
+	glog.Infof("%s update company with id %d successfully and return", prefix, realCompany.ID)
+	response.WriteHeaderAndEntity(http.StatusOK, realCompany)
+	return
 }
 
 func (c Company) deleteCompany(request *restful.Request, response *restful.Response) {
-	glog.Infof("DELETE %s", request.Request.URL)
+	prefix := fmt.Sprintf("[%s] [deleteCompany]", request.Request.RemoteAddr)
+	glog.Infof("%s DELETE %s", prefix, request.Request.URL)
 	company_id := request.PathParameter("company_id")
 	id, err := strconv.Atoi(company_id)
+	//fail to parse company id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot delete company, company_id is not integer, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	}
@@ -158,6 +205,8 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 	company := Company{}
 	db.First(&company, id)
 	if company.ID == 0 {
+		//company with id doesn't exist, return ok
+		glog.Infof("%s company with id %s doesn't exist, return ok", prefix, company_id)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
 	}
@@ -168,9 +217,15 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 	db.First(&realCompany, id)
 
 	if realCompany.ID != 0 {
+		//fail to delete company
 		errmsg := fmt.Sprintf("cannot delete company,some of other object is referencing")
+		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		return
 	} else {
+		//delete company successfully
+		glog.Infof("%s delete company with id %s successfully", prefix, company_id)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
+		return
 	}
 }

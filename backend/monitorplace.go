@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/emicklei/go-restful"
+	"github.com/gbjuno/mpmanager/backend/utils"
 	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -34,13 +37,14 @@ func (m MonitorPlace) Register(container *restful.Container) {
 }
 
 func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [CREATE_MonitorPlace]", request.Request.RemoteAddr)
+	prefix := fmt.Sprintf("[%s] [findMonitorPlace]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s, content %s", prefix, request.Request.URL)
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	scope := request.PathParameter("scope")
 	after := request.QueryParameter("after")
 	limit := request.QueryParameter("limit")
 
+	//get monitor_place list
 	if monitor_place_id == "" {
 		monitor_placeList := MonitorPlaceList{}
 		monitor_placeList.MonitorPlaces = make([]MonitorPlace, 0)
@@ -52,6 +56,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 	}
 
 	id, err := strconv.Atoi(monitor_place_id)
+	//fail to parse monitor_place id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot get monitor_place, monitor_place_id is not integer, err %s", err)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -61,6 +66,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 
 	monitor_place := MonitorPlace{}
 	db.First(&monitor_place, id)
+	//cannot find monitor_place
 	if monitor_place.ID == 0 {
 		errmsg := fmt.Sprintf("cannot find monitor_place with id %s", monitor_place_id)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -68,12 +74,15 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 		return
 	}
 
+	//find monitor_place, set QrcodePath
+	monitor_place.QrcodePath = fmt.Sprintf("https://www.juntengshoes.cn/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
 	if scope == "" {
 		glog.Infof("%s return monitor_place with id %d", prefix, monitor_place_id)
 		response.WriteHeaderAndEntity(http.StatusOK, monitor_place)
 		return
 	}
 
+	//find pictures related to monitor_place
 	if scope == "picture" {
 		pictureList := PictureWithMonitorPlace{}
 		pictureList.MonitorPlaceId = monitor_place.ID
@@ -145,25 +154,38 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 }
 
 func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [CREATE_MonitorPlace]", request.Request.RemoteAddr)
+	prefix := fmt.Sprintf("[%s] [createMonitorPlace]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
 	monitor_place := MonitorPlace{}
 	err := request.ReadEntity(&monitor_place)
 	if err == nil {
 		db.Create(&monitor_place)
-		if monitor_place.ID != 0 {
-			monitor_place.Qrcode = fmt.Sprintf("%s/qrcode/%s/%s.png", imgRepo, monitor_place.CompanyId, monitor_place.ID)
-			db.Save(&monitor_place)
-			glog.Infof("%s create monitor_place, id %d", prefix, monitor_place.ID)
-			return
-		} else {
+		if monitor_place.ID == 0 {
+			//fail to create monitor_place on database
 			errmsg := fmt.Sprintf("cannot create monitor_place, err %s", err)
 			glog.Errorf("%s %s", prefix, errmsg)
 			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 			return
+		} else {
+			//create monitor_place on databse
+			monitor_place.Qrcode = fmt.Sprintf("%s/qrcode/%d/%d.png", imgRepo, monitor_place.CompanyId, monitor_place.ID)
+			db.Save(&monitor_place)
+			company := Company{}
+			db.First(&company, monitor_place.CompanyId)
+			companyName := company.Name
+			qrcodeUrl := fmt.Sprintf("https://www.juntengshoes.cn/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
+			//create monitor_place qrcode image
+			if err := utils.GenerateQrcodeImage(qrcodePath, companyName+monitor_place.Name, monitor_place.Qrcode); err != nil {
+				errmsg := fmt.Sprintf("cannot create qrcode for monitor_place %d, err %s", monitor_place.ID, err)
+				glog.Errorf("%s %s", prefix, errmsg)
+			}
+			glog.Infof("%s create monitor_place, id %d", prefix, monitor_place.ID)
+			response.WriteHeaderAndEntity(http.StatusOK, realMonitorPlace)
+			return
 		}
 	} else {
+		//failed to parse monitor_place entity
 		errmsg := fmt.Sprintf("cannot create monitor_place, err %s", err)
 		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
@@ -173,12 +195,14 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 }
 
 func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [UPDATE_MonitorPlace]", request.Request.RemoteAddr)
+	prefix := fmt.Sprintf("[%s] [updateMonitorPlace]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	monitor_place := MonitorPlace{}
 	err := request.ReadEntity(&monitor_place)
+
+	//fail to parse monitor_place entity
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update monitor_place, err %s", err)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -186,6 +210,7 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 		return
 	}
 
+	//fail to parse monitor_place id
 	id, err := strconv.Atoi(monitor_place_id)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update monitor_place, path monitor_place_id is %s, err %s", monitor_place_id, err)
@@ -203,6 +228,8 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 
 	realMonitorPlace := MonitorPlace{}
 	db.First(&realMonitorPlace, monitor_place.ID)
+
+	//cannot find monitor_place
 	if realMonitorPlace.ID == 0 {
 		errmsg := fmt.Sprintf("cannot update monitor_place, monitor_place_id %d is not exist", monitor_place.ID)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -210,18 +237,20 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 		return
 	}
 
+	//find monitor_place
 	db.Model(&realMonitorPlace).Update(monitor_place)
 	glog.Infof("%s update monitor place with id %d succeed", prefix, realMonitorPlace.ID)
-	response.WriteHeaderAndEntity(http.StatusCreated, &realMonitorPlace)
+	response.WriteHeaderAndEntity(http.StatusOK, realMonitorPlace)
 	return
 }
 
 func (m MonitorPlace) deleteMonitorPlace(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [UPDATE_MonitorPlace]", request.Request.RemoteAddr)
+	prefix := fmt.Sprintf("[%s] [deleteMonitorPlace]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s DELETE %s, content %s", prefix, request.Request.URL, content)
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	id, err := strconv.Atoi(monitor_place_id)
+	//fail to parse monitor_place id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot delete monitor_place, monitor_place_id is not integer, err %s", err)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -232,6 +261,7 @@ func (m MonitorPlace) deleteMonitorPlace(request *restful.Request, response *res
 	monitor_place := MonitorPlace{}
 	db.First(&monitor_place, id)
 	if monitor_place.ID == 0 {
+		//monitor_place with id doesn't exist, return ok
 		glog.Infof("%s monitor_place with id %d doesn't exist, delete successfully", prefix, monitor_place_id)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
@@ -243,12 +273,15 @@ func (m MonitorPlace) deleteMonitorPlace(request *restful.Request, response *res
 	db.First(&realMonitorPlace, id)
 
 	if realMonitorPlace.ID != 0 {
+		//fail to delete monitor_place
 		errmsg := fmt.Sprintf("cannot delete monitor_place,some of other object is referencing")
 		glog.Infof("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 		return
 	} else {
-		glog.Infof("%s delete monitor_place with id %d successfully", prefix, monitor_place_id)
+		//delete monitor_place successfully
+		os.Remove(monitor_place.Qrcode)
+		glog.Infof("%s delete monitor_place with id %d, qrcode path %s successfully", prefix, monitor_place_id, monitor_place.Qrcode)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
 	}
