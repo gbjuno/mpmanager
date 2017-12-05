@@ -51,12 +51,12 @@ const PHOTO = `<!DOCTYPE html>
 </head>
 <body>
     <div class="page article js_show">
-        <div class="weui-article">
+        <div class="weui-article" style="padding-bottom:0px">
             <p>
                 <img id="previewImg" src="/html/pic_article.png" alt="">
             </p>
         </div>
-        <div class="weui-btn-area">
+        <div class="weui-btn-area" style="margin-top:0px">
             <a class="weui-btn weui-btn_primary" href="javascript:" id="takephoto">选择图片</a>
             <a class="weui-btn weui-btn_primary" href="javascript:" id="upload">上传图片</a>
         </div>
@@ -94,15 +94,24 @@ const PHOTO = `<!DOCTYPE html>
                 "uploadImage"
             ]
         });
+
+        wx.ready(function(){
+            initTakePhoto();
+            initUploadDialog();
+        });
+
         wx.error(function(res){
             alert("wx init failed")
         });
 
         $(function(){
-            var $takephoto = $("#takephoto");
+            
+        });
 
+        function initTakePhoto(){
+            var $takephoto = $("#takephoto");
+            
             $takephoto.click(function(){
-                alert('staring to take photo...');
                 wx.chooseImage({
                     count: 1,
                     sizeType: ['original', 'compressed'], 
@@ -116,15 +125,12 @@ const PHOTO = `<!DOCTYPE html>
             });
 
             $("#previewImg").click(function(){
-                alert('this src ...'+this.src);
                 wx.previewImage({
                     current: this.src, // 当前显示图片的http链接
                     urls: [this.src] // 需要预览的图片http链接列表
                 })
             });
-
-            initUploadDialog();
-        });
+        }
 
         function initUploadDialog(){
             var $confirmDialog = $('#confirmDialog');
@@ -138,13 +144,13 @@ const PHOTO = `<!DOCTYPE html>
                         var serverId = res.serverId;
                         alert(serverId);
                         $.post("/backend/download", {
-                            serverId: res.serverId
-                        },
-                        function(data, status) {
-                            console.log(status);
-                            console.log(data);
-                            });
-                        alert("upload success");
+                                serverId: res.serverId
+                            },
+                            function(data, status) {
+                                console.log(status);
+                                console.log(data);
+                            }
+                        );
                         $confirmDialog.fadeOut(200);
                     }
                 });
