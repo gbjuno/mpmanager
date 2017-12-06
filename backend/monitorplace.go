@@ -75,7 +75,6 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 	}
 
 	//find monitor_place, set QrcodePath
-	monitor_place.QrcodePath = fmt.Sprintf("https://www.juntengshoes.cn/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
 	if scope == "" {
 		glog.Infof("%s return monitor_place with id %d", prefix, monitor_place_id)
 		response.WriteHeaderAndEntity(http.StatusOK, monitor_place)
@@ -173,14 +172,15 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 			return
 		} else {
 			//create monitor_place on databse
-			monitor_place.Qrcode = fmt.Sprintf("%s/qrcode/%d/%d.png", imgRepo, monitor_place.CompanyId, monitor_place.ID)
+			monitor_place.QrcodePath = fmt.Sprintf("/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
+			monitor_place.QrcodeURI = fmt.Sprintf("/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
 			db.Save(&monitor_place)
 			company := Company{}
 			db.First(&company, monitor_place.CompanyId)
 			companyName := company.Name
-			qrcodePath := fmt.Sprintf("https://www.juntengshoes.cn/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
+			qrcodePath := fmt.Sprintf("https://%s/backend/photo?place=%d", domain, monitor_place.ID)
 			//create monitor_place qrcode image
-			if err := utils.GenerateQrcodeImage(qrcodePath, companyName+monitor_place.Name, monitor_place.Qrcode); err != nil {
+			if err := utils.GenerateQrcodeImage(qrcodePath, companyName+monitor_place.Name, imgRepo+monitor_place.QrcodePath); err != nil {
 				errmsg := fmt.Sprintf("cannot create qrcode for monitor_place %d, err %s", monitor_place.ID, err)
 				glog.Errorf("%s %s", prefix, errmsg)
 			}
@@ -286,8 +286,8 @@ func (m MonitorPlace) deleteMonitorPlace(request *restful.Request, response *res
 		return
 	} else {
 		//delete monitor_place successfully
-		os.Remove(monitor_place.Qrcode)
-		glog.Infof("%s delete monitor_place with id %d, qrcode path %s successfully", prefix, monitor_place_id, monitor_place.Qrcode)
+		os.Remove(imgRepo + monitor_place.QrcodePath)
+		glog.Infof("%s delete monitor_place with id %d, qrcode path %s successfully", prefix, monitor_place_id, monitor_place.QrcodePath)
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 		return
 	}

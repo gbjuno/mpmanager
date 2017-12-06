@@ -33,7 +33,37 @@ const BIND = `<!DOCTYPE html>
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/my.js"></script>
+    <script type="text/javascript">
+    var _global_uploadImageId;
+        $(function(){
+        /**
+         * 初始化函数
+         */
+        initBind();
+    });
+    
+    function initBind(){
+        $("#submit").click(function(){
+            var phoneVal = $("#phone").val();
+            var passwordVal = $("#password").val();
+            console.log(phoneVal);
+            console.log(passwordVal);
+            $.post("/backend/confirm",{
+                phone:phoneVal,
+                password:passwordVal
+                },
+                function(data,status) {
+                    if (data.Status) {
+                        alert(data.Message)
+                        window.location.href="https://www.juntengshoes.cn/html/bindsuccess.html"
+                    } else {
+                        alert(data.Message)
+                    }
+                }
+            );
+        });
+    }
+    </script>
 </body>
 `
 
@@ -45,9 +75,9 @@ const PHOTO = `<!DOCTYPE html>
     <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
 	<link rel="stylesheet" href="/html/weui.css">
 	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
-	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
-	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
-	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
 </head>
 <body>
     <div class="page article js_show">
@@ -144,11 +174,17 @@ const PHOTO = `<!DOCTYPE html>
                         var serverId = res.serverId;
                         alert(serverId);
                         $.post("/backend/download", {
+                                userId: {{ .Userid }},
+                                placeId: {{ .Placeid }}
                                 serverId: res.serverId
                             },
                             function(data, status) {
-                                console.log(status);
-                                console.log(data);
+                                alert(status)
+                                if(data.status) {
+                                   alert(data.message) 
+                                } else {
+                                   alert(data.message) 
+                               }
                             }
                         );
                         $confirmDialog.fadeOut(200);
@@ -168,5 +204,118 @@ const PHOTO = `<!DOCTYPE html>
 </body>
 `
 
-const PICTURE = `
+const SCANQRCODE = `
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>扫描二维码</title>
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
+    <link rel="stylesheet" href="/html/weui.css">
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+</head>
+<body>
+    <div class="page preview js_show">
+    <div class="page__bd">
+        <div class="weui-form-preview">
+            <div class="weui-form-preview__hd">
+                <div class="weui-form-preview__item">
+                    <label class="weui-form-preview__label">拍照用户</label>
+                    <em class="weui-form-preview__value">{{ .User }}</em>
+                </div>
+            </div>
+            <div class="weui-form-preview__bd">
+                <div class="weui-form-preview__item">
+                    <label class="weui-form-preview__label">手机号码</label>
+                    <span class="weui-form-preview__value">{{ .Phone }}</span>
+                </div>
+                <div class="weui-form-preview__item">
+                    <label class="weui-form-preview__label">所属企业</label>
+                    <span class="weui-form-preview__value">{{ .Company }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="weui-btn-area" style="margin-top:0px">
+            <a class="weui-btn weui-btn_primary" href="javascript:" id="scanqrcode">扫描地点二维码</a>
+        </div>
+    </div>
+    </div>
+
+    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+    <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
+    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+    <script type="text/javascript">
+    if(!wx){//验证是否存在微信的js组件
+        alert("微信接口调用失败，请检查是否引入微信js！");
+    }
+    wx.config({
+        debug: true,
+        appId: '{{ .Wxappid }}',
+        timestamp: {{ .Timestamp }},
+        nonceStr: '{{ .Noncestr }}',
+        signature: '{{ .Signature }}',
+        jsApiList: [
+            "scanQRCode",
+        ]
+    });
+
+    wx.ready(function(){
+        initQrcode();
+    });
+
+    wx.error(function(res){
+        alert("wx init failed")
+    });
+
+    $(function(){
+        
+    });
+
+    function initQrcode(){
+        $("#scanqrcode").click(function(){
+            wx.scanQRCode({
+                needResult: 0,
+                scanType: ["qrCode"],
+                success: function (res) {
+                    var result = res.resultStr;
+                }
+            });
+        });
+    }
+    </script>
+</body>
+`
+
+const NOTICEPAGE = `
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ .Title }}</title>
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
+    <link rel="stylesheet" href="/html/weui.css">
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+</head>
+<body>
+    <div class="weui-msg">
+        <div class="weui-msg__icon-area"><i class="weui-icon-{{ .Type }} weui-icon_msg"></i></div>
+        <div class="weui-msg__text-area">
+            <h2 class="weui-msg__title">{{ .Msgtitle }}</h2>
+            <p class="weui-msg__desc">{{ .Msgbody }}</p>
+        </div>
+        <div class="weui-msg__extra-area">
+            <div class="weui-footer">
+                <p class="weui-footer__text">Copyright © 2016-2017</p>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+    <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
+    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+</body>
+
 `

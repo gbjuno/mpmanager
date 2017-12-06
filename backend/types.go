@@ -58,10 +58,10 @@ type User struct {
 	UpdateAt  time.Time `gorm:"column:update_at;not null;" json:"update_at"`
 	Phone     string    `gorm:"column:phone;size:11;not null;unique_index" json:"phone"`
 	Name      string    `gorm:"column:name;size:20;not null" json:"name"`
-	Password  string    `gorm:"column:password;size:30;not null"`
+	Password  string    `gorm:"column:password;size:200;not null"`
 	Job       string    `gorm:"column:job;size:20" json:"job"`
 	CompanyId int       `gorm:"column:company_id;not null" json:"company_id"`
-	WxOpenId  string    `gorm:"column:wx_openid;size:50;index" json:"wx_openid"`
+	WxOpenId  string    `gorm:"column:wx_openid;size:50;unique_index" json:"wx_openid"`
 	Enable    string    `gorm:"column:enable;size:1;not null" json:"enable"`
 	Pictures  []Picture `gorm:"ForeignKey:UserId" json:"-"`
 }
@@ -90,8 +90,8 @@ type MonitorPlace struct {
 	Name          string    `gorm:"column:name;size:20;not null" json:"name"`
 	CompanyId     int       `gorm:"column:company_id;not null;index" json:"company_id"`
 	MonitorTypeId int       `gorm:"column:monitor_type_id;index" json:"monitor_type_id"`
-	Qrcode        string    `gorm:"column:qrcode" json:"-"`
-	QrcodePath    string    `gorm:"-" json:"qrcode_path"`
+	QrcodePath    string    `gorm:"column:qrcode_path" json:"qrcode_path"`
+	QrcodeURI     string    `gorm:"column:qrcode_uri" json:"qrcode_uri"`
 	Pictures      []Picture `gorm:"ForeignKey:MonitorPlaceId" json:"-"`
 }
 
@@ -104,10 +104,10 @@ type Picture struct {
 	CreateAt       time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
 	UpdateAt       time.Time `gorm:"column:update_at;not null;" json:"update_at"`
 	MonitorPlaceId int       `gorm:"column:monitor_place_id;not null;index" json:"monitor_place_id"`
-	Thumb          string    `gorm:"column:thumb" json:"-"`
-	Full           string    `gorm:"column:full" json:"-"`
-	ThumbPath      string    `gorm:"-" json:"thumb_path"`
-	FullPath       string    `gorm:"-" json:"full_path"`
+	ThumbPath      string    `gorm:"column:thumb_path" json:"thumb_path"`
+	FullPath       string    `gorm:"column:full_path" json:"full_path"`
+	ThumbURI       string    `gorm:"column:thumb_uri" json:"thumb_uri"`
+	FullURI        string    `gorm:"column:full_uri" json:"full_uri"`
 	Corrective     string    `gorm:"column:corrective;size:1;not null" json:"corrective"`
 	UserId         int       `gorm:"column:user_id;index" json:"user_id"`
 }

@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"github.com/chanxuehong/rand"
 	"github.com/emicklei/go-restful"
+	"github.com/gbjuno/mpmanager/backend/utils"
 	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +16,34 @@ import (
 type UserList struct {
 	Count int    `json:"count"`
 	Users []User `json:"users"`
+}
+
+func (u *User) DecryptPassword() (err error) {
+	prefix := fmt.Sprintf("[%s]", "DecryptPassword")
+	glog.Infof("user password decrypt as %s", u.Password)
+	decryptPass, err := utils.DesDecrypt([]byte(u.Password), wxDESkey)
+	if err != nil {
+		errmsg := fmt.Sprintf("cannot decrypt password, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
+		return errors.New(errmsg)
+	}
+	u.Password = string(decryptPass)
+	glog.Infof("user password decrypt as %s", u.Password)
+	return nil
+}
+
+func (u *User) EncryptPassword() (err error) {
+	prefix := fmt.Sprintf("[%s]", "EncryptPassword")
+	glog.Infof("user password decrypt as %s", u.Password)
+	encryptPass, err := utils.DesEncrypt([]byte(u.Password), wxDESkey)
+	if err != nil {
+		errmsg := fmt.Sprintf("cannot encrypt password, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
+		return errors.New(errmsg)
+	}
+	u.Password = string(encryptPass)
+	glog.Infof("user password encrypt as %s", u.Password)
+	return nil
 }
 
 func (u User) Register(container *restful.Container) {
@@ -52,6 +83,12 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 		userList.Users = make([]User, 0)
 		db.Find(&userList.Users)
 		userList.Count = len(userList.Users)
+		/*
+			for _, userTemp := range userList.Users {
+				glog.Infof("%s decrypt user password %v", prefix, []byte(user.Password))
+				userTemp.DecryptPassword()
+			}
+		*/
 		response.WriteHeaderAndEntity(http.StatusOK, userList)
 		return
 		//}
@@ -76,6 +113,7 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 	}
 
 	//find user
+	//user.DecryptPassword()
 	glog.Infof("%s return user with id %d", prefix, user.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, user)
 	return
@@ -90,6 +128,11 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 	user := User{}
 	err := request.ReadEntity(&user)
 	if err == nil {
+		if user.Password == "" {
+			rawBytes := rand.New()
+			user.Password = string(rawBytes[:6])
+		}
+		//user.EncryptPassword()
 		db.Create(&user)
 		if user.ID == 0 {
 			//fail to create user on database
@@ -99,7 +142,7 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 			return
 		} else {
 			//create user on database
-			glog.Info("%s create user with id %d succesfully", prefix, user.ID)
+			glog.Infof("%s create user with id %d succesfully", prefix, user.ID)
 			response.WriteHeaderAndEntity(http.StatusOK, user)
 			return
 		}
@@ -157,6 +200,10 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 	}
 
 	//find user and update
+	if user.Password != "" {
+		//if user password is update
+		//user.EncryptPassword()
+	}
 	db.Model(&realUser).Update(user)
 	glog.Infof("%s update user with id %d successfully and return", prefix, realUser.ID)
 	response.WriteHeaderAndEntity(http.StatusCreated, realUser)

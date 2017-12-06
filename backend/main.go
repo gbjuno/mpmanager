@@ -15,6 +15,7 @@ var dbip string
 var dbport string
 var debug bool
 var imgRepo string
+var domain string
 
 const RESTAPIVERSION = "/api/v1"
 
@@ -24,6 +25,7 @@ func main() {
 	flag.StringVar(&dbip, "ip", "127.0.0.1", "database ip address")
 	flag.StringVar(&dbport, "port", "3306", "database port")
 	flag.StringVar(&imgRepo, "imgRepo", "/opt/static", "image save Path")
+	flag.StringVar(&domain, "domain", "www.juntengshoes.cn", "domain name")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -67,12 +69,12 @@ func main() {
 		glog.Infof(server.ListenAndServe().Error())
 	}()
 
+	WechatBackendInit()
 	glog.Infof("starting wechat backend webserver on localhost:8001")
 	http.HandleFunc("/backend/wx_callback", wxCallbackHandler)
-	http.HandleFunc("/backend/session", sessionHandler)
-	http.HandleFunc("/backend/bind", bindingHandler)
+	http.HandleFunc("/backend/binding", bindingHandler)
 	http.HandleFunc("/backend/confirm", confirmHandler)
-	http.HandleFunc("/backend/picture", pictureHandler)
+	http.HandleFunc("/backend/scanqrcode", scanqrcodeHandler)
 	http.HandleFunc("/backend/photo", photoHandler)
 	http.HandleFunc("/backend/download", downloadHandler)
 	glog.Info(http.ListenAndServe(":8001", nil))
