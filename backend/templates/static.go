@@ -182,11 +182,12 @@ const PHOTO = `<!DOCTYPE html>
                                 serverId: res.serverId
                             },
                             function(data, status) {
+                                var jdata = JSON.parse(data)
                                 alert(status)
-                                if(data.status) {
-                                   alert(data.message) 
+                                if(jdata.status) {
+                                   alert(jdata.message) 
                                 } else {
-                                   alert(data.message) 
+                                   alert(jdata.message) 
                                }
                             }
                         );
