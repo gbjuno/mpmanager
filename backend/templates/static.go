@@ -34,35 +34,36 @@ const BIND = `<!DOCTYPE html>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
     <script type="text/javascript">
-    var _global_uploadImageId;
-        $(function(){
-        /**
-         * 初始化函数
-         */
-        initBind();
-    });
     
-    function initBind(){
-        $("#submit").click(function(){
-            var phoneVal = $("#phone").val();
-            var passwordVal = $("#password").val();
-            console.log(phoneVal);
-            console.log(passwordVal);
-            $.post("/backend/confirm",{
-                phone:phoneVal,
-                password:passwordVal
-                },
-                function(data,status) {
-                    if (data.Status) {
-                        alert(data.Message)
-                        window.location.href="https://www.juntengshoes.cn/html/bindsuccess.html"
-                    } else {
-                        alert(data.Message)
-                    }
-                }
-            );
+        $(function(){
+            /**
+            * 初始化函数
+            */
+            initBind();
         });
-    }
+        
+        function initBind(){
+            $("#submit").click(function(){
+                var phoneVal = $("#phone").val();
+                var passwordVal = $("#password").val();
+                console.log(phoneVal);
+                console.log(passwordVal);
+                $.post("/backend/confirm",{
+                    phone:phoneVal,
+                    password:passwordVal
+                    },
+                    function(data,status) {
+                        var jdata = JSON.parse(data);
+                        if (jdata.status) {
+                            alert(jdata.message)
+                            window.location.href="https://www.juntengshoes.cn/html/bindsuccess.html"
+                        } else {
+                            alert(jdata.message)
+                        }
+                    }
+                );
+            });
+        }
     </script>
 </body>
 `
@@ -134,6 +135,8 @@ const PHOTO = `<!DOCTYPE html>
             alert("wx init failed")
         });
 
+        var _uploadImageId;
+
         $(function(){
             
         });
@@ -149,7 +152,7 @@ const PHOTO = `<!DOCTYPE html>
                     success: function(res) {
                         var localIds = res.localIds; 
                         $("#previewImg").attr('src', localIds[0]);
-                        _global_uploadImageId = localIds[0];
+                        _uploadImageId = localIds[0];
                     }
                 });
             });
@@ -168,7 +171,7 @@ const PHOTO = `<!DOCTYPE html>
             $("#uploadConfirm").click(function(){
                 
                 wx.uploadImage({
-                    localId: _global_uploadImageId, // 需要上传的图片的本地ID，由chooseImage接口获得
+                    localId: _uploadImageId, // 需要上传的图片的本地ID，由chooseImage接口获得
                     isShowProgressTips: 1, // 默认为1，显示进度提示
                     success: function(res) {
                         var serverId = res.serverId;

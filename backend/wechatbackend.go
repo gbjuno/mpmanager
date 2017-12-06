@@ -245,7 +245,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 			glog.Infof("%s session is valid, user openid %s", prefix, openId)
 		}
 	} else {
-		glog.Infof("%s no cookie sid", prefix, cookie.Value)
+		glog.Infof("%s no cookie sid", prefix)
 	}
 
 	//cookie is not exist or invalid cookie
@@ -370,13 +370,28 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		db.Save(&user)
 		response.Status = true
 		response.Message = fmt.Sprintf("用户%s首次成功绑定企业%s，可以进行拍照", user.Name, company.Name)
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
+		
 		return
 	} else {
 		//password not match
 		glog.Infof("%s password not match, input password %s, actual password %s", prefix, password, user.Password)
 		response.Status = false
 		response.Message = "手机号或密码错误，请重试"
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -418,7 +433,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 			glog.Infof("%s session is valid, user openid %s", prefix, openId)
 		}
 	} else {
-		glog.Infof("%s no cookie sid", prefix, cookie.Value)
+		glog.Infof("%s no cookie sid", prefix)
 	}
 
 	//cookie is not exist or invalid cookie
