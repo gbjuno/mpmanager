@@ -49,7 +49,8 @@ func (u *User) EncryptPassword() (err error) {
 func (u User) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
-	ws.Route(ws.GET("?offset={offset}&limit={limit}").Doc("get user object").To(u.findUser))
+	ws.Route(ws.GET("").Doc("get user object").To(u.findUser))
+	ws.Route(ws.GET("/?offset={offset}&limit={limit}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.POST("").To(u.createUser))
 	ws.Route(ws.PUT("/{user_id}").To(u.updateUser))
@@ -81,28 +82,43 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 				}
 			} else {
 		*/
-		offsetOk := true
-		limitOk := true
-		offsetInt, err := strconv.Atoi(offset)
-		if err != nil {
-			offsetOk = false
-			glog.Errorf("%s offset %s is not integer, ignore", prefix, offset)
+		var offsetOk = false
+		var limitOk = false
+		var offsetInt int
+		var limitInt int
+		var err error
+
+		if offset != "" {
+			offsetInt, err = strconv.Atoi(offset)
+			if err != nil {
+				glog.Errorf("%s offset %s is not integer, ignore", prefix, offset)
+			}
+			offsetOk = true
 		}
 
-		limitInt, err := strconv.Atoi(limit)
-		if err != nil {
-			limitOk = false
-			glog.Errorf("%s limit %s is not integer, ignore", prefix, limit)
+		if limit != "" {
+			limitInt, err = strconv.Atoi(limit)
+			if err != nil {
+				limitOk = false
+				glog.Errorf("%s limit %s is not integer, ignore", prefix, limit)
+			}
+			limitOk = true
 		}
+
 		userList := UserList{}
 		userList.Users = make([]User, 0)
 		if offsetOk && limitOk {
-			db.Offset(offsetInt).Limit(limit).Find(&userList.Users)
+			glog.Infof("%s get user list, offset %d limit %d", prefix, offsetInt, limitInt)
+			db.Offset(offsetInt).Limit(limitInt).Find(&userList.Users)
 		} else if offsetOk {
-			db.Offset(offsetInt).Find(&userList.Users)
+			limitInt = int(^uint(0) >> 1)
+			glog.Infof("%s get user list, offset %d limit %d", prefix, offsetInt, limitInt)
+			db.Offset(offsetInt).Limit(limitInt).Find(&userList.Users)
 		} else if limitOk {
+			glog.Infof("%s get user list, limit %d", prefix, limitInt)
 			db.Limit(limitInt).Find(&userList.Users)
 		} else {
+			glog.Infof("%s get user list", prefix)
 			db.Find(&userList.Users)
 		}
 

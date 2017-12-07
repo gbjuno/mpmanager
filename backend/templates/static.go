@@ -176,6 +176,7 @@ const PHOTO = `<!DOCTYPE html>
                         var serverId = res.serverId;
                         alert(serverId);
                         $.post("/backend/download", {
+                                corrective: {{ .Corrective }},
                                 userId: {{ .Userid }},
                                 placeId: {{ .Placeid }},
                                 serverId: res.serverId

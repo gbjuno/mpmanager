@@ -80,7 +80,7 @@ func (p Picture) createPicture(request *restful.Request, response *restful.Respo
 		db.Create(&picture)
 		if picture.ID != 0 {
 			//create picture successfully
-			glog.Infof("%s create picture with id %s successfully", prefix, picture.ID)
+			glog.Infof("%s create picture with id %d successfully", prefix, picture.ID)
 			response.WriteHeaderAndEntity(http.StatusCreated, picture)
 			return
 		} else {

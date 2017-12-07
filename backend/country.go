@@ -102,6 +102,27 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 	country := Country{}
 	err := request.ReadEntity(&country)
 	if err == nil {
+		town := Town{}
+		db.First(&town, country.TownId)
+		if town.ID == 0 {
+			errmsg := fmt.Sprintf("town id %d not exists", country.TownId)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+
+		//whether country name is unique in the same town
+		countries := make([]Country, 0)
+		db.Where(" town_id = ?", town.ID).Find(&countries)
+		for _, c := range countries {
+			if c.Name == country.Name {
+				errmsg := fmt.Sprintf("country %s already exists", country.Name)
+				glog.Errorf("%s %s", prefix, errmsg)
+				response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+				return
+			}
+		}
+
 		db.Create(&country)
 		if country.ID == 0 {
 			//fail to create company on database

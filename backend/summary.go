@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -18,46 +19,71 @@ type SummaryList struct {
 func (s Summary) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
-	ws.Route(ws.GET("/").To(s.findSummary))
-	ws.Route(ws.GET("/{summary_id}").To(s.findSummary))
-	ws.Route(ws.POST("").To(s.createSummary))
-	ws.Route(ws.PUT("/{summary_id}").To(s.updateSummary))
-	ws.Route(ws.DELETE("/{summary_id}").To(s.deleteSummary))
+	ws.Route(ws.GET("").To(s.findSummary))
+	ws.Route(ws.GET("/?companyid={companyid}&after={after}&limit={limit}&order={order}").To(s.findSummary))
 	container.Add(ws)
 }
 
 func (s Summary) findSummary(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [findSummary]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
-	summary_id := request.PathParameter("summary_id")
+	company_id := request.PathParameter("companyid")
+
+	company := Company{}
+	var limitInt int
+	var afterOk bool
+	var limitOk bool
+	var err error
+	var searchDB *gorm.DB
+
+	if company_id != "" {
+		db.Where("id = " + company_id).First(&company)
+		if company.ID == 0 {
+			errmsg := fmt.Sprintf("%s company id %d does not exist", company_id)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+		searchDB.Where("id = ?", company.ID)
+	}
+
+	if after != "" {
+		loc, _ := time.LoadLocation("Asia/Shanghai")
+		const shortFormat = "20060102"
+		_, err = time.ParseInLocation(shortFormat, after, loc)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot find object with after %s, err %s, ignore", after, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		}
+		afterOk = true
+	}
+
+	if limit != "" {
+		limitInt, err = strconv.Atoi(limit)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot find object with limit %s, err %s, ignore", limit, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		}
+		limitOk = true
+	}
+
+	if order != "asc" && order != "desc" {
+		errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
+		glog.Errorf("%s %s", prefix, errmsg)
+	}
+
+	if order == "" {
+		order = "desc"
+	}
 
 	//get summary list
-	if summary_id == "" {
+	if company_id == "" {
 		summaryList := SummaryList{}
 		summaryList.Summarys = make([]Summary, 0)
 		db.Find(&summaryList.Summarys)
 		summaryList.Count = len(summaryList.Summarys)
-		glog.Infof("%s return summary list", prefix)
+		glog.Infof("%s return all summary list", prefix)
 		response.WriteHeaderAndEntity(http.StatusOK, summaryList)
-		return
-	}
-
-	id, err := strconv.Atoi(summary_id)
-	//fail to parse summary id
-	if err != nil {
-		errmsg := fmt.Sprintf("cannot get summary, summary_id is not integer, err %s", err)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
-		return
-	}
-
-	summary := Summary{}
-	db.First(&summary, id)
-	//cannot find summary
-	if summary.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find summary with id %s", summary_id)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
 
@@ -65,128 +91,4 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 	glog.Infof("%s return summary with id %d", prefix, summary.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, summary)
 	return
-}
-
-func (s Summary) createSummary(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [createSummary]", request.Request.RemoteAddr)
-	content, _ := ioutil.ReadAll(request.Request.Body)
-	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
-	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
-	request.Request.Body = newContent
-	summary := Summary{}
-	err := request.ReadEntity(&summary)
-	if err == nil {
-		db.Create(&summary)
-		if summary.ID == 0 {
-			//fail to create summary on database
-			errmsg := fmt.Sprintf("cannot create summary on database")
-			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-			return
-		} else {
-			//create summary on database
-			glog.Info("%s create summary with id %d succesfully", prefix, summary.ID)
-			response.WriteHeaderAndEntity(http.StatusOK, summary)
-			return
-		}
-		return
-	} else {
-		//fail to parse summary entity
-		errmsg := fmt.Sprintf("cannot create summary, err %s", err)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-		return
-	}
-}
-
-func (s Summary) updateSummary(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [updateSummary]", request.Request.RemoteAddr)
-	content, _ := ioutil.ReadAll(request.Request.Body)
-	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
-	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
-	request.Request.Body = newContent
-	summary_id := request.PathParameter("summary_id")
-	summary := Summary{}
-	err := request.ReadEntity(&summary)
-
-	//fail to parse summary entity
-	if err != nil {
-		errmsg := fmt.Sprintf("cannot update summary, err %s", err)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-		return
-	}
-
-	//fail to parse summary id
-	id, err := strconv.Atoi(summary_id)
-	if err != nil {
-		errmsg := fmt.Sprintf("cannot update summary, path summary_id is %s, err %s", summary_id, err)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-		return
-	}
-
-	if id != summary.ID {
-		errmsg := fmt.Sprintf("cannot update summary, path summary_id %d is not equal to id %d in body content", id, summary.ID)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-		return
-	}
-
-	realSummary := Summary{}
-	db.First(&realSummary, summary.ID)
-	//cannot find summary
-	if realSummary.ID == 0 {
-		errmsg := fmt.Sprintf("cannot update summary, summary_id %d is not exist", summary.ID)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-		return
-	}
-
-	//find summary and update
-	db.Model(&realSummary).Update(summary)
-	glog.Infof("%s update summary with id %d successfully and return", prefix, summary.ID)
-	response.WriteHeaderAndEntity(http.StatusCreated, realSummary)
-	return
-}
-
-func (s Summary) deleteSummary(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [deleteSummary]", request.Request.RemoteAddr)
-	glog.Infof("%s DELETE %s", prefix, request.Request.URL)
-	summary_id := request.PathParameter("summary_id")
-	id, err := strconv.Atoi(summary_id)
-	//fail to parse summary id
-	if err != nil {
-		errmsg := fmt.Sprintf("cannot delete summary, summary_id is not integer, err %s", err)
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-		return
-	}
-
-	summary := Summary{}
-	db.First(&summary, id)
-	if summary.ID == 0 {
-		//summary with id doesn't exist
-		glog.Infof("%s summary with id %s doesn't exist, return ok", prefix, summary_id)
-		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
-		return
-	}
-
-	db.Delete(&summary)
-
-	realSummary := Summary{}
-	db.First(&realSummary, id)
-
-	if realSummary.ID != 0 {
-		//fail to delete summary
-		errmsg := fmt.Sprintf("cannot delete summary,some of other object is referencing")
-		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
-		return
-	} else {
-		//delete summary successfully
-		glog.Infof("%s delete summary with id %s successfully", prefix, summary.ID)
-		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
-		return
-	}
 }

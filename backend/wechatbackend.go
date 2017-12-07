@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"time"
 
 	"github.com/chanxuehong/rand"
@@ -629,12 +630,13 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var jssdkObj struct {
-		Timestamp string
-		Noncestr  string
-		Wxappid   string
-		Signature string
-		Userid    int
-		Placeid   int
+		Timestamp  string
+		Noncestr   string
+		Wxappid    string
+		Signature  string
+		Userid     int
+		Placeid    int
+		Corrective bool
 	}
 	jssdkObj.Timestamp = fmt.Sprintf("%d", timeNow)
 	jssdkObj.Noncestr = nonceStr
@@ -678,22 +680,33 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//openid is related to a user
-	if isUserExist(openId) {
-		glog.Infof("%s openid is related to a user, return notice page", prefix)
-		return
-	}
-
-	r.ParseForm()
-	userId := r.Form.Get("userId")
-	placeId := r.Form.Get("placeId")
-	serverId := r.Form.Get("serverId")
-	glog.Infof("%s userId %s, placeId %s, serverId %s", userId, placeId, serverId)
-
 	var response struct {
 		Status  bool   `json:"status"`
 		Message string `json:"message"`
 	}
+
+	//openid is related to a user
+	if !isUserExist(openId) {
+		glog.Errorf("%s openid is not related to a user", prefix)
+		response.Status = false
+		response.Message = "用户未绑定，请绑定企业后再进行上传"
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
+		return
+	}
+
+	r.ParseForm()
+	corrective := r.Form.Get("corrective")
+	userId := r.Form.Get("userId")
+	placeId := r.Form.Get("placeId")
+	serverId := r.Form.Get("serverId")
+	glog.Infof("%s userId %s, placeId %s, serverId %s", userId, placeId, serverId)
 
 	user := User{}
 	db.Where("id = ?", userId).First(&user)
@@ -709,8 +722,8 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
 		return
 	}
 
@@ -727,8 +740,8 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
 		return
 	}
 
@@ -743,22 +756,37 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
 		return
 	}
 
 	timeNow := time.Now()
-	timeToday := fmt.Sprintf("%s%02s%02s", timeNow.Year(), timeNow.Month(), timeNow.Day())
+	timeToday := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 
 	picture := Picture{CreateAt: timeNow, UpdateAt: timeNow, MonitorPlaceId: monitor_place.ID, UserId: user.ID}
-	picture.ThumbPath = fmt.Sprintf("/picture/%s/%d/%d/thumb_%s.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
-	picture.ThumbURI = fmt.Sprintf("/picture/%s/%d/%d/thumb_%s.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
-	picture.FullPath = fmt.Sprintf("/static/picture/%s/%d/%d/full_%s.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
-	picture.FullURI = fmt.Sprintf("/static/picture/%s/%d/%d/full_%s.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
+	picture.ThumbPath = fmt.Sprintf("/picture/%s/%d/%d/thumb_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
+	picture.ThumbURI = fmt.Sprintf("/static/picture/%s/%d/%d/thumb_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
+	picture.FullPath = fmt.Sprintf("/picture/%s/%d/%d/full_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
+	picture.FullURI = fmt.Sprintf("/static/picture/%s/%d/%d/full_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
+	if corrective == "false" || corrective == "False" {
+		picture.Corrective = "F"
+	} else {
+		picture.Corrective = "T"
+	}
 
 	//picture save place: /picture/20171206/<monitor_place.CompanyId>/<monitor_place.ID>/full_<picture_id>.png
-	written, err := media.Download(wechatClient, serverId, fmt.Sprintf("%s/picture/%s/%d/%d/full_%s.png", imgRepo, monitor_place.CompanyId, timeToday, monitor_place.ID))
+	picturePath := imgRepo + picture.FullPath
+	glog.Infof("%s preparing directory", prefix)
+	dir := path.Dir(picturePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		glog.Errorf("%s cannot create directory %s", prefix, dir)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	glog.Infof("%s starting downloading picture, serverId %s", prefix, serverId)
+	written, err := media.Download(wechatClient, serverId, picturePath)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot download media id %s for place %s", serverId, placeId)
 		response.Status = false
@@ -770,11 +798,12 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		glog.Errorf("%s %s", prefix, errmsg)
-		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
 		return
 	}
 
+	db.Create(&picture)
 	response.Status = true
 	response.Message = "上传成功"
 	returnContent, err := json.Marshal(response)
@@ -784,8 +813,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	io.WriteString(w, string(returnContent))
 	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, string(returnContent))
 	return
 }
