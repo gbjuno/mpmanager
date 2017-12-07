@@ -30,7 +30,7 @@ const BIND = `<!DOCTYPE html>
     <div class="weui-btn-area">
             <a class="weui-btn weui-btn_primary" href="javascript:" id="submit">确定</a>
     </div>
-    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
     <script type="text/javascript">
@@ -75,6 +75,7 @@ const PHOTO = `<!DOCTYPE html>
     <title>拍照上传</title>
     <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
 	<link rel="stylesheet" href="/html/weui.css">
+        <link rel="stylesheet" href="/html/my.css">
 	<style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
     <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
     <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
@@ -91,7 +92,7 @@ const PHOTO = `<!DOCTYPE html>
             <a class="weui-btn weui-btn_primary" href="javascript:" id="takephoto">选择图片</a>
             <a class="weui-btn weui-btn_primary" href="javascript:" id="upload">上传图片</a>
         </div>
-        <div class="js_dialog" id="confirmDialog" style="opacity: 0;">
+        <div class="js_dialog" id="confirmDialog" style="display:none; opacity: 0;">
             <div class="weui-mask"></div>
             <div class="weui-dialog weui-skin_android">
                 <div class="weui-dialog__hd"><strong class="weui-dialog__title">确认上传</strong></div>
@@ -127,8 +128,7 @@ const PHOTO = `<!DOCTYPE html>
         });
 
         wx.ready(function(){
-            initTakePhoto();
-            initUploadDialog();
+
         });
 
         wx.error(function(res){
@@ -138,13 +138,12 @@ const PHOTO = `<!DOCTYPE html>
         var _uploadImageId;
 
         $(function(){
-            
+            initTakePhoto();
+            initUploadDialog();
         });
 
         function initTakePhoto(){
-            var $takephoto = $("#takephoto");
-            
-            $takephoto.click(function(){
+            $("#takephoto").click(function(){
                 wx.chooseImage({
                     count: 1,
                     sizeType: ['original', 'compressed'], 
@@ -161,7 +160,7 @@ const PHOTO = `<!DOCTYPE html>
                 wx.previewImage({
                     current: this.src, // 当前显示图片的http链接
                     urls: [this.src] // 需要预览的图片http链接列表
-                })
+                });
             });
         }
 
@@ -241,7 +240,7 @@ const SCANQRCODE = `
                 </div>
             </div>
         </div>
-        <div class="weui-btn-area" style="margin-top:0px">
+        <div class="weui-btn-area" >
             <a class="weui-btn weui-btn_primary" href="javascript:" id="scanqrcode">扫描地点二维码</a>
         </div>
     </div>
