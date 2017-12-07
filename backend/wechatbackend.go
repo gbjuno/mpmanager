@@ -255,6 +255,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		openId, err = getUserOpenId(code)
 		if err != nil {
 			glog.Errorf("%s cannot get user openid from wechat, err %s", prefix, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		glog.Infof("%s get user openid %s", prefix, openId)
@@ -263,6 +264,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		sid, err = newSession(openId)
 		if err != nil {
 			glog.Errorf("%s cannot get new session, err %s", prefix, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -282,15 +284,16 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		db.First(&company, user.CompanyId)
 		glog.Infof("%s openid is related to a user", prefix)
 		// openid is related to a user
+		w.WriteHeader(http.StatusOK)
 		msgbody := fmt.Sprintf("用户%s已经绑定企业%s，无须再次绑定即可拍照", user.Name, company.Name)
 		n := NoticePage{Title: "绑定企业", Type: noticePageSuccess, Msgtitle: "绑定企业成功", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
-		w.WriteHeader(http.StatusOK)
 		return
 	} else {
 		glog.Infof("%s openid is not related to a user", prefix)
 		// openid isn't related to a user
+		w.WriteHeader(http.StatusOK)
 		bind_tmpl := template.Must(template.New("bind").Parse(myTemplate.BIND))
 		bind_tmpl.Execute(w, nil)
 		return
@@ -336,10 +339,17 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	db.Where("wx_openid = ?", openId).First(&user)
 	if user.ID != 0 {
 		db.First(&company, user.CompanyId)
+		w.WriteHeader(http.StatusOK)
 		response.Status = true
 		response.Message = fmt.Sprintf("用户%s已成功绑定企业%s，可以进行拍照", user.Name, company.Name)
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		glog.Infof("%s openid is related to a user, return notice page", prefix)
-		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
 		return
 	}
 
@@ -353,6 +363,16 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	db.Where("phone = ?", phone).First(&user)
 	if user.ID == 0 {
 		glog.Errorf("%s user with phone %s doesn't exist", prefix, phone)
+		response.Status = false
+		response.Message = "手机号或密码错误，请重试"
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(w, string(returnContent))
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 	glog.Infof("%s find user with id %d", prefix, user.ID)
@@ -378,7 +398,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
-		
+
 		return
 	} else {
 		//password not match
@@ -403,19 +423,25 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	prefix := fmt.Sprintf("[%s]", "scanQrcodeHandler")
 	glog.Infof("%s %s %s", prefix, r.Method, r.RequestURI)
 
+	oauth2RedirectURI := fmt.Sprintf("https://%s/backend/scanqrcode", domain)
+	oauth2Scope := "snsapi_base"
+	oauth2State := "scanqrcode"
+	AuthCodeURL := mpoauth2.AuthCodeURL(wxAppId, oauth2RedirectURI, oauth2Scope, oauth2State)
+
 	queryValues, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		glog.Errorf("%s cannot parse url querystring, err %s", prefix, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	code := queryValues.Get("code")
 	state := queryValues.Get("state")
 
 	//request isn't redirected by wechat, return notice page
 	if code == "" || state == "" {
 		glog.Infof("%s request isn't redirect by weixin, return notice page")
-		w.WriteHeader(http.StatusOK)
+		http.Redirect(w, r, AuthCodeURL, http.StatusFound)
 		return
 	}
 
@@ -443,6 +469,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 		openId, err = getUserOpenId(code)
 		if err != nil {
 			glog.Errorf("%s cannot get user openid from wechat, err %s", prefix, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		glog.Infof("%s get user openid %s", prefix, openId)
@@ -451,6 +478,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 		sid, err = newSession(openId)
 		if err != nil {
 			glog.Errorf("%s cannot get new session, err %s", prefix, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -511,13 +539,14 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	glog.Infof("%s user %s, phone %s, company %s", prefix, jssdkObj.User, jssdkObj.Phone, jssdkObj.Company)
 	scanqrcodeTmpl := template.Must(template.New("scanqrcode").Parse(myTemplate.SCANQRCODE))
 	scanqrcodeTmpl.Execute(w, jssdkObj)
+	w.WriteHeader(http.StatusOK)
+	glog.Infof("%s end of scanqrcode", prefix)
 	return
 }
 
 func photoHandler(w http.ResponseWriter, r *http.Request) {
 	prefix := fmt.Sprintf("[%s]", "photoHandler")
 	glog.Infof("%s %s %s", prefix, r.Method, r.RequestURI)
-	glog.Infof("%s user binding started")
 
 	redirectURI := fmt.Sprintf("https://%s/backend/scanqrcode", domain)
 	scope := "snsapi_base"
@@ -563,12 +592,21 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 		//cannot find place
 		glog.Errorf("%s cannot find monitor_place with id %s", place)
 		w.WriteHeader(http.StatusOK)
+		msgbody := "该监控地点已经失效，如有问题请联系管理员"
+		n := NoticePage{Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "无效地点", Msgbody: msgbody}
+		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
+		noticepageTmpl.Execute(w, n)
 		return
 	}
+
 	if monitor_place.CompanyId != user.CompanyId {
 		glog.Errorf("%s place %d belongs to company %d, but user %d belongs to company %d",
 			prefix, monitor_place.ID, monitor_place.CompanyId, user.ID, user.CompanyId)
 		w.WriteHeader(http.StatusOK)
+		msgbody := "监控地点不属于用户绑定的企业，如有问题请联系管理员"
+		n := NoticePage{Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "非法操作", Msgbody: msgbody}
+		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
+		noticepageTmpl.Execute(w, n)
 		return
 	}
 
@@ -579,6 +617,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot get ticket %s", err)
 		glog.Errorf("%s %s", prefix, errmsg)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -594,10 +633,14 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	jssdkObj.Noncestr = nonceStr
 	jssdkObj.Wxappid = wxAppId
 	jssdkObj.Signature = jssdk.WXConfigSign(ticket, nonceStr, jssdkObj.Timestamp, fmt.Sprintf("https://%s%s", domain, r.URL))
+	jssdkObj.Userid = user.ID
+	jssdkObj.Placeid = monitor_place.ID
 
 	glog.Infof("%s get ticket %s, signature %s, noncestr %s, uri %s", prefix, ticket, jssdkObj.Signature, nonceStr, r.URL)
+	w.WriteHeader(http.StatusOK)
 	photoTmpl := template.Must(template.New("photo").Parse(myTemplate.PHOTO))
 	photoTmpl.Execute(w, jssdkObj)
+	glog.Infof("%s end of photo", prefix)
 	return
 }
 

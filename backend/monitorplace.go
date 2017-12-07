@@ -38,7 +38,7 @@ func (m MonitorPlace) Register(container *restful.Container) {
 
 func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [findMonitorPlace]", request.Request.RemoteAddr)
-	glog.Infof("%s GET %s, content %s", prefix, request.Request.URL)
+	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	scope := request.PathParameter("scope")
 	after := request.QueryParameter("after")

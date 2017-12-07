@@ -30,7 +30,7 @@ type MonitorPlaceWithCompany struct {
 func (c Company) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
-	ws.Route(ws.GET("").To(c.findCompany))
+	ws.Route(ws.GET("?offset={offset}&limit={limit}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}/{scope}").To(c.findCompany))
 	ws.Route(ws.POST("").To(c.createCompany))
@@ -44,12 +44,37 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	company_id := request.PathParameter("company_id")
 	scope := request.PathParameter("scope")
+	offset := request.QueryParameter("offset")
+	limit := request.QueryParameter("limit")
 
 	//get company list
 	if company_id == "" {
+		offsetOk := true
+		limitOk := true
+		offsetInt, err := strconv.Atoi(offset)
+		if err != nil {
+			offsetOk = false
+			glog.Errorf("%s offset %s is not integer, ignore", prefix, offset)
+		}
+
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil {
+			limitOk = false
+			glog.Errorf("%s limit %s is not integer, ignore", prefix, limit)
+		}
+
 		companyList := CompanyList{}
 		companyList.Companies = make([]Company, 0)
-		db.Find(&companyList.Companies)
+		if offsetOk && limitOk {
+			db.Offset(offsetInt).Limit(limit).Find(&companyList.Companies)
+		} else if offsetOk {
+			db.Offset(offsetInt).Find(&companyList.Companies)
+		} else if limitOk {
+			db.Limit(limitInt).Find(&companyList.Companies)
+		} else {
+			db.Find(&companyList.Companies)
+		}
+
 		companyList.Count = len(companyList.Companies)
 		response.WriteHeaderAndEntity(http.StatusOK, companyList)
 		glog.Infof("%s return company list", prefix)

@@ -178,7 +178,7 @@ const PHOTO = `<!DOCTYPE html>
                         alert(serverId);
                         $.post("/backend/download", {
                                 userId: {{ .Userid }},
-                                placeId: {{ .Placeid }}
+                                placeId: {{ .Placeid }},
                                 serverId: res.serverId
                             },
                             function(data, status) {
@@ -280,10 +280,12 @@ const SCANQRCODE = `
     function initQrcode(){
         $("#scanqrcode").click(function(){
             wx.scanQRCode({
-                needResult: 0,
+                needResult: 1,
                 scanType: ["qrCode"],
                 success: function (res) {
                     var result = res.resultStr;
+                    console.log(result);
+                    window.location.href=result;
                 }
             });
         });

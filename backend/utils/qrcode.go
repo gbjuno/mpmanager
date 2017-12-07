@@ -8,12 +8,21 @@ import (
 	"github.com/golang/glog"
 	"github.com/skip2/go-qrcode"
 	"image"
+	"os"
+	"path"
 )
 
 var fontFile = "/opt/workspace/src/github.com/gbjuno/mpmanager/backend/templates/simhei.ttf"
 
 func GenerateQrcodeImage(url string, comment string, savePath string) error {
 	prefix := fmt.Sprintf("%s", "[QRCODE]")
+	dir := path.Dir(savePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		errmsg := fmt.Sprintf("cannot create directory for path %s, err %s", savePath, err)
+		glog.Errorf("%s %s", prefix, errmsg)
+		return errors.New(errmsg)
+	}
+
 	var png []byte
 	png, err := qrcode.Encode(url, qrcode.Medium, 256)
 	if err != nil {
@@ -27,7 +36,7 @@ func GenerateQrcodeImage(url string, comment string, savePath string) error {
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot generate qrcode for url %s, savePath %s, err %s", url, savePath, err)
 		glog.Errorf("%s %s", prefix, errmsg)
-		return err
+		return errors.New(errmsg)
 	}
 
 	dc := gg.NewContext(256, 310)
@@ -38,7 +47,7 @@ func GenerateQrcodeImage(url string, comment string, savePath string) error {
 	if err := dc.LoadFontFace(fontFile, 15); err != nil {
 		errmsg := fmt.Sprintf("cannot generate qrcode for url %s, savePath %s, err %s", url, savePath, err)
 		glog.Errorf("%s %s", prefix, errmsg)
-		return err
+		return errors.New(errmsg)
 	}
 
 	if len(comment) > 30 {

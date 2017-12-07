@@ -49,7 +49,7 @@ func (u *User) EncryptPassword() (err error) {
 func (u User) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
-	ws.Route(ws.GET("").Doc("get user object").To(u.findUser))
+	ws.Route(ws.GET("?offset={offset}&limit={limit}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.POST("").To(u.createUser))
 	ws.Route(ws.PUT("/{user_id}").To(u.updateUser))
@@ -62,6 +62,8 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	user_id := request.PathParameter("user_id")
 	//phone := request.QueryParameter("phone")
+	offset := request.QueryParameter("offset")
+	limit := request.QueryParameter("limit")
 
 	user := User{}
 	//get user list
@@ -79,9 +81,31 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 				}
 			} else {
 		*/
+		offsetOk := true
+		limitOk := true
+		offsetInt, err := strconv.Atoi(offset)
+		if err != nil {
+			offsetOk = false
+			glog.Errorf("%s offset %s is not integer, ignore", prefix, offset)
+		}
+
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil {
+			limitOk = false
+			glog.Errorf("%s limit %s is not integer, ignore", prefix, limit)
+		}
 		userList := UserList{}
 		userList.Users = make([]User, 0)
-		db.Find(&userList.Users)
+		if offsetOk && limitOk {
+			db.Offset(offsetInt).Limit(limit).Find(&userList.Users)
+		} else if offsetOk {
+			db.Offset(offsetInt).Find(&userList.Users)
+		} else if limitOk {
+			db.Limit(limitInt).Find(&userList.Users)
+		} else {
+			db.Find(&userList.Users)
+		}
+
 		userList.Count = len(userList.Users)
 		/*
 			for _, userTemp := range userList.Users {
