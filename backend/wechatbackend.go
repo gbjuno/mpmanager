@@ -15,6 +15,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/chanxuehong/rand"
@@ -289,6 +290,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		n := NoticePage{Title: "绑定企业", Type: noticePageSuccess, Msgtitle: "绑定企业成功", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
 		return
 	} else {
 		glog.Infof("%s openid is not related to a user", prefix)
@@ -296,6 +298,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		bind_tmpl := template.Must(template.New("bind").Parse(myTemplate.BIND))
 		bind_tmpl.Execute(w, nil)
+		bind_tmpl.Execute(os.Stdout, nil)
 		return
 	}
 
@@ -500,6 +503,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
 		return
 	}
 
@@ -539,6 +543,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	glog.Infof("%s user %s, phone %s, company %s", prefix, jssdkObj.User, jssdkObj.Phone, jssdkObj.Company)
 	scanqrcodeTmpl := template.Must(template.New("scanqrcode").Parse(myTemplate.SCANQRCODE))
 	scanqrcodeTmpl.Execute(w, jssdkObj)
+	scanqrcodeTmpl.Execute(os.Stdout, jssdkObj)
 	w.WriteHeader(http.StatusOK)
 	glog.Infof("%s end of scanqrcode", prefix)
 	return
@@ -596,6 +601,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 		n := NoticePage{Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "无效地点", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
 		return
 	}
 
@@ -607,6 +613,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 		n := NoticePage{Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "非法操作", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
 		return
 	}
 
@@ -640,6 +647,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	photoTmpl := template.Must(template.New("photo").Parse(myTemplate.PHOTO))
 	photoTmpl.Execute(w, jssdkObj)
+	photoTmpl.Execute(os.Stdout, jssdkObj)
 	glog.Infof("%s end of photo", prefix)
 	return
 }
