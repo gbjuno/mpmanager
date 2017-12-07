@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
-	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type SummaryList struct {
@@ -20,19 +19,20 @@ func (s Summary) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(s.findSummary))
-	ws.Route(ws.GET("/?companyid={companyid}&after={after}&limit={limit}&order={order}").To(s.findSummary))
+	ws.Route(ws.GET("/?company_id={company_id}&after={after}&limit={limit}&order={order}").To(s.findSummary))
 	container.Add(ws)
 }
 
 func (s Summary) findSummary(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [findSummary]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
-	company_id := request.PathParameter("companyid")
+	company_id := request.PathParameter("company_id")
+	after := request.QueryParameter("after")
+	limit := request.QueryParameter("limit")
+	order := request.QueryParameter("order")
 
 	company := Company{}
 	var limitInt int
-	var afterOk bool
-	var limitOk bool
 	var err error
 	var searchDB *gorm.DB
 
@@ -44,6 +44,7 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 			return
 		}
+		glog.Infof("%s find summary with company id %s", prefix, company_id)
 		searchDB.Where("id = ?", company.ID)
 	}
 
@@ -55,7 +56,10 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 			errmsg := fmt.Sprintf("cannot find object with after %s, err %s, ignore", after, err)
 			glog.Errorf("%s %s", prefix, errmsg)
 		}
-		afterOk = true
+
+		condition := fmt.Sprintf("day >= str_to_date(%s, '%%%%Y%%%%m%%%%d')", after)
+		glog.Infof("%s find summary with after %s", prefix, after)
+		searchDB.Where(condition)
 	}
 
 	if limit != "" {
@@ -64,31 +68,29 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 			errmsg := fmt.Sprintf("cannot find object with limit %s, err %s, ignore", limit, err)
 			glog.Errorf("%s %s", prefix, errmsg)
 		}
-		limitOk = true
+		glog.Infof("%s set find summary db with limit %s", prefix, limit)
+		searchDB.Limit(limitInt)
 	}
 
 	if order != "asc" && order != "desc" {
 		errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
 		glog.Errorf("%s %s", prefix, errmsg)
+		order = "desc"
 	}
 
 	if order == "" {
 		order = "desc"
 	}
 
-	//get summary list
-	if company_id == "" {
-		summaryList := SummaryList{}
-		summaryList.Summarys = make([]Summary, 0)
-		db.Find(&summaryList.Summarys)
-		summaryList.Count = len(summaryList.Summarys)
-		glog.Infof("%s return all summary list", prefix)
-		response.WriteHeaderAndEntity(http.StatusOK, summaryList)
-		return
-	}
+	glog.Infof("%s find summary with order %s", prefix, order)
+	searchDB.Order("day " + order)
 
-	//find summary
-	glog.Infof("%s return summary with id %d", prefix, summary.ID)
-	response.WriteHeaderAndEntity(http.StatusOK, summary)
+	//get summary list
+	summaryList := SummaryList{}
+	summaryList.Summarys = make([]Summary, 0)
+	searchDB.Find(&summaryList.Summarys)
+	summaryList.Count = len(summaryList.Summarys)
+	glog.Infof("%s return all summary list", prefix)
+	response.WriteHeaderAndEntity(http.StatusOK, summaryList)
 	return
 }

@@ -17,18 +17,18 @@ func refreshTodaySummary() {
 
 	/*
 		todaySummaries := make([]TodaySummary, 0)
-		condition := fmt.Sprintf("date = str_to_date(%s,'%%Y%%m%%d'", todayStr)
+		condition := fmt.Sprintf("date = str_to_date(%s,'%%%%Y%%%%m%%%%d'", todayStr)
 		glog.Infof("%s search today_summary created today, condition %s", condition)
 		db.Where(condition).Find(&todaySummaries)
 	*/
 
 	companies := make([]Company, 0)
-	db.Where("eanble = 'T'").Find(&companies)
+	db.Where("enable = 'T'").Find(&companies)
 	for _, company := range companies {
 		monitor_places := make([]MonitorPlace, 0)
 		db.Where("company_id = ?", company.ID).Find(&monitor_places)
 		for _, monitor_place := range monitor_places {
-			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, MonitorPlaceId: monitor_place.ID, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
+			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
 			glog.Infof("%s try to insert todaySummary for company %d, monitor_place %d, should ignore conflict", prefix, company.ID, monitor_place.ID)
 			db.Create(&todaySummary)
 		}
@@ -56,12 +56,10 @@ func refreshSummaryStat() {
 	prefix := fmt.Sprintf("[%s]", "refreshSummaryStat")
 	timeNow := time.Now()
 	todayStr := fmt.Sprintf("%d%d%d", timeNow.Year(), timeNow.Month(), timeNow.Day())
-	shortForm := "20160102"
-	todayTime, _ := time.Parse(shortForm, todayStr)
 	glog.Infof("%s start at time %s %d-%d", prefix, todayStr, timeNow.Hour(), timeNow.Minute())
 
 	todaySummaries := make([]TodaySummary, 0)
-	condition := fmt.Sprintf("date = str_to_date(%s,'%%Y%%m%%d'", todayStr)
+	condition := fmt.Sprintf("date = str_to_date(%s,'%%%%Y%%%%m%%%%d'", todayStr)
 	glog.Infof("%s search today_summary created today, condition %s", condition)
 	db.Where(condition).Find(&todaySummaries)
 

@@ -124,7 +124,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 		}
 
 		if afterOk && limitOk {
-			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%Y%%m%%d')", after)
+			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%%%Y%%%%m%%%%d')", after)
 			glog.Infof("%s find pictureList with condition %s", prefix, condition)
 			db.Where(condition).Where("monitor_place_id = ?", monitor_place_id).Limit(limitInt).Order("id " + order).Find(&pictureList.Pictures)
 			pictureList.Count = len(pictureList.Pictures)
@@ -132,7 +132,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 			glog.Infof("%s return pictureList after %s with limit %s with monitor_place id %s and limit ", prefix, after, limit, monitor_place_id)
 			return
 		} else if afterOk {
-			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%Y%%m%%d')", after)
+			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%%%Y%%%%m%%%%d')", after)
 			glog.Infof("%s find pictureList with condition %s", prefix, condition)
 			db.Where(condition).Where("monitor_place_id = ?", monitor_place_id).Order("id" + order).Find(&pictureList.Pictures)
 			pictureList.Count = len(pictureList.Pictures)
@@ -219,8 +219,7 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 			todayStr := fmt.Sprintf("%d%d%d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 			shortForm := "20160102"
 			todayTime, _ := time.Parse(shortForm, todayStr)
-			companies := make([]Company, 0)
-			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, MonitorPlaceId: monitor_place.ID, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
+			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
 			glog.Info("%s try to create todaySummary for company with id %d succesfully", prefix, company.ID)
 			db.Create(&todaySummary)
 

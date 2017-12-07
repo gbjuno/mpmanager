@@ -14,7 +14,7 @@ var db *gorm.DB
 type Town struct {
 	ID        int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt  time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt  time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	UpdateAt  time.Time `gorm:"column:update_at;not null;default:NOW()" json:"update_at"`
 	Name      string    `gorm:"column:name;size:20;not null;unique_index" json:"name"`
 	Countries []Country `gorm:"ForeignKey:TownId" json:"-"`
 }
@@ -26,7 +26,7 @@ func (Town) TableName() string {
 type Country struct {
 	ID        int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt  time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt  time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	UpdateAt  time.Time `gorm:"column:update_at;not null;default:NOW()" json:"update_at"`
 	Name      string    `gorm:"column:name;size:20;not null" json:"name"`
 	TownId    int       `gorm:"column:town_id" json:"town_id"`
 	Companies []Company `gorm:"ForeignKey:CountryId" json:"-"`
@@ -39,7 +39,7 @@ func (Country) TableName() string {
 type Company struct {
 	ID             int            `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt       time.Time      `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt       time.Time      `gorm:"column:update_at;not null;" json:"update_at"`
+	UpdateAt       time.Time      `gorm:"column:update_at;not null;default:NOW()" json:"update_at"`
 	Name           string         `gorm:"column:name;size:60;not null;unique_index" json:"name"`
 	Address        string         `gorm:"column:address;size:100;not null" json:"address"`
 	CountryId      int            `gorm:"column:country_id" json:"country_id"`
@@ -57,7 +57,7 @@ func (Company) TableName() string {
 type User struct {
 	ID        int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt  time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt  time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	UpdateAt  time.Time `gorm:"column:update_at;not null;default:NOW()" json:"update_at"`
 	Phone     string    `gorm:"column:phone;size:11;not null;unique_index" json:"phone"`
 	Name      string    `gorm:"column:name;size:20;not null" json:"name"`
 	Password  string    `gorm:"column:password;size:200;not null"`
@@ -75,7 +75,7 @@ func (User) TableName() string {
 type MonitorType struct {
 	ID            int            `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt      time.Time      `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt      time.Time      `gorm:"column:update_at;not null;" json:"update_at"`
+	UpdateAt      time.Time      `gorm:"column:update_at;not null;default:NOW()" json:"update_at"`
 	Name          string         `gorm:"column:name;size:20;not null;unique_index" json:"name"`
 	Comment       string         `gorm:"column:comment" json:"comment"`
 	MonitorPlaces []MonitorPlace `gorm:"ForeignKey:MonitorTypeId" json:"-"`
@@ -88,7 +88,7 @@ func (MonitorType) TableName() string {
 type MonitorPlace struct {
 	ID            int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt      time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt      time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	UpdateAt      time.Time `gorm:"column:update_at;not null;default:NOW()" json:"update_at"`
 	Name          string    `gorm:"column:name;size:20;not null" json:"name"`
 	CompanyId     int       `gorm:"column:company_id;not null;index" json:"company_id"`
 	MonitorTypeId int       `gorm:"column:monitor_type_id;index" json:"monitor_type_id"`
@@ -104,7 +104,7 @@ func (MonitorPlace) TableName() string {
 type Picture struct {
 	ID             int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt       time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt       time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	UpdateAt       time.Time `gorm:"column:update_at;not null;default:NOW()" json:"update_at"`
 	MonitorPlaceId int       `gorm:"column:monitor_place_id;not null;index" json:"monitor_place_id"`
 	ThumbPath      string    `gorm:"column:thumb_path" json:"thumb_path"`
 	FullPath       string    `gorm:"column:full_path" json:"full_path"`
@@ -119,8 +119,9 @@ func (Picture) TableName() string {
 }
 
 type Summary struct {
-	Day         time.Time `gorm:"primary_key;olumn:day;not null;index" json:"day"`
-	CompanyId   int       `gorm:"primary_key;column:company_id;not null;index" json:"company_id"`
+	ID          int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	Day         time.Time `gorm:"column:day;not null;unique_index:day_company" json:"day"`
+	CompanyId   int       `gorm:"	column:company_id;not null;unique_index:day_company" json:"company_id"`
 	IsFinish    string    `gorm:"column:is_finish;string;size:1;not null" json:"finish"`
 	UnfinishIds string    `gorm:"column:unfinish_ids" json:"unfinish_ids"`
 }
@@ -130,12 +131,15 @@ func (Summary) TableName() string {
 }
 
 type TodaySummary struct {
-	Day            time.Time `gorm:"primary_key;column:day;not null;index" json:"day"`
-	CompanyId      int       `gorm:"primary_key;column:company_id;not null;index" json:"company_id"`
-	MonitorPlaceId int       `gorm:"primary_key;column:monitor_place_id;not null;index" json:"monitor_place_id"`
-	IsUpload       string    `gorm:"column:is_upload;string;size:1;not null" json:"is_upload"`
-	Corrective     string    `gorm:"column:corrective;string;size:1;not null" json:"corrective"`
-	EverCorrective string    `gorm:"column:ever_corrective;string;size:1;not null" json:"ever_corrective"`
+	ID               int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	Day              time.Time `gorm:"column:day;not null;unique_index:day_company_place" json:"day"`
+	CompanyId        int       `gorm:"column:company_id;not null;unique_index:day_company_place" json:"company_id"`
+	CompanyName      string    `gorm:"column:company_name;not null" json:"company_name"`
+	MonitorPlaceId   int       `gorm:"column:monitor_place_id;not null;unique_index:day_company_place" json:"monitor_place_id"`
+	MonitorPlaceName string    `gorm:"column:monitor_place_name;not null;" json:"monitor_place_name"`
+	IsUpload         string    `gorm:"column:is_upload;string;size:1;not null" json:"is_upload"`
+	Corrective       string    `gorm:"column:corrective;string;size:1;not null" json:"corrective"`
+	EverCorrective   string    `gorm:"column:ever_corrective;string;size:1;not null" json:"ever_corrective"`
 }
 
 func (TodaySummary) TableName() string {
@@ -153,7 +157,7 @@ func InitializeDB() {
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}
-	db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{})
+	db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{})
 	db.Model(&Country{}).AddForeignKey("town_id", "towns(id)", "SET NULL", "SET NULL")
 	db.Model(&Company{}).AddForeignKey("country_id", "countries(id)", "SET NULL", "SET NULL")
 	db.Model(&User{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")

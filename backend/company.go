@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
-	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -194,7 +193,6 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 			todayStr := fmt.Sprintf("%d%d%d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 			shortForm := "20160102"
 			todayTime, _ := time.Parse(shortForm, todayStr)
-			companies := make([]Company, 0)
 			summary := Summary{Day: todayTime, CompanyId: company.ID, IsFinish: "F"}
 			glog.Info("%s try to create summary for company with id %d succesfully", prefix, company.ID)
 			db.Create(&summary)

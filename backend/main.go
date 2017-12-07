@@ -63,6 +63,19 @@ func main() {
 	summary := Summary{}
 	summary.Register(wsContainer)
 
+	todaySummary := TodaySummary{}
+	todaySummary.Register(wsContainer)
+
+	go func() {
+		glog.Infof("starting cronjob system")
+		jobWorker()
+		glog.Infof("cronjob system end")
+	}()
+
+	refreshTodaySummary()
+	refreshSummary()
+	refreshSummaryStat()
+
 	go func() {
 		glog.Infof("starting restful webserver on localhost:8000")
 		server := &http.Server{Addr: ":8000", Handler: wsContainer}
