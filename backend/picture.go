@@ -35,7 +35,7 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 	if picture_id == "" {
 		pictureList := PictureList{}
 		pictureList.Pictures = make([]Picture, 0)
-		db.Find(&pictureList.Pictures)
+		db.Debug().Find(&pictureList.Pictures)
 		pictureList.Count = len(pictureList.Pictures)
 		glog.Infof("%s Return picture list", prefix)
 		response.WriteHeaderAndEntity(http.StatusOK, pictureList)
@@ -52,7 +52,7 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 	}
 
 	picture := Picture{}
-	db.First(&picture, id)
+	db.Debug().First(&picture, id)
 
 	//cannot find picture
 	if picture.ID == 0 {
@@ -77,7 +77,7 @@ func (p Picture) createPicture(request *restful.Request, response *restful.Respo
 	picture := Picture{}
 	err := request.ReadEntity(&picture)
 	if err == nil {
-		db.Create(&picture)
+		db.Debug().Create(&picture)
 		if picture.ID != 0 {
 			//create picture successfully
 			glog.Infof("%s create picture with id %d successfully", prefix, picture.ID)
@@ -85,8 +85,9 @@ func (p Picture) createPicture(request *restful.Request, response *restful.Respo
 			return
 		} else {
 			//fail to create picture
-			glog.Errorf("%s cannot create picture on database", prefix)
-			response.WriteHeaderAndEntity(http.StatusOK, picture)
+			errmsg := fmt.Sprintf("%s cannot create picture on database", prefix)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 			return
 		}
 	} else {
@@ -132,7 +133,7 @@ func (p Picture) updatePicture(request *restful.Request, response *restful.Respo
 	}
 
 	realPicture := Picture{}
-	db.First(&realPicture, picture.ID)
+	db.Debug().First(&realPicture, picture.ID)
 	//cannot find picture
 	if realPicture.ID == 0 {
 		errmsg := fmt.Sprintf("cannot update picture, picture_id %d is not exist", picture.ID)
@@ -142,7 +143,7 @@ func (p Picture) updatePicture(request *restful.Request, response *restful.Respo
 	}
 
 	//find picture and update
-	db.Model(&realPicture).Update(picture)
+	db.Debug().Model(&realPicture).Update(picture)
 	glog.Infof("%s update picture with id %d on database", prefix, realPicture.ID)
 	response.WriteHeaderAndEntity(http.StatusCreated, realPicture)
 	return
@@ -162,7 +163,7 @@ func (p Picture) deletePicture(request *restful.Request, response *restful.Respo
 	}
 
 	picture := Picture{}
-	db.First(&picture, id)
+	db.Debug().First(&picture, id)
 	if picture.ID == 0 {
 		//picture with id doesn't exist, return ok
 		response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
@@ -170,10 +171,10 @@ func (p Picture) deletePicture(request *restful.Request, response *restful.Respo
 		return
 	}
 
-	db.Delete(&picture)
+	db.Debug().Delete(&picture)
 
 	realPicture := Picture{}
-	db.First(&realPicture, id)
+	db.Debug().First(&realPicture, id)
 
 	if realPicture.ID != 0 {
 		//fail to delete picture

@@ -6,6 +6,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/gbjuno/mpmanager/backend/utils"
 	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -30,7 +31,8 @@ func (m MonitorPlace) Register(container *restful.Container) {
 	ws.Route(ws.GET("").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}/").To(m.findMonitorPlace))
-	ws.Route(ws.GET("/{monitor_place_id}/{scope}/?after={after}&limit={limit}&order={order}").To(m.findMonitorPlace))
+	ws.Route(ws.GET("/{monitor_place_id}/{scope}/").To(m.findMonitorPlace))
+	ws.Route(ws.GET("/{monitor_place_id}/{scope}/?after={after}&pageSize={pageSize}&pageNo={pageNo}&order={order}").To(m.findMonitorPlace))
 	ws.Route(ws.POST("").To(m.createMonitorPlace))
 	ws.Route(ws.PUT("/{monitor_place_id}").To(m.updateMonitorPlace))
 	ws.Route(ws.DELETE("/{monitor_place_id}").To(m.deleteMonitorPlace))
@@ -43,14 +45,15 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	scope := request.PathParameter("scope")
 	after := request.QueryParameter("after")
-	limit := request.QueryParameter("limit")
+	pageSize := request.QueryParameter("pageSize")
+	pageNo := request.QueryParameter("pageNo")
 	order := request.QueryParameter("order")
 
 	//get monitor_place list
 	if monitor_place_id == "" {
 		monitor_placeList := MonitorPlaceList{}
 		monitor_placeList.MonitorPlaces = make([]MonitorPlace, 0)
-		db.Find(&monitor_placeList.MonitorPlaces)
+		db.Debug().Find(&monitor_placeList.MonitorPlaces)
 		monitor_placeList.Count = len(monitor_placeList.MonitorPlaces)
 		response.WriteHeaderAndEntity(http.StatusOK, monitor_placeList)
 		glog.Infof("%s return monitor_place list", prefix)
@@ -67,7 +70,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 	}
 
 	monitor_place := MonitorPlace{}
-	db.First(&monitor_place, id)
+	db.Debug().First(&monitor_place, id)
 	//cannot find monitor_place
 	if monitor_place.ID == 0 {
 		errmsg := fmt.Sprintf("cannot find monitor_place with id %s", monitor_place_id)
@@ -85,73 +88,68 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 
 	//find pictures related to monitor_place
 	if scope == "picture" {
-		pictureList := PictureWithMonitorPlace{}
-		pictureList.MonitorPlaceId = monitor_place.ID
-		pictureList.Pictures = make([]Picture, 0)
 
-		var limitInt int
-		var afterOk bool
-		var limitOk bool
-		var err error
+		var searchPicture *gorm.DB = db.Debug().Where("monitor_place_id = ?", monitor_place.ID)
 
 		if after != "" {
-			loc, _ := time.LoadLocation("Asia/Shanghai")
+			loc, _ := time.LoadLocation("Local")
 			const shortFormat = "20060102"
 			_, err = time.ParseInLocation(shortFormat, after, loc)
 			if err != nil {
 				errmsg := fmt.Sprintf("cannot find object with after %s, err %s, ignore", after, err)
 				glog.Errorf("%s %s", prefix, errmsg)
 			}
-			afterOk = true
-		}
-
-		if limit != "" {
-			limitInt, err = strconv.Atoi(limit)
-			if err != nil {
-				errmsg := fmt.Sprintf("cannot find object with limit %s, err %s, ignore", limit, err)
-				glog.Errorf("%s %s", prefix, errmsg)
-			}
-			limitOk = true
+			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%Y%%m%%d')", after)
+			glog.Infof("%s find today_summary on after %s", prefix, after)
+			searchPicture = searchPicture.Where(condition)
 		}
 
 		if order != "asc" && order != "desc" {
 			errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
 			glog.Errorf("%s %s", prefix, errmsg)
+			order = "desc"
 		}
 
 		if order == "" {
 			order = "desc"
 		}
 
-		if afterOk && limitOk {
-			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%%%Y%%%%m%%%%d')", after)
-			glog.Infof("%s find pictureList with condition %s", prefix, condition)
-			db.Where(condition).Where("monitor_place_id = ?", monitor_place_id).Limit(limitInt).Order("id " + order).Find(&pictureList.Pictures)
-			pictureList.Count = len(pictureList.Pictures)
-			response.WriteHeaderAndEntity(http.StatusOK, pictureList)
-			glog.Infof("%s return pictureList after %s with limit %s with monitor_place id %s and limit ", prefix, after, limit, monitor_place_id)
-			return
-		} else if afterOk {
-			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%%%Y%%%%m%%%%d')", after)
-			glog.Infof("%s find pictureList with condition %s", prefix, condition)
-			db.Where(condition).Where("monitor_place_id = ?", monitor_place_id).Order("id" + order).Find(&pictureList.Pictures)
-			pictureList.Count = len(pictureList.Pictures)
-			response.WriteHeaderAndEntity(http.StatusOK, pictureList)
-			glog.Infof("%s return pictureList after %s with monitor_place id %s", prefix, after, monitor_place_id)
-			return
-		} else if limitOk {
-			db.Limit(limitInt).Where("monitor_place_id = ?", monitor_place.ID).Order("id " + order).Find(&pictureList.Pictures)
-			pictureList.Count = len(pictureList.Pictures)
-			response.WriteHeaderAndEntity(http.StatusOK, pictureList)
-			glog.Infof("%s return pictureList with limit %s with monitor_place id %", prefix, limit, monitor_place_id)
-			return
-		} else {
-			db.Where("monitor_place_id = ?", monitor_place.ID).Order("id " + order).Find(&pictureList.Pictures)
-			pictureList.Count = len(pictureList.Pictures)
-			response.WriteHeaderAndEntity(http.StatusOK, pictureList)
-			glog.Infof("%s return pictureList with monitor_place id %s", prefix, monitor_place_id)
-			return
+		glog.Infof("%s find picture with order %s", prefix, order)
+		searchPicture = searchPicture.Order("create_at " + order)
+
+		isPageSizeOk := true
+		pageSizeInt, err := strconv.Atoi(pageSize)
+		if err != nil {
+			isPageSizeOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageSize %s, err %s, ignore", pageSize, err)
+			glog.Errorf("%s %s", prefix, errmsg)
 		}
+
+		//pageNo depends on pageSize
+		isPageNoOk := true
+		pageNoInt, err := strconv.Atoi(pageNo)
+		if err != nil {
+			isPageNoOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageNo %s, err %s, ignore", pageNo, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		}
+
+		if isPageSizeOk && isPageNoOk {
+			limit := pageSizeInt
+			offset := (pageNoInt - 1) * limit
+			glog.Infof("%s set find picture db with pageSize %s, pageNo %s(limit %d, offset %d)", prefix, pageSize, pageNo, limit, offset)
+			searchPicture = searchPicture.Offset(offset).Limit(limit)
+		}
+
+		pictureList := PictureWithMonitorPlace{}
+		pictureList.MonitorPlaceId = monitor_place.ID
+		pictureList.Pictures = make([]Picture, 0)
+
+		searchPicture.Find(&pictureList.Pictures)
+		pictureList.Count = len(pictureList.Pictures)
+		response.WriteHeaderAndEntity(http.StatusOK, pictureList)
+		glog.Infof("%s return picture list", prefix)
+		return
 	}
 
 	errmsg := fmt.Sprintf("cannot find object with scope %s", scope)
@@ -170,7 +168,7 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 	err := request.ReadEntity(&monitor_place)
 	if err == nil {
 		company := Company{}
-		db.First(&company, monitor_place.CompanyId)
+		db.Debug().First(&company, monitor_place.CompanyId)
 		if company.ID == 0 {
 			errmsg := fmt.Sprintf("company id %d not exists", company.ID)
 			glog.Errorf("%s %s", prefix, errmsg)
@@ -180,7 +178,7 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 
 		//whether monitor_place name is unique in the same town
 		monitor_places := make([]MonitorPlace, 0)
-		db.Where("company_id = ?", company.ID).Find(&monitor_places)
+		db.Debug().Where("company_id = ?", company.ID).Find(&monitor_places)
 		for _, m := range monitor_places {
 			if m.Name == monitor_place.Name {
 				errmsg := fmt.Sprintf("monitor_place %s already exists int the same company %s", monitor_place.Name, company.Name)
@@ -190,7 +188,7 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 			}
 		}
 
-		db.Create(&monitor_place)
+		db.Debug().Create(&monitor_place)
 		if monitor_place.ID == 0 {
 			//fail to create monitor_place on database
 			errmsg := fmt.Sprintf("cannot create monitor_place, err %s", err)
@@ -201,9 +199,9 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 			//create monitor_place on databse
 			monitor_place.QrcodePath = fmt.Sprintf("/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
 			monitor_place.QrcodeURI = fmt.Sprintf("/static/qrcode/%d/%d.png", monitor_place.CompanyId, monitor_place.ID)
-			db.Save(&monitor_place)
+			db.Debug().Save(&monitor_place)
 			company := Company{}
-			db.First(&company, monitor_place.CompanyId)
+			db.Debug().First(&company, monitor_place.CompanyId)
 			companyName := company.Name
 			qrcodePath := fmt.Sprintf("https://%s/backend/photo?place=%d", domain, monitor_place.ID)
 			//create monitor_place qrcode image
@@ -215,13 +213,15 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 			response.WriteHeaderAndEntity(http.StatusOK, monitor_place)
 
 			//insert a new row into TodaySummary
+
+			loc, _ := time.LoadLocation("Local")
 			timeNow := time.Now()
-			todayStr := fmt.Sprintf("%d%d%d", timeNow.Year(), timeNow.Month(), timeNow.Day())
-			shortForm := "20160102"
-			todayTime, _ := time.Parse(shortForm, todayStr)
+			todayStr := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
+			shortForm := "20060102"
+			todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
 			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
-			glog.Info("%s try to create todaySummary for company with id %d succesfully", prefix, company.ID)
-			db.Create(&todaySummary)
+			glog.Infof("%s try to create todaySummary for company with id %d succesfully", prefix, company.ID)
+			db.Debug().Create(&todaySummary)
 
 			return
 		}
@@ -270,7 +270,7 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 	}
 
 	realMonitorPlace := MonitorPlace{}
-	db.First(&realMonitorPlace, monitor_place.ID)
+	db.Debug().First(&realMonitorPlace, monitor_place.ID)
 
 	//cannot find monitor_place
 	if realMonitorPlace.ID == 0 {
@@ -281,7 +281,7 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 	}
 
 	//find monitor_place
-	db.Model(&realMonitorPlace).Update(monitor_place)
+	db.Debug().Model(&realMonitorPlace).Update(monitor_place)
 	glog.Infof("%s update monitor place with id %d succeed", prefix, realMonitorPlace.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, realMonitorPlace)
 	return
@@ -302,7 +302,7 @@ func (m MonitorPlace) deleteMonitorPlace(request *restful.Request, response *res
 	}
 
 	monitor_place := MonitorPlace{}
-	db.First(&monitor_place, id)
+	db.Debug().First(&monitor_place, id)
 	if monitor_place.ID == 0 {
 		//monitor_place with id doesn't exist, return ok
 		glog.Infof("%s monitor_place with id %d doesn't exist, delete successfully", prefix, monitor_place_id)
@@ -310,10 +310,10 @@ func (m MonitorPlace) deleteMonitorPlace(request *restful.Request, response *res
 		return
 	}
 
-	db.Delete(&monitor_place)
+	db.Debug().Delete(&monitor_place)
 
 	realMonitorPlace := MonitorPlace{}
-	db.First(&realMonitorPlace, id)
+	db.Debug().First(&realMonitorPlace, id)
 
 	if realMonitorPlace.ID != 0 {
 		//fail to delete monitor_place

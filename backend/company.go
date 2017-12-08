@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -32,7 +33,7 @@ func (c Company) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(c.findCompany))
-	ws.Route(ws.GET("/?limit={limit}&offset={offset}").To(c.findCompany))
+	ws.Route(ws.GET("/?pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}/{scope}").To(c.findCompany))
 	ws.Route(ws.POST("").To(c.createCompany))
@@ -46,49 +47,53 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	company_id := request.PathParameter("company_id")
 	scope := request.PathParameter("scope")
-	offset := request.QueryParameter("offset")
-	limit := request.QueryParameter("limit")
+	pageSize := request.QueryParameter("pageSize")
+	pageNo := request.QueryParameter("pageNo")
+	order := request.QueryParameter("order")
 
-	//get company list
-	var offsetOk = false
-	var limitOk = false
-	var offsetInt int
-	var limitInt int
-	var err error
+	var searchCompany *gorm.DB = db.Debug()
+
+	if order != "asc" && order != "desc" {
+		errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
+		glog.Errorf("%s %s", prefix, errmsg)
+		order = "asc"
+	}
+
+	if order == "" {
+		order = "asc"
+	}
+
+	glog.Infof("%s find company with order %s", prefix, order)
+	searchCompany = searchCompany.Order("id " + order)
 
 	if company_id == "" {
-		if offset != "" {
-			offsetInt, err = strconv.Atoi(offset)
-			if err != nil {
-				glog.Errorf("%s offset %s is not integer, ignore", prefix, offset)
-			}
-			offsetOk = true
+		isPageSizeOk := true
+		pageSizeInt, err := strconv.Atoi(pageSize)
+		if err != nil {
+			isPageSizeOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageSize %s, err %s, ignore", pageSize, err)
+			glog.Errorf("%s %s", prefix, errmsg)
 		}
 
-		if limit != "" {
-			limitInt, err = strconv.Atoi(limit)
-			if err != nil {
-				glog.Errorf("%s limit %s is not integer, ignore", prefix, limit)
-			}
-			limitOk = true
+		//pageNo depends on pageSize
+		isPageNoOk := true
+		pageNoInt, err := strconv.Atoi(pageNo)
+		if err != nil {
+			isPageNoOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageNo %s, err %s, ignore", pageNo, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		}
+
+		if isPageSizeOk && isPageNoOk {
+			limit := pageSizeInt
+			offset := (pageNoInt - 1) * limit
+			glog.Infof("%s set find company db with pageSize %s, pageNo %s(limit %d, offset %d)", prefix, pageSize, pageNo, limit, offset)
+			searchCompany = searchCompany.Offset(offset).Limit(limit)
 		}
 
 		companyList := CompanyList{}
 		companyList.Companies = make([]Company, 0)
-		if offsetOk && limitOk {
-			glog.Infof("%s get company list, offset %d limit %d", prefix, offsetInt, limitInt)
-			db.Offset(offsetInt).Limit(limitInt).Find(&companyList.Companies)
-		} else if offsetOk {
-			limitInt = int(^uint(0) >> 1)
-			glog.Infof("%s get company list, offset %d limit %d", prefix, offsetInt, limitInt)
-			db.Offset(offsetInt).Limit(limitInt).Find(&companyList.Companies)
-		} else if limitOk {
-			glog.Infof("%s get company list, limit %d", prefix, limitInt)
-			db.Limit(limitInt).Find(&companyList.Companies)
-		} else {
-			glog.Infof("%s get company list", prefix)
-			db.Find(&companyList.Companies)
-		}
+		searchCompany.Find(&companyList.Companies)
 
 		companyList.Count = len(companyList.Companies)
 		response.WriteHeaderAndEntity(http.StatusOK, companyList)
@@ -106,7 +111,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 	}
 
 	company := Company{}
-	db.First(&company, id)
+	db.Debug().First(&company, id)
 	//cannot find company
 	if company.ID == 0 {
 		errmsg := fmt.Sprintf("cannot find company with id %s", company_id)
@@ -127,7 +132,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		userList := UserListWithCompany{}
 		userList.CompanyId = company.ID
 		userList.Users = make([]User, 0)
-		db.Model(&company).Related(&userList.Users)
+		db.Debug().Model(&company).Related(&userList.Users)
 		userList.Count = len(userList.Users)
 		response.WriteHeaderAndEntity(http.StatusOK, userList)
 		glog.Infof("%s return users related company with id %d", prefix, company.ID)
@@ -139,7 +144,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		monitorPlaceList := MonitorPlaceWithCompany{}
 		monitorPlaceList.CompanyId = company.ID
 		monitorPlaceList.MonitorPlaces = make([]MonitorPlace, 0)
-		db.Model(&company).Related(&monitorPlaceList)
+		db.Debug().Model(&company).Related(&monitorPlaceList.MonitorPlaces)
 		monitorPlaceList.Count = len(monitorPlaceList.MonitorPlaces)
 		response.WriteHeaderAndEntity(http.StatusOK, monitorPlaceList)
 		glog.Infof("%s return monitor_places related company with id %d", prefix, company.ID)
@@ -167,14 +172,14 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 			company.Enable = "F"
 		}
 		searchCompany := Company{}
-		db.Where("name = ?", company.Name).First(&searchCompany)
+		db.Debug().Where("name = ?", company.Name).First(&searchCompany)
 		if searchCompany.ID != 0 {
 			errmsg := fmt.Sprintf("company %s already exists", company.Name)
 			glog.Errorf("%s %s", prefix, errmsg)
 			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 			return
 		}
-		db.Create(&company)
+		db.Debug().Create(&company)
 
 		if company.ID == 0 {
 			//fail to create company on database
@@ -189,13 +194,14 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 			response.WriteHeaderAndEntity(http.StatusOK, company)
 
 			//insert a new row into Summary
+			loc, _ := time.LoadLocation("Local")
 			timeNow := time.Now()
-			todayStr := fmt.Sprintf("%d%d%d", timeNow.Year(), timeNow.Month(), timeNow.Day())
-			shortForm := "20160102"
-			todayTime, _ := time.Parse(shortForm, todayStr)
+			todayStr := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
+			shortForm := "20060102"
+			todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
 			summary := Summary{Day: todayTime, CompanyId: company.ID, IsFinish: "F"}
 			glog.Info("%s try to create summary for company with id %d succesfully", prefix, company.ID)
-			db.Create(&summary)
+			db.Debug().Create(&summary)
 
 			return
 		}
@@ -244,7 +250,7 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 	}
 
 	realCompany := Company{}
-	db.First(&realCompany, company.ID)
+	db.Debug().First(&realCompany, company.ID)
 
 	//cannot find company
 	if realCompany.ID == 0 {
@@ -261,7 +267,7 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 	}
 
 	//find comopany and update
-	db.Model(&realCompany).Update(company)
+	db.Debug().Model(&realCompany).Update(company)
 	glog.Infof("%s update company with id %d successfully and return", prefix, realCompany.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, realCompany)
 	return
@@ -281,7 +287,7 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 	}
 
 	company := Company{}
-	db.First(&company, id)
+	db.Debug().First(&company, id)
 	if company.ID == 0 {
 		//company with id doesn't exist, return ok
 		glog.Infof("%s company with id %s doesn't exist, return ok", prefix, company_id)
@@ -289,10 +295,10 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 		return
 	}
 
-	db.Delete(&company)
+	db.Debug().Delete(&company)
 
 	realCompany := Company{}
-	db.First(&realCompany, id)
+	db.Debug().First(&realCompany, id)
 
 	if realCompany.ID != 0 {
 		//fail to delete company

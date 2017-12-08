@@ -8,6 +8,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/gbjuno/mpmanager/backend/utils"
 	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -50,7 +51,7 @@ func (u User) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").Doc("get user object").To(u.findUser))
-	ws.Route(ws.GET("/?offset={offset}&limit={limit}").Doc("get user object").To(u.findUser))
+	ws.Route(ws.GET("/?pageNo={pageNo}&pageSize={pageSize}&order={order}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.POST("").To(u.createUser))
 	ws.Route(ws.PUT("/{user_id}").To(u.updateUser))
@@ -63,77 +64,66 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	user_id := request.PathParameter("user_id")
 	//phone := request.QueryParameter("phone")
-	offset := request.QueryParameter("offset")
-	limit := request.QueryParameter("limit")
+	pageSize := request.QueryParameter("pageSize")
+	pageNo := request.QueryParameter("pageNo")
+	order := request.QueryParameter("order")
 
-	user := User{}
+	var searchUser *gorm.DB = db.Debug()
+	if order != "asc" && order != "desc" {
+		errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
+		glog.Errorf("%s %s", prefix, errmsg)
+		order = "asc"
+	}
+
+	if order == "" {
+		order = "asc"
+	}
+
+	glog.Infof("%s find user with order %s", prefix, order)
+	searchUser = searchUser.Order("id " + order)
 	//get user list
 	if user_id == "" {
-		/*
-			if phone != "" {
-				db.Where("phone = ?", phone).First(&user)
-				if user.ID == 0 {
-					errmsg := fmt.Sprintf("cannot find user with phone %s", phone)
-					response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
-					return
-				} else {
-					response.WriteHeaderAndEntity(http.StatusOK, user)
-					return
-				}
-			} else {
-		*/
-		var offsetOk = false
-		var limitOk = false
-		var offsetInt int
-		var limitInt int
-		var err error
-
-		if offset != "" {
-			offsetInt, err = strconv.Atoi(offset)
-			if err != nil {
-				glog.Errorf("%s offset %s is not integer, ignore", prefix, offset)
-			}
-			offsetOk = true
+		isPageSizeOk := true
+		pageSizeInt, err := strconv.Atoi(pageSize)
+		if err != nil {
+			isPageSizeOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageSize %s, err %s, ignore", pageSize, err)
+			glog.Errorf("%s %s", prefix, errmsg)
 		}
 
-		if limit != "" {
-			limitInt, err = strconv.Atoi(limit)
-			if err != nil {
-				limitOk = false
-				glog.Errorf("%s limit %s is not integer, ignore", prefix, limit)
-			}
-			limitOk = true
+		//pageNo depends on pageSize
+		isPageNoOk := true
+		pageNoInt, err := strconv.Atoi(pageNo)
+		if err != nil {
+			isPageNoOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageNo %s, err %s, ignore", pageNo, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		}
+
+		if isPageSizeOk && isPageNoOk {
+			limit := pageSizeInt
+			offset := (pageNoInt - 1) * limit
+			glog.Infof("%s set find user db with pageSize %s, pageNo %s(limit %d, offset %d)", prefix, pageSize, pageNo, limit, offset)
+			searchUser = searchUser.Offset(offset).Limit(limit)
 		}
 
 		userList := UserList{}
 		userList.Users = make([]User, 0)
-		if offsetOk && limitOk {
-			glog.Infof("%s get user list, offset %d limit %d", prefix, offsetInt, limitInt)
-			db.Offset(offsetInt).Limit(limitInt).Find(&userList.Users)
-		} else if offsetOk {
-			limitInt = int(^uint(0) >> 1)
-			glog.Infof("%s get user list, offset %d limit %d", prefix, offsetInt, limitInt)
-			db.Offset(offsetInt).Limit(limitInt).Find(&userList.Users)
-		} else if limitOk {
-			glog.Infof("%s get user list, limit %d", prefix, limitInt)
-			db.Limit(limitInt).Find(&userList.Users)
-		} else {
-			glog.Infof("%s get user list", prefix)
-			db.Find(&userList.Users)
-		}
+		searchUser.Find(&userList.Users)
 
 		userList.Count = len(userList.Users)
-		/*
-			for _, userTemp := range userList.Users {
-				glog.Infof("%s decrypt user password %v", prefix, []byte(user.Password))
-				userTemp.DecryptPassword()
-			}
-		*/
+		for i, u := range userList.Users {
+			company := Company{}
+			db.First(&company, u.ID)
+			userList.Users[i].CompanyName = company.Name
+		}
+
 		response.WriteHeaderAndEntity(http.StatusOK, userList)
+		glog.Infof("%s return user list", prefix)
 		return
-		//}
 	}
 
+	user := User{}
 	id, err := strconv.Atoi(user_id)
 	//fail to parse user id
 	if err != nil {
@@ -143,7 +133,7 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 		return
 	}
 
-	db.First(&user, id)
+	db.Debug().First(&user, id)
 	//fail to find user
 	if user.ID == 0 {
 		errmsg := fmt.Sprintf("cannot find user with id %s", user_id)
@@ -151,6 +141,10 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
+
+	company := Company{}
+	db.First(&company, user.ID)
+	user.CompanyName = company.Name
 
 	//find user
 	//user.DecryptPassword()
@@ -172,8 +166,34 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 			rawBytes := rand.New()
 			user.Password = string(rawBytes[:6])
 		}
+
+		samePhoneUser := User{}
+		db.Debug().Where("phone = ?", user.Phone).First(&samePhoneUser)
+		if samePhoneUser.ID != 0 {
+			errmsg := fmt.Sprintf("user with phone %s already exists", samePhoneUser.Phone)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+
+		if user.CompanyId == 0 {
+			errmsg := fmt.Sprintf("please provide company id")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+
+		company := Company{}
+		db.First(&company, user.CompanyId)
+		if company.ID == 0 {
+			errmsg := fmt.Sprintf("company id %d not found", company.ID)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+
 		//user.EncryptPassword()
-		db.Create(&user)
+		db.Debug().Create(&user)
 		if user.ID == 0 {
 			//fail to create user on database
 			errmsg := fmt.Sprintf("cannot create user on database")
@@ -230,7 +250,7 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 	}
 
 	realUser := User{}
-	db.First(&realUser, user.ID)
+	db.Debug().First(&realUser, user.ID)
 	//cannot find user
 	if realUser.ID == 0 {
 		errmsg := fmt.Sprintf("cannot update user, user_id %d is not exist", user.ID)
@@ -244,7 +264,7 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 		//if user password is update
 		//user.EncryptPassword()
 	}
-	db.Model(&realUser).Update(user)
+	db.Debug().Model(&realUser).Update(user)
 	glog.Infof("%s update user with id %d successfully and return", prefix, realUser.ID)
 	response.WriteHeaderAndEntity(http.StatusCreated, realUser)
 	return
@@ -264,7 +284,7 @@ func (u User) deleteUser(request *restful.Request, response *restful.Response) {
 	}
 
 	user := User{}
-	db.First(&user, id)
+	db.Debug().First(&user, id)
 	if user.ID == 0 {
 		//user with id doesn't exist, return ok
 		glog.Infof("%s user with id %s doesn't exist, return ok", prefix, user_id)
@@ -272,10 +292,10 @@ func (u User) deleteUser(request *restful.Request, response *restful.Response) {
 		return
 	}
 
-	db.Delete(&user)
+	db.Debug().Delete(&user)
 
 	realUser := User{}
-	db.First(&realUser, id)
+	db.Debug().First(&realUser, id)
 
 	if realUser.ID != 0 {
 		//failed to delete user

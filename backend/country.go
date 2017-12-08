@@ -43,7 +43,7 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 	if country_id == "" {
 		countryList := CountryList{}
 		countryList.Countries = make([]Country, 0)
-		db.Find(&countryList.Countries)
+		db.Debug().Find(&countryList.Countries)
 		countryList.Count = len(countryList.Countries)
 		response.WriteHeaderAndEntity(http.StatusOK, countryList)
 		glog.Infof("%s return country list", prefix)
@@ -59,7 +59,7 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 		return
 	}
 	country := Country{}
-	db.First(&country, id)
+	db.Debug().First(&country, id)
 	//cannot find country
 	if country.ID == 0 {
 		errmsg := fmt.Sprintf("cannot find country with id %s", country_id)
@@ -80,7 +80,7 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 		companyList := CompanyListWithCountryID{}
 		companyList.CountryId = country.ID
 		companyList.Companies = make([]Company, 0)
-		db.Model(&country).Related(&companyList.Companies)
+		db.Debug().Model(&country).Related(&companyList.Companies)
 		companyList.Count = len(companyList.Companies)
 		glog.Infof("%s return companies related country with id %d", prefix, country.ID)
 		response.WriteHeaderAndEntity(http.StatusOK, companyList)
@@ -103,7 +103,7 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 	err := request.ReadEntity(&country)
 	if err == nil {
 		town := Town{}
-		db.First(&town, country.TownId)
+		db.Debug().First(&town, country.TownId)
 		if town.ID == 0 {
 			errmsg := fmt.Sprintf("town id %d not exists", country.TownId)
 			glog.Errorf("%s %s", prefix, errmsg)
@@ -113,7 +113,7 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 
 		//whether country name is unique in the same town
 		countries := make([]Country, 0)
-		db.Where(" town_id = ?", town.ID).Find(&countries)
+		db.Debug().Where(" town_id = ?", town.ID).Find(&countries)
 		for _, c := range countries {
 			if c.Name == country.Name {
 				errmsg := fmt.Sprintf("country %s already exists", country.Name)
@@ -123,7 +123,7 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 			}
 		}
 
-		db.Create(&country)
+		db.Debug().Create(&country)
 		if country.ID == 0 {
 			//fail to create company on database
 			errmsg := fmt.Sprintf("cannot create country on database")
@@ -179,7 +179,7 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 	}
 
 	realCountry := Country{}
-	db.First(&realCountry, country.ID)
+	db.Debug().First(&realCountry, country.ID)
 
 	//cannot find country
 	if realCountry.ID == 0 {
@@ -190,7 +190,7 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 	}
 
 	//find country and update
-	db.Model(&realCountry).Update(country)
+	db.Debug().Model(&realCountry).Update(country)
 	glog.Infof("%s update country with id %d successfully and return", prefix, realCountry.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, realCountry)
 }
@@ -208,7 +208,7 @@ func (c Country) deleteCountry(request *restful.Request, response *restful.Respo
 	}
 
 	country := Country{}
-	db.First(&country, id)
+	db.Debug().First(&country, id)
 	if country.ID == 0 {
 		//country with id doesn't exist
 		glog.Infof("%s country with id %s doesn't exist, return ok", prefix, country_id)
@@ -216,10 +216,10 @@ func (c Country) deleteCountry(request *restful.Request, response *restful.Respo
 		return
 	}
 
-	db.Delete(&country)
+	db.Debug().Delete(&country)
 
 	realCountry := Country{}
-	db.First(&realCountry, id)
+	db.Debug().First(&realCountry, id)
 
 	if realCountry.ID != 0 {
 		//fail to delete country

@@ -49,7 +49,7 @@ func (t Town) findTown(request *restful.Request, response *restful.Response) {
 	if town_id == "" {
 		townList := TownList{}
 		townList.Towns = make([]Town, 0)
-		db.Find(&townList.Towns)
+		db.Debug().Find(&townList.Towns)
 		townList.Count = len(townList.Towns)
 		response.WriteHeaderAndEntity(http.StatusOK, townList)
 		glog.Infof("%s return town list", prefix)
@@ -66,7 +66,7 @@ func (t Town) findTown(request *restful.Request, response *restful.Response) {
 	}
 
 	town := Town{}
-	db.First(&town, id)
+	db.Debug().First(&town, id)
 	//cannot find town
 	if town.ID == 0 {
 		errmsg := fmt.Sprintf("cannot find town with id %d", town_id)
@@ -87,7 +87,7 @@ func (t Town) findTown(request *restful.Request, response *restful.Response) {
 		countryList := CountryListWithTownID{}
 		countryList.TownId = town.ID
 		countryList.Countries = make([]Country, 0)
-		db.Model(&town).Related(&countryList.Countries)
+		db.Debug().Model(&town).Related(&countryList.Countries)
 		countryList.Count = len(countryList.Countries)
 		response.WriteHeaderAndEntity(http.StatusOK, countryList)
 		glog.Infof("%s return countries related to town id %d", prefix, town.ID)
@@ -103,10 +103,10 @@ func (t Town) findTown(request *restful.Request, response *restful.Response) {
 		countryList := CountryListWithTownID{}
 		countryList.TownId = town.ID
 		countryList.Countries = make([]Country, 0)
-		db.Model(&town).Related(&countryList.Countries)
+		db.Debug().Model(&town).Related(&countryList.Countries)
 		for _, country := range countryList.Countries {
 			companyTempList := make([]Company, 0)
-			db.Model(&country).Related(&companyTempList)
+			db.Debug().Model(&country).Related(&companyTempList)
 			companyList.Companies = append(companyList.Companies, companyTempList...)
 		}
 		companyList.Count = len(companyList.Companies)
@@ -130,7 +130,15 @@ func (t Town) createTown(request *restful.Request, response *restful.Response) {
 	town := Town{}
 	err := request.ReadEntity(&town)
 	if err == nil {
-		db.Create(&town)
+		sameNameTown := Town{}
+		db.Debug().Where("name = ?", town.Name).First(&sameNameTown)
+		if sameNameTown.ID != 0 {
+			errmsg := fmt.Sprintf("monitor_type %s already exists", sameNameTown.Name)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+		db.Debug().Create(&town)
 		if town.ID == 0 {
 			//fail to create town on database
 			errmsg := fmt.Sprintf("cannot create town on database")
@@ -187,7 +195,7 @@ func (t Town) updateTown(request *restful.Request, response *restful.Response) {
 	}
 
 	realTown := Town{}
-	db.First(&realTown, town.ID)
+	db.Debug().First(&realTown, town.ID)
 
 	//cannot find town
 	if realTown.ID == 0 {
@@ -197,7 +205,7 @@ func (t Town) updateTown(request *restful.Request, response *restful.Response) {
 		return
 	}
 	//find town and update
-	db.Model(&realTown).Update(town)
+	db.Debug().Model(&realTown).Update(town)
 	glog.Infof("%s update town with id %d successfully and return", prefix, realTown.ID)
 	response.WriteHeaderAndEntity(http.StatusCreated, realTown)
 	return
@@ -217,7 +225,7 @@ func (t Town) deleteTown(request *restful.Request, response *restful.Response) {
 	}
 
 	town := Town{}
-	db.First(&town, id)
+	db.Debug().First(&town, id)
 	if town.ID == 0 {
 		//town with id doesn't exist, return ok
 		glog.Infof("%s town with id %s doesn't exist, return ok", prefix, town_id)
@@ -225,10 +233,10 @@ func (t Town) deleteTown(request *restful.Request, response *restful.Response) {
 		return
 	}
 
-	db.Delete(&town)
+	db.Debug().Delete(&town)
 
 	realTown := Town{}
-	db.First(&realTown, id)
+	db.Debug().First(&realTown, id)
 
 	if realTown.ID != 0 {
 		//fail to delete town

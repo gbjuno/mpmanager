@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -202,7 +203,7 @@ func getUserOpenId(code string) (string, error) {
 func isUserExist(openId string) bool {
 	// user session is valid
 	user := User{}
-	db.Where("wx_openid = ?", openId).First(&user)
+	db.Debug().Where("wx_openid = ?", openId).First(&user)
 	if user.ID != 0 {
 		return true
 	}
@@ -280,10 +281,10 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := User{}
-	db.Where("wx_openid = ?", openId).First(&user)
+	db.Debug().Where("wx_openid = ?", openId).First(&user)
 	if user.ID != 0 {
 		company := Company{}
-		db.First(&company, user.CompanyId)
+		db.Debug().First(&company, user.CompanyId)
 		glog.Infof("%s openid is related to a user", prefix)
 		// openid is related to a user
 		w.WriteHeader(http.StatusOK)
@@ -340,9 +341,9 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	user := User{}
 	company := Company{}
 
-	db.Where("wx_openid = ?", openId).First(&user)
+	db.Debug().Where("wx_openid = ?", openId).First(&user)
 	if user.ID != 0 {
-		db.First(&company, user.CompanyId)
+		db.Debug().First(&company, user.CompanyId)
 		w.WriteHeader(http.StatusOK)
 		response.Status = true
 		response.Message = fmt.Sprintf("用户%s已成功绑定企业%s，可以进行拍照", user.Name, company.Name)
@@ -364,7 +365,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	glog.Infof("%s, postform data phone %s, password %s", prefix, phone, password)
 
 	user = User{}
-	db.Where("phone = ?", phone).First(&user)
+	db.Debug().Where("phone = ?", phone).First(&user)
 	if user.ID == 0 {
 		glog.Errorf("%s user with phone %s doesn't exist", prefix, phone)
 		response.Status = false
@@ -391,7 +392,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	// password match
 	if password == user.Password {
 		user.WxOpenId = openId
-		db.Save(&user)
+		db.Debug().Save(&user)
 		response.Status = true
 		response.Message = fmt.Sprintf("用户%s首次成功绑定企业%s，可以进行拍照", user.Name, company.Name)
 		returnContent, err := json.Marshal(response)
@@ -496,7 +497,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := User{}
-	db.Where("wx_openid = ?", openId).First(&user)
+	db.Debug().Where("wx_openid = ?", openId).First(&user)
 	if user.ID == 0 {
 		// openid isn't related to a user
 		glog.Infof("%s openid is not related to a user", prefix)
@@ -509,7 +510,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	company := Company{}
-	db.First(&company, user.CompanyId)
+	db.Debug().First(&company, user.CompanyId)
 
 	// openid is related to a user
 	nonceStr := string(rand.NewHex())
@@ -576,7 +577,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := User{}
-	db.Where("wx_openid = ?", openId).First(&user)
+	db.Debug().Where("wx_openid = ?", openId).First(&user)
 	//openid is not related to a user
 	if user.ID == 0 {
 		http.Redirect(w, r, authCodeURL, http.StatusFound)
@@ -593,7 +594,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 
 	place := queryValues.Get("place")
 	monitor_place := MonitorPlace{}
-	db.Where("id = ?", place).First(&monitor_place)
+	db.Debug().Where("id = ?", place).First(&monitor_place)
 	if monitor_place.ID == 0 {
 		//cannot find place
 		glog.Errorf("%s cannot find monitor_place with id %s", place)
@@ -709,7 +710,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	glog.Infof("%s userId %s, placeId %s, serverId %s", userId, placeId, serverId)
 
 	user := User{}
-	db.Where("id = ?", userId).First(&user)
+	db.Debug().Where("id = ?", userId).First(&user)
 	//openid is not related to a user
 	if user.ID == 0 {
 		errmsg := fmt.Sprintf("invalid user id %s, user not found", userId)
@@ -728,7 +729,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	monitor_place := MonitorPlace{}
-	db.Where("id = ?", placeId).First(&monitor_place)
+	db.Debug().Where("id = ?", placeId).First(&monitor_place)
 	if monitor_place.ID == 0 {
 		errmsg := fmt.Sprintf("invalid monitor_place id %s, monitor_place not found", placeId)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -765,20 +766,24 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	timeToday := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 
 	picture := Picture{CreateAt: timeNow, UpdateAt: timeNow, MonitorPlaceId: monitor_place.ID, UserId: user.ID}
-	picture.ThumbPath = fmt.Sprintf("/picture/%s/%d/%d/thumb_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
-	picture.ThumbURI = fmt.Sprintf("/static/picture/%s/%d/%d/thumb_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
-	picture.FullPath = fmt.Sprintf("/picture/%s/%d/%d/full_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
-	picture.FullURI = fmt.Sprintf("/static/picture/%s/%d/%d/full_%d.png", timeToday, monitor_place.CompanyId, monitor_place.ID, picture.ID)
 	if corrective == "false" || corrective == "False" {
 		picture.Corrective = "F"
 	} else {
 		picture.Corrective = "T"
 	}
 
+	hashCode := md5.New()
+	io.WriteString(hashCode, serverId)
+	name := hashCode.Sum(nil)
+	glog.Infof("%s serverId md5hash code %x", prefix, name)
 	//picture save place: /picture/20171206/<monitor_place.CompanyId>/<monitor_place.ID>/full_<picture_id>.png
+	picture.ThumbPath = fmt.Sprintf("/picture/%s/%d/%d/thumb_%x.png", timeToday, monitor_place.CompanyId, monitor_place.ID, name)
+	picture.ThumbURI = fmt.Sprintf("/static/picture/%s/%d/%d/thumb_%x.png", timeToday, monitor_place.CompanyId, monitor_place.ID, name)
+	picture.FullPath = fmt.Sprintf("/picture/%s/%d/%d/full_%x.png", timeToday, monitor_place.CompanyId, monitor_place.ID, name)
+	picture.FullURI = fmt.Sprintf("/static/picture/%s/%d/%d/full_%x.png", timeToday, monitor_place.CompanyId, monitor_place.ID, name)
 	picturePath := imgRepo + picture.FullPath
-	glog.Infof("%s preparing directory", prefix)
 	dir := path.Dir(picturePath)
+	glog.Infof("%s preparing directory %s", prefix, dir)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		glog.Errorf("%s cannot create directory %s", prefix, dir)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -803,7 +808,9 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.Create(&picture)
+	db.Debug().Create(&picture)
+	db.Save(&picture)
+
 	response.Status = true
 	response.Message = "上传成功"
 	returnContent, err := json.Marshal(response)
