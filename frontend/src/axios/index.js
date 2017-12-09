@@ -99,3 +99,9 @@ export const fetchPlaceTypes = (filter={}) => {
     let url = config.PLACETYPE_URL
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
+
+// 统计报表API
+export const fetchSummaries = (filter={}) => {
+    let url = config.SUMMARY_URL
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}

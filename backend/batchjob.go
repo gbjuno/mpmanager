@@ -50,7 +50,7 @@ func refreshSummary() {
 	companies := make([]Company, 0)
 	db.Debug().Where("enable = 'T'").Find(&companies)
 	for _, company := range companies {
-		summary := Summary{Day: todayTime, CompanyId: company.ID, IsFinish: "F"}
+		summary := Summary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, IsFinish: "F"}
 		glog.Infof("%s try to insert summary for company %d, should ignore conflict", prefix, company.ID)
 		db.Debug().Create(&summary)
 	}

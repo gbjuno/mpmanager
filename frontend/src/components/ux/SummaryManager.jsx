@@ -11,18 +11,20 @@ import BreadcrumbCustom from '../BreadcrumbCustom';
 
 
 
-
 class SummaryManager extends React.Component {
     state = {
         selectedRowKeys: [],  // Check here to configure the default column
         loading: false,
-        usersData: [],
-        selectedCompany: '',
-        selectedCompanyId: '',
+        summariesData: [],
+        selectedSummary: '',
+        selectedSummaryId: '',
+        currentPage: 1
     };
+
     componentDidMount() {
         this.start();
     }
+
     start = () => {
         this.setState({ loading: true });
         this.fetchData();
@@ -30,19 +32,19 @@ class SummaryManager extends React.Component {
 
     fetchData = () => {
         const { fetchData } = this.props
+        const { currentPage } = this.state
         let tempTownId
-        fetchData({funcName: 'fetchUsers', stateName: 'usersData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.users === undefined) return
+        fetchData({funcName: 'fetchSummaries',params: {pageNo: currentPage, pageSize: 20}, stateName: 'summariesData'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.summaries === undefined) return
             this.setState({
-                usersData: [...res.data.users.map(val => {
-                    val.key = val.id;
+                summariesData: [...res.data.summaries.map(val => {
+                    val.key = val.company_id;
                     return val;
                 })],
                 loading: false,
             });
         });
     }
-
 
     onSelectChange = (selectedRowKeys) => {
         console.log('selectedRowKeys changed: ', selectedRowKeys);
@@ -60,81 +62,54 @@ class SummaryManager extends React.Component {
         });
     }
 
-    handleAdd = () => {
-        this.setState({
-            usersData: [{
-                key: -1,
-                id: -1,
-                name: '',
-                address: '',
-                country_id: '',
-            }, ...this.state.usersData]
-        });
-    }
-
-    handleDeleteTown = () => {
-        const { fetchData } = this.props
-        const { townSelectedRowKeys } = this.state
-        if(townSelectedRowKeys.length === 0) return
-        fetchData({funcName: 'deleteTown', params: {townId: townSelectedRowKeys[0]}, stateName: 'deleteTownStatus'})
-            .then(res => {
-                console.log('delete town successfully', res)
-                this.fetchTownsData() 
-            }).catch(err => console.log(err));
-    }
-
-    onNewTownSave = (name) => {
-        const { fetchData } = this.props
-        fetchData({funcName: 'newTown', params: {name}, stateName: 'newTownStatus'})
-            .then(res => {
-                console.log('create new town successfully', res)
-                this.fetchTownsData() 
-            }).catch(err => console.log(err));
-        console.log('value--->', name)
-    }
-
     render() {
-
-        const userColumns = [{
-            title: '用户名',
-            dataIndex: 'name',
-            width: 40,
-            render: (text, record) => {
-                return <a href={record.url} target="_blank">{text}</a>
-                
-            }
-        }, {
-            title: '手机号',
-            dataIndex: 'phone',
-            width: 40,
-            render: (text, record) => {
-                return <a href={record.url} target="_blank">{text}</a>
-                
-            }
-        }, {
-            title: '所在公司',
+        const summaryColumns = [{
+                title: '统计日期',
+                dataIndex: 'day',
+                width: 20,
+                render: (text, record) => {
+                    if (record.id === -1){
+                        return ''
+                    }
+                    var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
+                    return createAt.substring(0, createAt.indexOf(' '))
+                }
+            },{
+            title: '公司',
             dataIndex: 'company_name',
-            width: 40,
+            width: 20,
             render: (text, record) => {
-                return <a href={record.url} target="_blank">{text}</a>
-
+                return <a href={record.url} target="_blank">{text}</a>                
             }
-        },{
-            title: '微信号',
-            dataIndex: 'wx_openid',
-            width: 80,
+        }, {
+            title: '是否完成',
+            dataIndex: 'finish',
+            width: 20,
+            render: (text, record) => {
+                var value 
+                if(text == "T") {
+                    value = "是"
+                } else {
+                    value = "否"
+                }
+                return <a href={record.url} target="_blank">{value}</a>                
+            }
+        }, {
+            title: '未完成的拍照地点',
+            dataIndex: 'unfinish_ids',
+            width: 40,
             render: (text, record) => {
                 return <a href={record.url} target="_blank">{text}</a>
             }
         }];
 
-        const { loading, selectedRowKeys, selectedTown,
-            usersData } = this.state;
-        console.log('users ...sss...', usersData)
+        const { loading, selectedRowKeys, selectedTown, summariesData } = this.state;
+        console.log('summaries ...sss...', summariesData)
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
         };
+
         return (
             <div className="gutter-example">
                 <style>
@@ -183,20 +158,12 @@ class SummaryManager extends React.Component {
                       }
                 `}
                 </style>
-                <BreadcrumbCustom first="安监管理" second="用户管理" />
+                <BreadcrumbCustom first="安监管理" second="统计报表" />
                 <Row gutter={16}>
                     <Col className="gutter-row" md={24}>
                         <div className="gutter-box">
-                            <Card title="用户列表" bordered={false}>
-                                <div style={{ marginBottom: 16 }}>
-                                    <Button type="primary" onClick={this.handleAdd}
-                                            disabled={loading} 
-                                    >新增</Button>
-                                    <Button type="primary" onClick={this.handleDeleteTown}
-                                            disabled={loading} 
-                                    >删除</Button>
-                                </div>
-                                <Table rowSelection={rowSelection} columns={userColumns} dataSource={usersData}
+                            <Card title="统计报告" bordered={false}>
+                                <Table columns={summaryColumns} dataSource={summariesData}
                                         onRowClick={this.onRowClick}
                                 />
                             </Card>
@@ -215,6 +182,7 @@ const mapStateToProps = state => {
     } = state.httpData;
     return { townsData };
 };
+
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch)

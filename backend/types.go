@@ -124,6 +124,7 @@ type Summary struct {
 	ID          int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"-"`
 	Day         time.Time `gorm:"column:day;not null;unique_index:day_company;default:NOW()" json:"day"`
 	CompanyId   int       `gorm:"column:company_id;not null;unique_index:day_company" json:"company_id"`
+	CompanyName string    `gorm:"column:company_name;not null" json:"company_name"`
 	IsFinish    string    `gorm:"column:is_finish;string;size:1;not null" json:"finish"`
 	UnfinishIds string    `gorm:"column:unfinish_ids" json:"unfinish_ids"`
 }
