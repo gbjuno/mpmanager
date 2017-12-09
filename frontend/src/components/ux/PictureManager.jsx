@@ -5,11 +5,11 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Row, Col, Card } from 'antd';
+import { fetchData, receiveData } from '../../action';
 import BreadcrumbCustom from '../BreadcrumbCustom';
 import SearchForm from '../forms/SearchForm'
 import PhotoSwipe from 'photoswipe';
 import PhotoswipeUIDefault from 'photoswipe/dist/photoswipe-ui-default';
-import { fetchData, receiveData } from '../../action';
 
 import 'photoswipe/dist/photoswipe.css';
 import 'photoswipe/dist/default-skin/default-skin.css';

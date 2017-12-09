@@ -40,10 +40,55 @@ export const guest = () => get({url: config.MOCK_AUTH_VISITOR});
 
 // 安检图片获取
 export const fetchScPic = (filter={}) => {
-    let url = SECURITY_PIC_URL
-    if(filter.picName !== undefined) url = `${SECURITY_PIC_URL}?picName=${filter.picName}`
+    let url = config.SECURITY_PIC_URL
+    if(filter.picName !== undefined) url = `${config.SECURITY_PIC_URL}?picName=${filter.picName}`
     console.log('url...', url)
     return axios.get(url ,{picName:filter.picName}).then(res => res.data).catch(err => console.log(err));
 }
 
-const SECURITY_PIC_URL = 'http://localhost:8081/pic'
+// 村镇管理API
+
+export const fetchTowns = (filter={}) => {
+    let url = config.TOWN_URL
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
+export const newTown = (town) => {
+    console.log('starting to new a town...');
+    return axios.post(config.TOWN_URL, {...town}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data).catch(err => console.log(err));
+}
+
+export const deleteTown = (town) => {
+    if(town === undefined || town.townId === -1) return
+    return axios.delete(config.TOWN_URL + "/" + town.townId);
+}
+
+export const fetchCountries = (filter={}) => {
+    let url = config.COUNTRY_URL(filter.townId)
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
+
+// 公司管理API
+
+export const fetchCompanies = (filter={}) => {
+    let url = config.COMPANY_URL
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
+
+// 用户管理API
+
+export const fetchUsers = (filter={}) => {
+    let url = config.USER_URL
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
+
+// 地点管理API
+
+export const fetchPlaces = (filter={}) => {
+    let url = config.PLACE_URL
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}

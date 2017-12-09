@@ -14,6 +14,7 @@ import BreadcrumbCustom from '../BreadcrumbCustom';
 class EditableCell extends React.Component {
 
     state = {
+        dataIndex : this.props.dataIndex,
         value: this.props.value,
         editable: true,
     }
@@ -43,11 +44,13 @@ class EditableCell extends React.Component {
                         onChange={this.handleChange}
                         onPressEnter={this.check}
                     />
+                    {/** 
                     <Icon
                         type="check"
                         className="editable-cell-icon-check"
                         onClick={this.check}
                     />
+                    */}
                     </div>
                     :
                     <a target="_blank">{value}</a>
@@ -57,102 +60,63 @@ class EditableCell extends React.Component {
     }
 }
 
-class CountryManager extends React.Component {
+class CompanyManager extends React.Component {
     state = {
-        townSelectedRowKeys: [],  // Check here to configure the default column
-        countrySelectedRowKeys: [],  // Check here to configure the default column
+        selectedRowKeys: [],  // Check here to configure the default column
         loading: false,
-        townsData: [],
-        countriesData: [],
-        selectedTown: '',
-        selectedTownId: '',
+        companiesData: [],
+        selectedCompany: '',
+        selectedCompanyId: '',
     };
     componentDidMount() {
         this.start();
     }
     start = () => {
         this.setState({ loading: true });
-        this.fetchTownsData();
+        this.fetchData();
     };
 
-    fetchTownsData = () => {
+    fetchData = () => {
         const { fetchData } = this.props
         let tempTownId
-        fetchData({funcName: 'fetchTowns', stateName: 'townsData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.towns === undefined) return
-            tempTownId = res.data.towns[0].id
+        fetchData({funcName: 'fetchCompanies', stateName: 'companiesData'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.companies === undefined) return
             this.setState({
-                townsData: [...res.data.towns.map(val => {
-                    val.key = val.id;
-                    return val;
-                })],
-                loading: false,
-                selectedTown: res.data.towns[0].name || '',
-            });
-
-            this.fetchCountriesData(tempTownId);
-        });
-    }
-
-    fetchCountriesData = townId => {
-        if (townId === undefined) return
-        const { fetchData } = this.props
-        fetchData({funcName: 'fetchCountries', stateName: 'countriesData', 
-            params: {townId}}).then(res => {
-            this.setState({
-                countriesData: [...res.data.countries.map(val => {
+                companiesData: [...res.data.companies.map(val => {
                     val.key = val.id;
                     return val;
                 })],
                 loading: false,
             });
-        }).catch(err => {
-            this.setState({
-                countriesData: [],
-            })
         });
     }
 
-    onTownSelectChange = (selectedRowKeys) => {
+
+    onSelectChange = (selectedRowKeys) => {
         console.log('selectedRowKeys changed: ', selectedRowKeys);
         if(selectedRowKeys.length > 0){
             selectedRowKeys = [selectedRowKeys[selectedRowKeys.length-1]]
         }
         
-        this.setState({ townSelectedRowKeys: selectedRowKeys });
+        this.setState({ selectedRowKeys });
     };
 
-    onTownRowClick = (record, index, event) => {
-        console.log('select record...', record)
-        const { townSelectedRowKeys } = this.state
+    onRowClick = (record, index, event) => {
+        const { selectedRowKeys } = this.state
         this.setState({
-            selectedTown: record.name,
-            townSelectedRowKeys: townSelectedRowKeys.length > 0 && 
-                townSelectedRowKeys[0] === record.id ? [] : [record.id],
+            selectedRowKeys: selectedRowKeys.length > 0 && selectedRowKeys[0] === record.id ? [] : [record.id],
         });
-        this.fetchCountriesData(record.id)
     }
 
-    onCountrySelectChange = (selectedRowKeys) => {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
-        if(selectedRowKeys.length > 0){
-            selectedRowKeys = [selectedRowKeys[selectedRowKeys.length-1]]
-        }
-        
-        this.setState({ countrySelectedRowKeys: selectedRowKeys });
-    };
-
-    onCountryRowClick = (record, index, event) => {
-        console.log('select record...', record)
-    }
-
-    handleAddTown = () => {
+    handleAdd = () => {
         this.setState({
-            townsData: [{
+            companiesData: [{
                 key: -1,
                 id: -1,
                 name: '',
-            }, ...this.state.townsData]
+                address: '',
+                country_id: '',
+            }, ...this.state.companiesData]
         });
     }
 
@@ -179,13 +143,35 @@ class CountryManager extends React.Component {
 
     render() {
 
-        const townColumns = [{
-            title: '镇名',
+        const companyColumns = [{
+            title: '公司名',
             dataIndex: 'name',
             width: 40,
             render: (text, record) => {
                 if(record.id === -1){
                     return <EditableCell value={record.name} onChange={this.onNewTownSave} />
+                }else{
+                    return <a href={record.url} target="_blank">{text}</a>
+                }
+            }
+        }, {
+            title: '所在镇',
+            dataIndex: 'country_id',
+            width: 40,
+            render: (text, record) => {
+                if(record.id === -1){
+                    return <EditableCell value={record.country_id} onChange={this.onNewTownSave} />
+                }else{
+                    return <a href={record.url} target="_blank">{text}</a>
+                }
+            }
+        }, {
+            title: '详细地址',
+            dataIndex: 'address',
+            width: 40,
+            render: (text, record) => {
+                if(record.id === -1){
+                    return <EditableCell value={record.address} onChange={this.onNewTownSave} />
                 }else{
                     return <a href={record.url} target="_blank">{text}</a>
                 }
@@ -202,35 +188,13 @@ class CountryManager extends React.Component {
                 return createAt;
             }
         }];
-        
-        const countryColumns = [{
-            title: '村名',
-            dataIndex: 'name',
-            width: 40
-        }, {
-            title: '描述',
-            dataIndex: 'id',
-            width: 80
-        }, {
-            title: '创建时间',
-            dataIndex: 'create_at',
-            width: 80,
-            render: (text, record) => {
-                var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
-                return createAt;
-            }
-        }];
 
-        const { loading, townSelectedRowKeys, countrySelectedRowKeys, selectedTown,
-            townsData, countriesData } = this.state;
-        const townRowSelection = {
-            selectedRowKeys: townSelectedRowKeys,
-            onChange: this.onTownSelectChange,
+        const { loading, selectedRowKeys, selectedTown,
+            companiesData } = this.state;
+        const rowSelection = {
+            selectedRowKeys,
+            onChange: this.onSelectChange,
         };
-        const countryRowSelection = {
-            selectedRowKeys: countrySelectedRowKeys,
-            onChange: this.onCountrySelectChange,
-        }
         return (
             <div className="gutter-example">
                 <style>
@@ -279,37 +243,22 @@ class CountryManager extends React.Component {
                       }
                 `}
                 </style>
-                <BreadcrumbCustom first="安监管理" second="村镇管理" />
+                <BreadcrumbCustom first="安监管理" second="公司管理" />
                 <Row gutter={16}>
-                    <Col className="gutter-row" md={10}>
+                    <Col className="gutter-row" md={24}>
                         <div className="gutter-box">
-                            <Card title="镇列表" bordered={false}>
+                            <Card title="公司列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
-                                    <Button type="primary" onClick={this.handleAddTown}
+                                    <Button type="primary" onClick={this.handleAdd}
                                             disabled={loading} 
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleDeleteTown}
                                             disabled={loading} 
                                     >删除</Button>
                                 </div>
-                                <Table rowSelection={townRowSelection} columns={townColumns} dataSource={townsData} pagination={false}
-                                        onRowClick={this.onTownRowClick}
+                                <Table rowSelection={rowSelection} columns={companyColumns} dataSource={companiesData}
+                                        onRowClick={this.onRowClick}
                                 />
-                            </Card>
-                        </div>
-                    </Col>
-                    <Col className="gutter-row" md={14}>
-                        <div className="gutter-box">
-                            <Card title={`${selectedTown + "-"}村列表`} bordered={false}>
-                                <div style={{ marginBottom: 16 }}>
-                                    <Button type="primary" onClick={this.AddRow}
-                                            disabled={loading} 
-                                    >新增</Button>
-                                    <Button type="primary" onClick={this.start}
-                                            disabled={loading} 
-                                    >删除</Button>
-                                </div>
-                                <Table rowSelection={countryRowSelection} columns={countryColumns} dataSource={countriesData} pagination={false}/>
                             </Card>
                         </div>
                     </Col>
@@ -331,5 +280,5 @@ const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch)
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(CountryManager)
+export default connect(mapStateToProps, mapDispatchToProps)(CompanyManager)
 
