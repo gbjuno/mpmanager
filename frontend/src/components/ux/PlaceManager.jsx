@@ -161,7 +161,7 @@ class PlaceManager extends React.Component {
             const imgsTag = this.generateCard(imgs)
             return (
             <div>
-                <div>{placeDataWithType.name}</div>
+                <h2>{placeDataWithType.placeTypeName}</h2>
                 <Row gutter={20}>
                     <Col className="gutter-row" md={4}>
                         {imgsTag[0]}

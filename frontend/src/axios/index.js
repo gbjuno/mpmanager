@@ -73,7 +73,7 @@ export const fetchCountries = (filter={}) => {
 // 公司管理API
 
 export const fetchCompanies = (filter={}) => {
-    let url = config.COMPANY_URL
+    let url = `${config.COMPANY_URL}?pageNo=${filter.pageNo}&pageSize=${filter.pageSize}`
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 

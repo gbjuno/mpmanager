@@ -70,20 +70,23 @@ class SiderCustom extends Component {
                     openKeys={this.state.firstHide ? null : [this.state.openKey]}
                     onOpenChange={this.openMenu}
                 >
+                    {/**
                     <Menu.Item key="/app/dashboard/index">
                         <Link to={'/app/dashboard/index'}><Icon type="mobile" /><span className="nav-text">首页</span></Link>
                     </Menu.Item>
+                    */}
                     <SubMenu
                         key="/app/ux"
                         title={<span><Icon type="scan" /><span className="nav-text">安监管理</span></span>}
                     >
+                        <Menu.Item key="/app/ux/tp"><Link to={'/app/ux/tp'}>图片管理</Link></Menu.Item>
                         <Menu.Item key="/app/ux/cz"><Link to={'/app/ux/cz'}>村镇管理</Link></Menu.Item>
                         <Menu.Item key="/app/ux/gs"><Link to={'/app/ux/gs'}>公司管理</Link></Menu.Item>
                         <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}>用户管理</Link></Menu.Item>
                         <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}>地点管理</Link></Menu.Item>
-                        <Menu.Item key="/app/ux/tp"><Link to={'/app/ux/tp'}>图片管理</Link></Menu.Item>
                         <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}>统计报表</Link></Menu.Item>
                     </SubMenu>
+                    {/**
                     <SubMenu
                         key="/app/ui"
                         title={<span><Icon type="scan" /><span className="nav-text">UI</span></span>}
@@ -145,6 +148,7 @@ class SiderCustom extends Component {
                         <Menu.Item key="/app/auth/basic"><Link to={'/app/auth/basic'}>基础演示</Link></Menu.Item>
                         <Menu.Item key="/app/auth/routerEnter"><Link to={'/app/auth/routerEnter'}>路由拦截</Link></Menu.Item>
                     </SubMenu>
+                    */}
                 </Menu>
                 <style>
                     {`
