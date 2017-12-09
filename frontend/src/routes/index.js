@@ -32,6 +32,7 @@ import CountryManager from '../components/ux/CountryManager';
 import CompanyManager from '../components/ux/CompanyManager';
 import PlaceManager from '../components/ux/PlaceManager';
 import UserManager from '../components/ux/UserManager';
+import SummaryManager from '../components/ux/SummaryManager';
 
 const Wysiwyg = (location, cb) => {     // 按需加载富文本配置
     require.ensure([], require => {
@@ -70,6 +71,7 @@ export default class CRouter extends Component {
                             <Route path={'gs'} component={CompanyManager} />
                             <Route path={'dd'} component={PlaceManager} />
                             <Route path={'yh'} component={UserManager} />
+                            <Route path={'tj'} component={SummaryManager} />
                         </Route>
                         <Route path={'ui'}>
                             <Route path={'icons'} component={Icons} />

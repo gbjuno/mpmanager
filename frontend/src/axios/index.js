@@ -92,3 +92,10 @@ export const fetchPlaces = (filter={}) => {
     let url = config.PLACE_URL
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
+
+// 地点类型管理API
+
+export const fetchPlaceTypes = (filter={}) => {
+    let url = config.PLACETYPE_URL
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}

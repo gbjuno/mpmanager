@@ -8,6 +8,7 @@ import { Row, Col, Card } from 'antd';
 import { fetchData, receiveData } from '../../action';
 import BreadcrumbCustom from '../BreadcrumbCustom';
 import PlaceSearch from './search/PlaceSearch'
+import * as config from '../../axios/config'
 import PhotoSwipe from 'photoswipe';
 import PhotoswipeUIDefault from 'photoswipe/dist/photoswipe-ui-default';
 
@@ -16,11 +17,20 @@ import 'photoswipe/dist/default-skin/default-skin.css';
 
 class PlaceManager extends React.Component {
     state = {
+        placeTypes: [],
         placesData: [],
+        placesDataWithType: [],
         rate: 1,
         responsive: false,
+        placeTypeLoading: false,
     };
+
+    componentWillUnmount = () => {
+        
+    };
+
     componentDidMount = () => {
+        this.setState({ placeTypeLoading: true });
         this.resizePicture();
         const clientWidth = document.body.clientWidth;
         if(clientWidth <= 992) {
@@ -41,20 +51,47 @@ class PlaceManager extends React.Component {
             
         };
 
-        this.fetchData();
+        this.fetchPlaceType();        
     };
 
-    fetchData = () => {
+    fetchPlaceType = () => {
         const { fetchData } = this.props
         let tempTownId
-        fetchData({funcName: 'fetchPlaces', stateName: 'placesData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
+        fetchData({funcName: 'fetchPlaceTypes', stateName: 'placeTypes'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.monitor_types === undefined) return
             this.setState({
-                placesData: [...res.data.monitor_places.map(val => {
+                placeTypes: [...res.data.monitor_types.map(val => {
                     val.key = val.id;
                     return val;
                 })],
-                loading: false,
+                placeTypeLoading: false,
+            }, () => {
+                this.fetchPlaceData();
+            });
+        });
+    }
+
+    fetchPlaceData = () => {
+        const { fetchData } = this.props
+        const { placeTypeLoading, placeTypes } = this.state
+        fetchData({funcName: 'fetchPlaces', stateName: 'placesData'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
+            let placesDataWithType = []
+            for(let placeType of placeTypes){
+                console.log('placeType.id', placeType.id)
+                placesDataWithType.push(
+                    {
+                    placeTypeId: placeType.id,
+                    placeTypeName: placeType.name,
+                    placesData: [...res.data.monitor_places.map(val => {
+                            val.key = val.id;
+                            return val;
+                        }).filter(val => val.monitor_type_id === placeType.id)],
+                    }
+                );
+            }
+            this.setState({
+                placesDataWithType,
             });
         });
     }
@@ -62,8 +99,7 @@ class PlaceManager extends React.Component {
     componentDidUpdate = (nextProps, nextState) => {
     };
 
-    componentWillUnmount = () => {
-    };
+    
 
 
     resizePicture = () => {
@@ -97,31 +133,32 @@ class PlaceManager extends React.Component {
         return matrix
     };
 
-    render() {
-        const { rate, responsive, placesData } = this.state
-        console.log('before transposition...', placesData)
-        const imgs = this.transpositionToMatrix( placesData);
-        console.log('all places---> imy', imgs)
-        const standardHeight = 430
-        const imgsTag = imgs.map(v1 => (
-            v1.map(v2 => (
-                <div key={v2.id} className="gutter-box" style={responsive? {}: {height: standardHeight * rate + 80}}>
-                    <Card bordered={false} bodyStyle={responsive? {padding: 0}: { padding: 0, height: standardHeight * rate + 60}}>
-                        <div>
-                            <img style={responsive? {}: {height: standardHeight * rate}} onClick={() => {}} alt="example" width="100%" src={v2.src} />
-                        </div>
-                        <div className="pa-m">
-                            <h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.name}</span></h3>
-                            <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.createAt}</span></a></small>
-                        </div>
-                    </Card>
-                </div>
+    generateCard = imgs => imgs.map(v1 => (
+        v1.map(v2 => (
+            <div key={v2.id} className="gutter-box" style={responsive? {}: {height: standardHeight * rate + 80}}>
+                <Card bordered={false} bodyStyle={responsive? {padding: 0}: { padding: 0, height: standardHeight * rate + 60}}>
+                    <div>
+                        <img style={responsive? {}: {height: standardHeight * rate}} onClick={() => {}} 
+                            alt="example" width="100%" src={config.SERVER_ROOT + v2.qrcode_uri} />
+                    </div>
+                    <div className="pa-m">
+                        <h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.name}</span></h3>
+                        <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.create_at}</span></a></small>
+                    </div>
+                </Card>
+            </div>
             ))
-        ));
-        return (
-            <div id="placeQRs" className="gutter-example button-demo">
-                <BreadcrumbCustom first="安监管理" second="地点管理" />
-                <PlaceSearch style={{paddingBottom: 13}} fetchData={fetchData}/>
+        ))
+
+    render() {
+        const { rate, responsive, placeTypes, placesData, placesDataWithType } = this.state
+        console.log('placesDataWithType...', placesDataWithType)
+        console.log('placeTypes...', placeTypes)
+        let placeGrids = placesDataWithType.map(placeDataWithType => {
+            let imgsTag = this.transpositionToMatrix( placeDataWithType.placesData);
+            return (
+            <div>
+                <div>{placeDataWithType.name}</div>
                 <Row gutter={20}>
                     <Col className="gutter-row" md={4}>
                         {imgsTag[0]}
@@ -142,6 +179,16 @@ class PlaceManager extends React.Component {
                         {imgsTag[5]}
                     </Col>
                 </Row>
+            </div>
+            )
+        })
+        const standardHeight = 300
+        const imgsTag = this.generateCard(imgs)
+        return (
+            <div id="placeQRs" className="gutter-example button-demo">
+                <BreadcrumbCustom first="安监管理" second="地点管理" />
+                <PlaceSearch style={{paddingBottom: 13}} fetchData={fetchData}/>
+                {placeGrids}
                 <style>{`
                     .ant-card-body img {
                         cursor: pointer;
