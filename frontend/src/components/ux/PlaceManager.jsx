@@ -23,6 +23,7 @@ class PlaceManager extends React.Component {
         rate: 1,
         responsive: false,
         placeTypeLoading: false,
+        standardHeight: 300
     };
 
     componentWillUnmount = () => {
@@ -135,10 +136,10 @@ class PlaceManager extends React.Component {
 
     generateCard = imgs => imgs.map(v1 => (
         v1.map(v2 => (
-            <div key={v2.id} className="gutter-box" style={responsive? {}: {height: standardHeight * rate + 80}}>
-                <Card bordered={false} bodyStyle={responsive? {padding: 0}: { padding: 0, height: standardHeight * rate + 60}}>
+            <div key={v2.id} className="gutter-box" style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate + 80}}>
+                <Card bordered={false} bodyStyle={this.state.responsive? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
                     <div>
-                        <img style={responsive? {}: {height: standardHeight * rate}} onClick={() => {}} 
+                        <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} onClick={() => {}} 
                             alt="example" width="100%" src={config.SERVER_ROOT + v2.qrcode_uri} />
                     </div>
                     <div className="pa-m">
@@ -155,7 +156,9 @@ class PlaceManager extends React.Component {
         console.log('placesDataWithType...', placesDataWithType)
         console.log('placeTypes...', placeTypes)
         let placeGrids = placesDataWithType.map(placeDataWithType => {
-            let imgsTag = this.transpositionToMatrix( placeDataWithType.placesData);
+            let imgs = this.transpositionToMatrix( placeDataWithType.placesData);
+            
+            const imgsTag = this.generateCard(imgs)
             return (
             <div>
                 <div>{placeDataWithType.name}</div>
@@ -182,8 +185,7 @@ class PlaceManager extends React.Component {
             </div>
             )
         })
-        const standardHeight = 300
-        const imgsTag = this.generateCard(imgs)
+        
         return (
             <div id="placeQRs" className="gutter-example button-demo">
                 <BreadcrumbCustom first="安监管理" second="地点管理" />
