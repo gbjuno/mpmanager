@@ -11,7 +11,7 @@ function hasErrors(fieldsError) {
     return Object.keys(fieldsError).some(field => fieldsError[field]);
 }
 
-class SearchForm extends Component {
+class PictureSearch extends Component {
     componentDidMount() {
         // To disabled submit button at the beginning.
         this.props.form.validateFields();
@@ -62,4 +62,4 @@ class SearchForm extends Component {
 }
 
 
-export default Form.create()(SearchForm);
+export default Form.create()(PictureSearch);

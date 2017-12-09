@@ -27,6 +27,14 @@ class EditableCell extends React.Component {
             this.props.onChange(this.state.value);
         }
     }
+
+    close = () => {
+        this.setState({ editable: false });
+        if (this.props.onCancel) {
+            this.props.onCancel();
+        }
+    }
+
     edit = () => {
         this.setState({ editable: true });
     }
@@ -47,6 +55,11 @@ class EditableCell extends React.Component {
                         type="check"
                         className="editable-cell-icon-check"
                         onClick={this.check}
+                    />
+                    <Icon
+                        type="close"
+                        className="editable-cell-icon-close"
+                        onClick={this.close}
                     />
                     </div>
                     :
@@ -144,6 +157,11 @@ class CountryManager extends React.Component {
 
     onCountryRowClick = (record, index, event) => {
         console.log('select record...', record)
+        const { countrySelectedRowKeys } = this.state
+        this.setState({
+            countrySelectedRowKeys: countrySelectedRowKeys.length > 0 &&
+                countrySelectedRowKeys[0] === record.id ? [] : [record.id],
+        })
     }
 
     handleAddTown = () => {
@@ -154,6 +172,17 @@ class CountryManager extends React.Component {
                 name: '',
             }, ...this.state.townsData]
         });
+    }
+
+    handleCancelEditTown = () => {
+        let tmpTownsData = [...this.state.townsData.filter(item => item.id !== -1)]
+        console.log('tmpTownsData', tmpTownsData)
+        alert(tmpTownsData[0].name)
+        this.setState({
+            townsData: tmpTownsData,
+            selectedTown: tmpTownsData[0].name,
+            selectedTownId: tmpTownsData[0].id,
+        })
     }
 
     handleDeleteTown = () => {
@@ -177,6 +206,37 @@ class CountryManager extends React.Component {
         console.log('value--->', name)
     }
 
+    handleAddCountry = () => {
+        this.setState({
+            townsData: [{
+                key: -1,
+                id: -1,
+                name: '',
+            }, ...this.state.townsData]
+        });
+    }
+
+    handleDeleteCountry = () => {
+        const { fetchData } = this.props
+        const { townSelectedRowKeys } = this.state
+        if(townSelectedRowKeys.length === 0) return
+        fetchData({funcName: 'deleteTown', params: {townId: townSelectedRowKeys[0]}, stateName: 'deleteTownStatus'})
+            .then(res => {
+                console.log('delete town successfully', res)
+                this.fetchTownsData() 
+            }).catch(err => console.log(err));
+    }
+
+    onNewCountrySave = (name) => {
+        const { fetchData } = this.props
+        fetchData({funcName: 'newTown', params: {name}, stateName: 'newTownStatus'})
+            .then(res => {
+                console.log('create new town successfully', res)
+                this.fetchTownsData() 
+            }).catch(err => console.log(err));
+        console.log('value--->', name)
+    }
+
     render() {
 
         const townColumns = [{
@@ -185,7 +245,7 @@ class CountryManager extends React.Component {
             width: 40,
             render: (text, record) => {
                 if(record.id === -1){
-                    return <EditableCell value={record.name} onChange={this.onNewTownSave} />
+                    return <EditableCell value={record.name} onChange={this.onNewTownSave} onCancel={this.handleCancelEditTown}/>
                 }else{
                     return <a href={record.url} target="_blank">{text}</a>
                 }
@@ -207,10 +267,6 @@ class CountryManager extends React.Component {
             title: '村名',
             dataIndex: 'name',
             width: 40
-        }, {
-            title: '描述',
-            dataIndex: 'id',
-            width: 80
         }, {
             title: '创建时间',
             dataIndex: 'create_at',
@@ -241,7 +297,7 @@ class CountryManager extends React.Component {
                       
                       .editable-cell-input-wrapper,
                       .editable-cell-text-wrapper {
-                        padding-right: 24px;
+                        padding-right: 44px;
                       }
                       
                       .editable-cell-text-wrapper {
@@ -250,6 +306,13 @@ class CountryManager extends React.Component {
                       
                       .editable-cell-icon,
                       .editable-cell-icon-check {
+                        position: absolute;
+                        right: 20px;
+                        width: 20px;
+                        cursor: pointer;
+                      }
+
+                      .editable-cell-icon-close {
                         position: absolute;
                         right: 0;
                         width: 20px;
@@ -261,7 +324,8 @@ class CountryManager extends React.Component {
                         display: none;
                       }
                       
-                      .editable-cell-icon-check {
+                      .editable-cell-icon-check,
+                      .editable-cell-icon-close {
                         line-height: 28px;
                       }
                       
@@ -281,7 +345,7 @@ class CountryManager extends React.Component {
                 </style>
                 <BreadcrumbCustom first="安监管理" second="村镇管理" />
                 <Row gutter={16}>
-                    <Col className="gutter-row" md={10}>
+                    <Col className="gutter-row" md={12}>
                         <div className="gutter-box">
                             <Card title="镇列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
@@ -298,18 +362,19 @@ class CountryManager extends React.Component {
                             </Card>
                         </div>
                     </Col>
-                    <Col className="gutter-row" md={14}>
+                    <Col className="gutter-row" md={12}>
                         <div className="gutter-box">
                             <Card title={`${selectedTown + "-"}村列表`} bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
-                                    <Button type="primary" onClick={this.AddRow}
+                                    <Button type="primary" onClick={this.handleAddCountry}
                                             disabled={loading} 
                                     >新增</Button>
                                     <Button type="primary" onClick={this.start}
                                             disabled={loading} 
                                     >删除</Button>
                                 </div>
-                                <Table rowSelection={countryRowSelection} columns={countryColumns} dataSource={countriesData} pagination={false}/>
+                                <Table rowSelection={countryRowSelection} columns={countryColumns} dataSource={countriesData} pagination={false}
+                                        onRowClick={this.onCountryRowClick}/>
                             </Card>
                         </div>
                     </Col>

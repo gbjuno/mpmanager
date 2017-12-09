@@ -809,7 +809,7 @@
       } else {
         var loadFn = function() {
           document.removeEventListener("DOMContentLoaded", loadFn, false)
-          fn()
+          //TODO fn()
         }
         document.addEventListener("DOMContentLoaded", loadFn, false)
       }

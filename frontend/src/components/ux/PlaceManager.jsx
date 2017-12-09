@@ -144,12 +144,12 @@ class PlaceManager extends React.Component {
                     </div>
                     <div className="pa-m">
                         <h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.name}</span></h3>
-                        <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.create_at}</span></a></small>
+                        <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.create_at.substring(0, 10)}</span></a></small>
                     </div>
                 </Card>
             </div>
-            ))
         ))
+    ))
 
     render() {
         const { rate, responsive, placeTypes, placesData, placesDataWithType } = this.state
@@ -160,7 +160,7 @@ class PlaceManager extends React.Component {
             
             const imgsTag = this.generateCard(imgs)
             return (
-            <div>
+            <div key={placeDataWithType.placeTypeId}>
                 <h2>{placeDataWithType.placeTypeName}</h2>
                 <Row gutter={20}>
                     <Col className="gutter-row" md={4}>
