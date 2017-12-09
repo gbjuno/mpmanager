@@ -12,6 +12,7 @@ import (
 	"gopkg.in/chanxuehong/wechat.v2/mp/menu"
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/callback/request"
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/callback/response"
+	msgTemplate "gopkg.in/chanxuehong/wechat.v2/mp/message/template"
 	"html/template"
 	"io"
 	"net/http"
@@ -35,6 +36,7 @@ const (
 	wxOriId           = "gh_75a8e6a73da5"
 	wxToken           = "wechatcms"
 	wxEncodedAESKey   = "aeskeyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+	wxTemplateId      = "c4VfrtkOm_RXwv-1AFw8EX-_BTtttGGt1tWnHXLPpHA"
 	noticePageSuccess = "success"
 	noticePagefail    = "warn"
 )
@@ -62,6 +64,17 @@ type NoticePage struct {
 func WechatBackendInit() {
 	prefix := fmt.Sprintf("[%s]", "WechatBackendInit")
 	glog.Infof("%s initialization", prefix)
+
+	token, _ := wechatClient.Token()
+	glog.Infof("%s get token %s", prefix, token)
+	templates, _ := msgTemplate.GetAllPrivateTemplate(wechatClient)
+	for _, t := range templates {
+		glog.Infof("%s get template message template id %s", prefix, t.TemplateId)
+	}
+
+	token, _ = wechatClient.Token()
+	glog.Infof("%s get token %s", prefix, token)
+	sendTemplateMsg()
 
 	if wechatMenu, _, err := menu.Get(wechatClient); err != nil {
 		glog.Errorf("%s cannot get menu, err %s", prefix, err)
@@ -101,13 +114,17 @@ func createMenu() {
 	scanqrcodeRedirectURI := fmt.Sprintf(redirectURIPrefix, "scanqrcode")
 	scanqrcodeState := "scanqrcode"
 	scanqrcodeURI := mpoauth2.AuthCodeURL(wxAppId, scanqrcodeRedirectURI, oauth2Scope, scanqrcodeState)
-	scanqrcodeButton.SetAsViewButton("拍    照", scanqrcodeURI)
+	scanqrcodeButton.SetAsViewButton("扫描拍照", scanqrcodeURI)
 	glog.Infof("set Button scanqrcode for uri %s, wechat redirecturi %s", scanqrcodeRedirectURI, scanqrcodeURI)
 
-	checkButton := &menu.Button{}
-	checkButton.SetAsClickButton("检查进度", "CL_CHECKPROGRESS")
-	wechatMenu := &menu.Menu{Buttons: []menu.Button{*bindingButton, *scanqrcodeButton, *checkButton}}
+	companystatButton := &menu.Button{}
+	companystatRedirectURI := fmt.Sprintf(redirectURIPrefix, "companystat")
+	companystatState := "companystat"
+	companystatURI := mpoauth2.AuthCodeURL(wxAppId, companystatRedirectURI, oauth2Scope, companystatState)
+	companystatButton.SetAsViewButton("检查进度", companystatURI)
+	glog.Infof("set Button companystat for uri %s, wechat redirecturi %s", companystatRedirectURI, companystatURI)
 
+	wechatMenu := &menu.Menu{Buttons: []menu.Button{*bindingButton, *scanqrcodeButton, *companystatButton}}
 	if err := menu.Create(wechatClient, wechatMenu); err != nil {
 		glog.Fatalf("cannot connect with weixin server, err %s", err)
 	}
@@ -822,5 +839,107 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, string(returnContent))
+
+	//update today summary
+	ts := TodaySummary{}
+	condition := fmt.Sprintf("day = str_to_date(%s, '%%Y%%m%%d')", timeToday)
+	db.Debug().Where(condition).Where("monitor_place_id = ?", monitor_place.ID).First(&ts)
+	db.Debug().Model(&ts).Update(TodaySummary{IsUpload: "T"})
+	glog.Infof("%s update today summary of monitor_place %d is_upload", prefix, monitor_place.ID)
+	return
+}
+
+func companystatHandler(w http.ResponseWriter, r *http.Request) {
+	prefix := fmt.Sprintf("[%s]", "photoHandler")
+	glog.Infof("%s %s %s", prefix, r.Method, r.RequestURI)
+
+	oauth2RedirectURI := fmt.Sprintf("https://%s/backend/companystat", domain)
+	oauth2Scope := "snsapi_base"
+	oauth2State := "companystat"
+	AuthCodeURL := mpoauth2.AuthCodeURL(wxAppId, oauth2RedirectURI, oauth2Scope, oauth2State)
+
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		glog.Errorf("%s cannot parse url querystring, err %s", prefix, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	code := queryValues.Get("code")
+	state := queryValues.Get("state")
+
+	//request isn't redirected by wechat, return notice page
+	if code == "" || state == "" {
+		glog.Infof("%s request isn't redirect by weixin, return notice page")
+		http.Redirect(w, r, AuthCodeURL, http.StatusFound)
+		return
+	}
+
+	var openId string
+	var sid string
+	var validSession bool = false
+
+	cookie, err := r.Cookie("sid")
+	//no cookie sid
+	if err == nil {
+		glog.Infof("%s get cookie sid %s", prefix, cookie.Value)
+		openId, err = parseSession(cookie.Value)
+		if err == nil {
+			validSession = true
+			glog.Infof("%s session is valid, user openid %s", prefix, openId)
+		}
+	} else {
+		glog.Infof("%s no cookie sid", prefix)
+	}
+
+	//cookie is not exist or invalid cookie
+	if !validSession {
+		glog.Infof("%s cookie not exist or invalid cookie, generating newOne", prefix)
+		//get openid
+		openId, err = getUserOpenId(code)
+		if err != nil {
+			glog.Errorf("%s cannot get user openid from wechat, err %s", prefix, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		glog.Infof("%s get user openid %s", prefix, openId)
+
+		//set session
+		sid, err = newSession(openId)
+		if err != nil {
+			glog.Errorf("%s cannot get new session, err %s", prefix, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		cookie := http.Cookie{
+			Name:     "sid",
+			Value:    sid,
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &cookie)
+		glog.Infof("%s new session create for user with openid %s", prefix, openId)
+	}
+
+	user := User{}
+	db.Debug().Where("wx_openid = ?", openId).First(&user)
+	if user.ID == 0 {
+		// openid isn't related to a user
+		glog.Infof("%s openid is not related to a user", prefix)
+		msgbody := "在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢"
+		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
+		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
+		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
+		return
+	}
+
+	cs, _ := getTodaySummaryWithCompanyId(user.CompanyId)
+
+	w.WriteHeader(http.StatusOK)
+	companystatTmpl := template.Must(template.New("companystat").Parse(myTemplate.COMPANYSTAT))
+	companystatTmpl.Execute(w, cs)
+	companystatTmpl.Execute(os.Stdout, cs)
+	glog.Infof("%s end of companystat", prefix)
 	return
 }

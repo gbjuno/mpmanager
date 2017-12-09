@@ -96,6 +96,12 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		searchCompany.Find(&companyList.Companies)
 
 		companyList.Count = len(companyList.Companies)
+		for i, _ := range companyList.Companies {
+			country := Country{}
+			db.Debug().First(&country, companyList.Companies[i].CountryId)
+			companyList.Companies[i].CountryName = country.Name
+		}
+
 		response.WriteHeaderAndEntity(http.StatusOK, companyList)
 		glog.Infof("%s return company list", prefix)
 		return
@@ -119,6 +125,10 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return
 	}
+
+	country := Country{}
+	db.Debug().First(&country, company.CountryId)
+	company.CountryName = country.Name
 
 	//find company
 	if scope == "" {
