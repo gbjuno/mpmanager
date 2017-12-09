@@ -11,8 +11,8 @@ import (
 )
 
 type SummaryList struct {
-	Count    int       `json:"count"`
-	Summarys []Summary `json:"summarys"`
+	Count     int       `json:"count"`
+	Summaries []Summary `json:"summaries"`
 }
 
 func (s Summary) Register(container *restful.Container) {
@@ -105,9 +105,9 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 
 	//get summary list
 	summaryList := SummaryList{}
-	summaryList.Summarys = make([]Summary, 0)
-	searchDB.Find(&summaryList.Summarys)
-	summaryList.Count = len(summaryList.Summarys)
+	summaryList.Summaries = make([]Summary, 0)
+	searchDB.Find(&summaryList.Summaries)
+	summaryList.Count = len(summaryList.Summaries)
 	glog.Infof("%s return all summary list", prefix)
 	response.WriteHeaderAndEntity(http.StatusOK, summaryList)
 	return

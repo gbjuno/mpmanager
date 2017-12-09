@@ -26,8 +26,8 @@ type CompanySummary struct {
 }
 
 type CompanySummaryList struct {
-	Count          int               `json:"count"`
-	CompanySummary []*CompanySummary `json:"company_summary"`
+	Count            int               `json:"count"`
+	CompanySummaries []*CompanySummary `json:"company_summaries"`
 }
 
 func getTodaySummaryWithCompanyId(company_id int) (*CompanySummary, error) {
@@ -208,9 +208,9 @@ func (s TodaySummary) findTodaySummary(request *restful.Request, response *restf
 
 	csl := CompanySummaryList{}
 	csl.Count = len(company_CompanySummaryMap)
-	csl.CompanySummary = make([]*CompanySummary, 0)
+	csl.CompanySummaries = make([]*CompanySummary, 0)
 	for _, c := range companies {
-		csl.CompanySummary = append(csl.CompanySummary, company_CompanySummaryMap[c.ID])
+		csl.CompanySummaries = append(csl.CompanySummaries, company_CompanySummaryMap[c.ID])
 	}
 
 	glog.Infof("%s return all today_summary list", prefix)
