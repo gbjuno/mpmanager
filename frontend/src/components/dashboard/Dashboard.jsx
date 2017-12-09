@@ -6,7 +6,7 @@ import { Row, Col, Card, Timeline, Icon } from 'antd';
 import BreadcrumbCustom from '../BreadcrumbCustom';
 import EchartsViews from './EchartsViews';
 import EchartsProjects from './EchartsProjects';
-import b1 from '../../style/imgs/b1.jpg';
+import b1 from '../../style/imgs/b2.png';
 
 
 class Dashboard extends React.Component {

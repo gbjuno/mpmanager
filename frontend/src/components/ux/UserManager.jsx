@@ -43,11 +43,13 @@ class EditableCell extends React.Component {
                         onChange={this.handleChange}
                         onPressEnter={this.check}
                     />
+                    {/** 
                     <Icon
                         type="check"
                         className="editable-cell-icon-check"
                         onClick={this.check}
                     />
+                    */}
                     </div>
                     :
                     <a target="_blank">{value}</a>
@@ -57,102 +59,63 @@ class EditableCell extends React.Component {
     }
 }
 
-class CountryManager extends React.Component {
+class UserManager extends React.Component {
     state = {
-        townSelectedRowKeys: [],  // Check here to configure the default column
-        countrySelectedRowKeys: [],  // Check here to configure the default column
+        selectedRowKeys: [],  // Check here to configure the default column
         loading: false,
-        townsData: [],
-        countriesData: [],
-        selectedTown: '',
-        selectedTownId: '',
+        usersData: [],
+        selectedCompany: '',
+        selectedCompanyId: '',
     };
     componentDidMount() {
         this.start();
     }
     start = () => {
         this.setState({ loading: true });
-        this.fetchTownsData();
+        this.fetchData();
     };
 
-    fetchTownsData = () => {
+    fetchData = () => {
         const { fetchData } = this.props
         let tempTownId
-        fetchData({funcName: 'fetchTowns', stateName: 'townsData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.towns === undefined) return
-            tempTownId = res.data.towns[0].id
+        fetchData({funcName: 'fetchUsers', stateName: 'usersData'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.users === undefined) return
             this.setState({
-                townsData: [...res.data.towns.map(val => {
-                    val.key = val.id;
-                    return val;
-                })],
-                loading: false,
-                selectedTown: res.data.towns[0].name || '',
-            });
-
-            this.fetchCountriesData(tempTownId);
-        });
-    }
-
-    fetchCountriesData = townId => {
-        if (townId === undefined) return
-        const { fetchData } = this.props
-        fetchData({funcName: 'fetchCountries', stateName: 'countriesData', 
-            params: {townId}}).then(res => {
-            this.setState({
-                countriesData: [...res.data.countries.map(val => {
+                usersData: [...res.data.users.map(val => {
                     val.key = val.id;
                     return val;
                 })],
                 loading: false,
             });
-        }).catch(err => {
-            this.setState({
-                countriesData: [],
-            })
         });
     }
 
-    onTownSelectChange = (selectedRowKeys) => {
+
+    onSelectChange = (selectedRowKeys) => {
         console.log('selectedRowKeys changed: ', selectedRowKeys);
         if(selectedRowKeys.length > 0){
             selectedRowKeys = [selectedRowKeys[selectedRowKeys.length-1]]
         }
         
-        this.setState({ townSelectedRowKeys: selectedRowKeys });
+        this.setState({ selectedRowKeys });
     };
 
-    onTownRowClick = (record, index, event) => {
-        console.log('select record...', record)
-        const { townSelectedRowKeys } = this.state
+    onRowClick = (record, index, event) => {
+        const { selectedRowKeys } = this.state
         this.setState({
-            selectedTown: record.name,
-            townSelectedRowKeys: townSelectedRowKeys.length > 0 && 
-                townSelectedRowKeys[0] === record.id ? [] : [record.id],
+            selectedRowKeys: selectedRowKeys.length > 0 && selectedRowKeys[0] === record.id ? [] : [record.id],
         });
-        this.fetchCountriesData(record.id)
     }
 
-    onCountrySelectChange = (selectedRowKeys) => {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
-        if(selectedRowKeys.length > 0){
-            selectedRowKeys = [selectedRowKeys[selectedRowKeys.length-1]]
-        }
-        
-        this.setState({ countrySelectedRowKeys: selectedRowKeys });
-    };
-
-    onCountryRowClick = (record, index, event) => {
-        console.log('select record...', record)
-    }
-
-    handleAddTown = () => {
+    handleAdd = () => {
         this.setState({
-            townsData: [{
+            usersData: [{
                 key: -1,
                 id: -1,
                 name: '',
-            }, ...this.state.townsData]
+                address: '',
+                country_id: '',
+            }, ...this.state.usersData]
         });
     }
 
@@ -179,8 +142,8 @@ class CountryManager extends React.Component {
 
     render() {
 
-        const townColumns = [{
-            title: '镇名',
+        const userColumns = [{
+            title: '用户名',
             dataIndex: 'name',
             width: 40,
             render: (text, record) => {
@@ -191,46 +154,54 @@ class CountryManager extends React.Component {
                 }
             }
         }, {
-            title: '创建时间',
-            dataIndex: 'create_at',
-            width: 80,
+            title: '手机号',
+            dataIndex: 'phone',
+            width: 40,
             render: (text, record) => {
-                if (record.id === -1){
-                    return ''
+                if(record.id === -1){
+                    return <EditableCell value={record.country_id} onChange={this.onNewTownSave} />
+                }else{
+                    return <a href={record.url} target="_blank">{text}</a>
                 }
-                var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
-                return createAt;
             }
-        }];
-        
-        const countryColumns = [{
-            title: '村名',
-            dataIndex: 'name',
-            width: 40
         }, {
-            title: '描述',
-            dataIndex: 'id',
-            width: 80
+            title: '职位',
+            dataIndex: 'job',
+            width: 40,
+            render: (text, record) => {
+                if(record.id === -1){
+                    return <EditableCell value={record.address} onChange={this.onNewTownSave} />
+                }else{
+                    return <a href={record.url} target="_blank">{text}</a>
+                }
+            }
         }, {
-            title: '创建时间',
-            dataIndex: 'create_at',
+            title: '所在公司',
+            dataIndex: 'company_name',
+            width: 40,
+            render: (text, record) => {
+                if(record.id === -1){
+                    return <EditableCell value={record.address} onChange={this.onNewTownSave} />
+                }else{
+                    return <a href={record.url} target="_blank">{text}</a>
+                }
+            }
+        },{
+            title: '微信号',
+            dataIndex: 'wx_openid',
             width: 80,
             render: (text, record) => {
-                var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
-                return createAt;
+                return <a href={record.url} target="_blank">{text}</a>
             }
         }];
 
-        const { loading, townSelectedRowKeys, countrySelectedRowKeys, selectedTown,
-            townsData, countriesData } = this.state;
-        const townRowSelection = {
-            selectedRowKeys: townSelectedRowKeys,
-            onChange: this.onTownSelectChange,
+        const { loading, selectedRowKeys, selectedTown,
+            usersData } = this.state;
+        console.log('users ...sss...', usersData)
+        const rowSelection = {
+            selectedRowKeys,
+            onChange: this.onSelectChange,
         };
-        const countryRowSelection = {
-            selectedRowKeys: countrySelectedRowKeys,
-            onChange: this.onCountrySelectChange,
-        }
         return (
             <div className="gutter-example">
                 <style>
@@ -279,37 +250,22 @@ class CountryManager extends React.Component {
                       }
                 `}
                 </style>
-                <BreadcrumbCustom first="安监管理" second="村镇管理" />
+                <BreadcrumbCustom first="安监管理" second="用户管理" />
                 <Row gutter={16}>
-                    <Col className="gutter-row" md={10}>
+                    <Col className="gutter-row" md={24}>
                         <div className="gutter-box">
-                            <Card title="镇列表" bordered={false}>
+                            <Card title="用户列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
-                                    <Button type="primary" onClick={this.handleAddTown}
+                                    <Button type="primary" onClick={this.handleAdd}
                                             disabled={loading} 
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleDeleteTown}
                                             disabled={loading} 
                                     >删除</Button>
                                 </div>
-                                <Table rowSelection={townRowSelection} columns={townColumns} dataSource={townsData} pagination={false}
-                                        onRowClick={this.onTownRowClick}
+                                <Table rowSelection={rowSelection} columns={userColumns} dataSource={usersData}
+                                        onRowClick={this.onRowClick}
                                 />
-                            </Card>
-                        </div>
-                    </Col>
-                    <Col className="gutter-row" md={14}>
-                        <div className="gutter-box">
-                            <Card title={`${selectedTown + "-"}村列表`} bordered={false}>
-                                <div style={{ marginBottom: 16 }}>
-                                    <Button type="primary" onClick={this.AddRow}
-                                            disabled={loading} 
-                                    >新增</Button>
-                                    <Button type="primary" onClick={this.start}
-                                            disabled={loading} 
-                                    >删除</Button>
-                                </div>
-                                <Table rowSelection={countryRowSelection} columns={countryColumns} dataSource={countriesData} pagination={false}/>
                             </Card>
                         </div>
                     </Col>
@@ -331,5 +287,5 @@ const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch)
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(CountryManager)
+export default connect(mapStateToProps, mapDispatchToProps)(UserManager)
 
