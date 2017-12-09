@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
@@ -27,6 +28,43 @@ type CompanySummary struct {
 type CompanySummaryList struct {
 	Count          int               `json:"count"`
 	CompanySummary []*CompanySummary `json:"company_summary"`
+}
+
+func getTodaySummaryWithCompanyId(company_id int) (*CompanySummary, error) {
+	prefix := fmt.Sprintf("[%s]", "companyTodaySummary")
+	company := Company{}
+	db.First(&company, company_id)
+	if company.ID == 0 {
+		errmsg := fmt.Sprintf("company id %d does not exist", company_id)
+		glog.Errorf("%s %s", prefix, errmsg)
+		return nil, errors.New(errmsg)
+	}
+
+	var searchTodaySummary *gorm.DB = db
+
+	timeNow := time.Now()
+	timeToday := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
+	condition := fmt.Sprintf("day = str_to_date(%s, '%%Y%%m%%d')", timeToday)
+
+	glog.Infof("%s find summary with day %s", prefix, timeToday)
+	searchTodaySummary = searchTodaySummary.Where(condition)
+
+	glog.Infof("%s find today_summary with company id %s", prefix, company_id)
+	searchTodaySummary = searchTodaySummary.Where("company_id = ?", company.ID)
+	//todaySummaryList with company id
+	todaySummaryList := make([]TodaySummary, 0)
+	searchTodaySummary.Find(&todaySummaryList)
+
+	companySummary := CompanySummary{}
+	companySummary.CompanyID = company.ID
+	companySummary.CompanyName = company.Name
+	monitorPlaceSummaryList := make([]*MonitorPlaceSummary, 0)
+	for _, t := range todaySummaryList {
+		m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Corrective: t.Corrective, EverCorrective: t.EverCorrective}
+		monitorPlaceSummaryList = append(monitorPlaceSummaryList, &m)
+	}
+	companySummary.MonitorPlaceSummaryList = monitorPlaceSummaryList
+	return &companySummary, nil
 }
 
 func (s TodaySummary) Register(container *restful.Container) {
@@ -76,7 +114,7 @@ func (s TodaySummary) findTodaySummary(request *restful.Request, response *restf
 	if company_id != "" {
 		db.Debug().Where("id = " + company_id).First(&company)
 		if company.ID == 0 {
-			errmsg := fmt.Sprintf("%s company id %d does not exist", company_id)
+			errmsg := fmt.Sprintf("company id %s does not exist", company_id)
 			glog.Errorf("%s %s", prefix, errmsg)
 			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 			return

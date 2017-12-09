@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/robfig/cron"
+	"gopkg.in/chanxuehong/wechat.v2/mp/message/template"
 	"time"
 )
 
@@ -73,6 +75,7 @@ func refreshSummaryStat() {
 			companyStat := companyMap[todaySummary.CompanyId]
 			monitorPlace := MonitorPlace{}
 			db.Debug().First(&monitorPlace, todaySummary.MonitorPlaceId)
+			glog.Infof("%s today summary company id %d, monitor_place %s picture not uploaded", prefix, todaySummary.CompanyId, todaySummary.MonitorPlaceName)
 
 			if companyStat == "" {
 				companyMap[todaySummary.CompanyId] = monitorPlace.Name
@@ -83,20 +86,82 @@ func refreshSummaryStat() {
 	}
 
 	for companyId, companyStat := range companyMap {
-		company := Company{}
-		db.Debug().First(&company, companyId)
+		summary := Summary{}
+		db.Debug().Where(condition).Where("company_id = ?", companyId).First(&summary)
+		glog.Infof("%s update summary today for company %d, unfinish_ids %s.", prefix, companyId, companyStat)
 		if companyStat == "" {
-			db.Debug().Model(&company).Update("is_finish", "T", "unfinish_ids", "")
+			db.Debug().Model(&summary).Update("is_finish", "T")
 		} else {
-			db.Debug().Model(&company).Update("is_finish", "F", "unfinish_ids", companyStat)
+			s := Summary{IsFinish: "F", UnfinishIds: companyStat}
+			db.Debug().Model(&summary).Update(s)
 		}
 	}
+}
+
+type Keyword struct {
+	Value string `json:"value"`
+}
+
+type TMsgData struct {
+	First    Keyword `json:"first"`
+	Keyword1 Keyword `json:"keyword1"`
+	Keyword2 Keyword `json:"keyword2"`
+	Keyword3 Keyword `json:"keyword3"`
+	Remark   Keyword `json:"remark"`
+}
+
+// send template message
+func sendTemplateMsg() {
+	prefix := fmt.Sprintf("[%s]", "sendTemplateMsg")
+	loc, _ := time.LoadLocation("Local")
+	timeNow := time.Now()
+	todayStr := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
+	todayStrCN := fmt.Sprintf("%d年%d月%d日", timeNow.Year(), timeNow.Month(), timeNow.Day())
+	shortForm := "20060102"
+	todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
+	glog.Infof("%s start at time %s %d:%d, %s", prefix, todayStr, timeNow.Hour(), timeNow.Minute(), todayTime)
+
+	summaries := make([]Summary, 0)
+	db.Debug().Find(&summaries)
+	for _, s := range summaries {
+		if s.IsFinish == "F" {
+			glog.Infof("%s company id %d job is not finish today", prefix, s.CompanyId)
+			company := Company{}
+			db.Debug().First(&company, s.CompanyId)
+			users := make([]User, 0)
+			db.Debug().Where("company_id = ?", company.ID).Where("enable = 'T'").Find(&users)
+			k1 := Keyword{Value: company.Name}
+			k2 := Keyword{Value: todayStrCN}
+			k3 := Keyword{Value: s.UnfinishIds}
+			first := Keyword{Value: "您好，本日贵企业尚需处理如下拍照任务"}
+			remark := Keyword{Value: "请您尽快处理"}
+			msg := TMsgData{First: first, Keyword1: k1, Keyword2: k2, Keyword3: k3, Remark: remark}
+			t := template.TemplateMessage2{TemplateId: wxTemplateId, Data: msg}
+			for _, u := range users {
+				t.ToUser = u.WxOpenId
+				tStr, _ := json.Marshal(t)
+				msgId, err := template.Send(wechatClient, json.RawMessage(tStr))
+				if err != nil {
+					glog.Errorf("%s failed to send message to user %s openid %s, message %s,  err %s", prefix, u.Name, t.ToUser, string(tStr), err)
+				} else {
+					glog.Infof("%s ok to send message to user %s openid %s, msgid %d", prefix, u.Name, t.ToUser, msgId)
+				}
+			}
+		}
+	}
+	glog.Infof("%s end send message job", prefix)
 }
 
 func jobWorker() {
 	c := cron.New()
 	c.AddFunc("0 0 0 * * *", refreshTodaySummary)
 	c.AddFunc("0 2 * * * *", refreshSummary)
-	c.AddFunc("0 5 * * * *", refreshSummaryStat)
+	c.AddFunc("0 */30 * * * *", refreshSummaryStat)
+	c.AddFunc("0 0 12 * * *", sendTemplateMsg)
+	c.AddFunc("0 0 16 * * *", sendTemplateMsg)
+	c.AddFunc("0 35 19 * * *", sendTemplateMsg)
+	c.AddFunc("0 0 18 * * *", sendTemplateMsg)
+	c.AddFunc("0 0 20 * * *", sendTemplateMsg)
+	c.AddFunc("0 0 22 * * *", sendTemplateMsg)
 	c.Start()
 }
