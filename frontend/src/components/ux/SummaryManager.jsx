@@ -220,5 +220,5 @@ const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch)
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(UserManager)
+export default connect(mapStateToProps, mapDispatchToProps)(SummaryManager)
 
