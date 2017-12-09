@@ -107,6 +107,7 @@ type Picture struct {
 	ID             int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	CreateAt       time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
 	UpdateAt       time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	MonitorTypeId  int       `gorm:"-" json:"monitor_type_id"`
 	MonitorPlaceId int       `gorm:"column:monitor_place_id;not null;index" json:"monitor_place_id"`
 	ThumbPath      string    `gorm:"column:thumb_path" json:"thumb_path"`
 	FullPath       string    `gorm:"column:full_path" json:"full_path"`

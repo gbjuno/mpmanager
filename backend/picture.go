@@ -37,6 +37,11 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 		pictureList.Pictures = make([]Picture, 0)
 		db.Debug().Find(&pictureList.Pictures)
 		pictureList.Count = len(pictureList.Pictures)
+		for i, _ := range pictureList.Pictures {
+			monitorPlace := MonitorPlace{}
+			db.Debug().First(&monitorPlace, pictureList.Pictures[i].MonitorPlaceId)
+			pictureList.Pictures[i].MonitorTypeId = monitorPlace.MonitorTypeId
+		}
 		glog.Infof("%s Return picture list", prefix)
 		response.WriteHeaderAndEntity(http.StatusOK, pictureList)
 		return

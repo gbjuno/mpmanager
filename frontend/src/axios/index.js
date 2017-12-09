@@ -100,8 +100,16 @@ export const fetchPlaceTypes = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+
 // 统计报表API
 export const fetchSummaries = (filter={}) => {
     let url = config.SUMMARY_URL
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
+// 图片管理API
+
+export const fetchPictures = (filter={}) => {
+    let url = config.PICTURE_URL
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
