@@ -134,8 +134,12 @@ func textMsgHandler(ctx *core.Context) {
 	prefix := fmt.Sprintf("[%s]", "textMsgHandler")
 	glog.Infof("%s 收到文本消息:\n%s", prefix, ctx.MsgPlaintext)
 	msg := request.GetText(ctx.MixedMsg)
-	resp := response.NewText(msg.FromUserName, msg.ToUserName, msg.CreateTime, msg.Content)
-	ctx.RawResponse(resp) // 明文回复
+	articles := make([]response.Article, 1)
+	articles[0] = response.Article{Title: "公众号使用指导", Description: "新手必看", PicURL: fmt.Sprintf("https://%s/html/images/subscribe.png", domain), URL: fmt.Sprintf("https://%s/html/subscribe.html", domain)}
+	resp := response.NewNews(msg.FromUserName, msg.ToUserName, msg.CreateTime, articles)
+	ctx.RawResponse(resp)
+	//resp := response.NewText(msg.FromUserName, msg.ToUserName, msg.CreateTime, msg.Content)
+	//ctx.RawResponse(resp) // 明文回复
 	//ctx.AESResponse(resp, 0, "", nil) // aes密文回复
 }
 
@@ -148,16 +152,21 @@ func defaultMsgHandler(ctx *core.Context) {
 func menuClickEventHandler(ctx *core.Context) {
 	prefix := fmt.Sprintf("[%s]", "menuClickHandler")
 	glog.Infof("%s 收到菜单 click 事件:\n%s", prefix, ctx.MsgPlaintext)
-	event := menu.GetClickEvent(ctx.MixedMsg)
-	resp := response.NewText(event.FromUserName, event.ToUserName, event.CreateTime, "收到 click 类型的事件")
-	ctx.RawResponse(resp) // 明文回复
+	//event := menu.GetClickEvent(ctx.MixedMsg)
+	//resp := response.NewText(event.FromUserName, event.ToUserName, event.CreateTime, "收到 click 类型的事件")
+	ctx.NoneResponse()
+	//ctx.RawResponse(resp) // 明文回复
 	//ctx.AESResponse(resp, 0, "", nil) // aes密文回复
 }
 
 func defaultEventHandler(ctx *core.Context) {
 	prefix := fmt.Sprintf("[%s]", "defaultEventHandler")
 	glog.Infof("%s 收到事件:\n%s", prefix, ctx.MsgPlaintext)
-	ctx.NoneResponse()
+	msg := request.GetSubscribeEvent(ctx.MixedMsg)
+	articles := make([]response.Article, 1)
+	articles[0] = response.Article{Title: "公众号使用指导", Description: "新手必看", PicURL: fmt.Sprintf("https://%s/html/images/subscribe.png", domain), URL: fmt.Sprintf("https://%s/html/subscribe.html", domain)}
+	resp := response.NewNews(msg.FromUserName, msg.ToUserName, msg.CreateTime, articles)
+	ctx.RawResponse(resp)
 }
 
 // wxCallbackHandler 是处理回调请求的 http handler.
@@ -406,6 +415,20 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		}*/
 
 	// password match
+	if len(user.WxOpenId) > 5 {
+		glog.Errorf("%s user with phone %s has been bound to another wechat user", prefix, phone)
+		response.Status = false
+		response.Message = "该账户已经被其他微信用户绑定，请联系管理员进行确认，谢谢"
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(w, string(returnContent))
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	hashCode := md5.New()
 	io.WriteString(hashCode, password)
@@ -522,12 +545,12 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	if user.ID == 0 {
 		// openid isn't related to a user
 		glog.Infof("%s openid is not related to a user", prefix)
-		redirectURIPrefix := fmt.Sprintf("https://%s/backend/%%s", domain)
-		oauth2Scope := "snsapi_base"
-		bindingRedirectURI := fmt.Sprintf(redirectURIPrefix, "binding")
-		bindingState := "binding"
-		bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
-		msgbody := fmt.Sprintf("在菜单中或<a href=\"%s\">点击此处</a>绑定企业，绑定企业后再进行拍照，谢谢", bindingURI)
+		//redirectURIPrefix := fmt.Sprintf("https://%s/backend/%%s", domain)
+		//oauth2Scope := "snsapi_base"
+		//bindingRedirectURI := fmt.Sprintf(redirectURIPrefix, "binding")
+		//bindingState := "binding"
+		//bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
+		msgbody := fmt.Sprintf("在菜单中或绑定企业，绑定企业后再进行拍照，谢谢")
 		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
@@ -664,6 +687,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 		Userid     int
 		Placeid    int
 		Corrective bool
+		PlaceName  string
 	}
 	jssdkObj.Timestamp = fmt.Sprintf("%d", timeNow)
 	jssdkObj.Noncestr = nonceStr
@@ -671,6 +695,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	jssdkObj.Signature = jssdk.WXConfigSign(ticket, nonceStr, jssdkObj.Timestamp, fmt.Sprintf("https://%s%s", domain, r.URL))
 	jssdkObj.Userid = user.ID
 	jssdkObj.Placeid = monitor_place.ID
+	jssdkObj.PlaceName = monitor_place.Name
 
 	glog.Infof("%s get ticket %s, signature %s, noncestr %s, uri %s", prefix, ticket, jssdkObj.Signature, nonceStr, r.URL)
 	w.WriteHeader(http.StatusOK)
@@ -838,7 +863,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	db.Save(&picture)
 
 	response.Status = true
-	response.Message = "上传成功"
+	response.Message = "上传成功,页面将跳转到扫描二维码界面"
 	returnContent, err := json.Marshal(response)
 	glog.Infof("%s download serverId %s success, bytes %d", prefix, serverId, written)
 	if err != nil {
@@ -935,12 +960,12 @@ func companystatHandler(w http.ResponseWriter, r *http.Request) {
 	if user.ID == 0 {
 		// openid isn't related to a user
 		glog.Infof("%s openid is not related to a user", prefix)
-		redirectURIPrefix := fmt.Sprintf("https://%s/backend/%%s", domain)
-		oauth2Scope := "snsapi_base"
-		bindingRedirectURI := fmt.Sprintf(redirectURIPrefix, "binding")
-		bindingState := "binding"
-		bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
-		msgbody := fmt.Sprintf("在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢", bindingURI)
+		//redirectURIPrefix := fmt.Sprintf("https://%s/backend/%%s", domain)
+		//oauth2Scope := "snsapi_base"
+		//bindingRedirectURI := fmt.Sprintf(redirectURIPrefix, "binding")
+		//bindingState := "binding"
+		//bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
+		msgbody := fmt.Sprintf("在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢")
 		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)

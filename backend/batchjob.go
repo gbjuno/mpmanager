@@ -70,13 +70,14 @@ func refreshSummaryStat() {
 	var companyMap map[int]string = make(map[int]string)
 
 	for _, todaySummary := range todaySummaries {
+		companyStat, ok := companyMap[todaySummary.CompanyId]
+		if !ok {
+			companyMap[todaySummary.CompanyId] = ""
+		}
 		if todaySummary.IsUpload == "F" {
-
-			companyStat := companyMap[todaySummary.CompanyId]
 			monitorPlace := MonitorPlace{}
 			db.Debug().First(&monitorPlace, todaySummary.MonitorPlaceId)
 			glog.Infof("%s today summary company id %d, monitor_place %s picture not uploaded", prefix, todaySummary.CompanyId, todaySummary.MonitorPlaceName)
-
 			if companyStat == "" {
 				companyMap[todaySummary.CompanyId] = monitorPlace.Name
 			} else {
@@ -90,10 +91,13 @@ func refreshSummaryStat() {
 		db.Debug().Where(condition).Where("company_id = ?", companyId).First(&summary)
 		glog.Infof("%s update summary today for company %d, unfinish_ids %s.", prefix, companyId, companyStat)
 		if companyStat == "" {
-			db.Debug().Model(&summary).Update("is_finish", "T")
+			summary.IsFinish = "T"
+			summary.UnfinishIds = ""
+			db.Save(&summary)
 		} else {
-			s := Summary{IsFinish: "F", UnfinishIds: companyStat}
-			db.Debug().Model(&summary).Update(s)
+			summary.IsFinish = "F"
+			summary.UnfinishIds = companyStat
+			db.Save(&summary)
 		}
 	}
 }
@@ -122,7 +126,8 @@ func sendTemplateMsg() {
 	glog.Infof("%s start at time %s %d:%d, %s", prefix, todayStr, timeNow.Hour(), timeNow.Minute(), todayTime)
 
 	summaries := make([]Summary, 0)
-	db.Debug().Find(&summaries)
+	condition := fmt.Sprintf("day = str_to_date(%s, '%%Y%%m%%d')", todayStr)
+	db.Debug().Where(condition).Find(&summaries)
 	for _, s := range summaries {
 		if s.IsFinish == "F" {
 			glog.Infof("%s company id %d job is not finish today", prefix, s.CompanyId)
@@ -159,7 +164,6 @@ func jobWorker() {
 	c.AddFunc("0 */30 * * * *", refreshSummaryStat)
 	c.AddFunc("0 0 12 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 16 * * *", sendTemplateMsg)
-	c.AddFunc("0 35 19 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 18 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 20 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 22 * * *", sendTemplateMsg)

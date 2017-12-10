@@ -75,6 +75,12 @@ const PHOTO = `<!DOCTYPE html>
 </head>
 <body>
     <div class="page article js_show">
+        <div class="weui-form-preview__bd">
+            <div class="weui-form-preview__item">
+                <label class="weui-form-preview__label">当前拍照地点</label>
+                <span class="weui-form-preview__value">{{ .PlaceName }}</span>
+            </div>
+        </div>
         <div class="weui-article" style="padding-bottom:0px">
             <p>
                 <img id="previewImg" src="/html/pic_article.png" alt="">
@@ -107,7 +113,7 @@ const PHOTO = `<!DOCTYPE html>
             alert("微信接口调用失败，请检查是否引入微信js！");
         }
         wx.config({
-            debug: true,
+            debug: false,
             appId: '{{ .Wxappid }}',
             timestamp: {{ .Timestamp }},
             nonceStr: '{{ .Noncestr }}',
@@ -138,8 +144,8 @@ const PHOTO = `<!DOCTYPE html>
             $("#takephoto").click(function(){
                 wx.chooseImage({
                     count: 1,
-                    sizeType: ['original', 'compressed'], 
-                    sourceType: ['album', 'camera'], 
+                    sizeType: ['compressed'], 
+                    sourceType: ['camera'], 
                     success: function(res) {
                         var localIds = res.localIds; 
                         $("#previewImg").attr('src', localIds[0]);
@@ -166,7 +172,6 @@ const PHOTO = `<!DOCTYPE html>
                     isShowProgressTips: 1, // 默认为1，显示进度提示
                     success: function(res) {
                         var serverId = res.serverId;
-                        alert(serverId);
                         $.post("/backend/download", {
                                 corrective: {{ .Corrective }},
                                 userId: {{ .Userid }},
@@ -175,9 +180,9 @@ const PHOTO = `<!DOCTYPE html>
                             },
                             function(data, status) {
                                 var jdata = JSON.parse(data)
-                                alert(status)
                                 if(jdata.status) {
-                                   alert(jdata.message) 
+                                   alert(jdata.message)
+                                   window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx6eb571f36f6b1c10&redirect_uri=https%3A%2F%2Fwww.juntengshoes.cn%2Fbackend%2Fscanqrcode&response_type=code&scope=snsapi_base&state=scanqrcode#wechat_redirect" 
                                 } else {
                                    alert(jdata.message) 
                                }
@@ -243,7 +248,7 @@ const SCANQRCODE = `
         alert("微信接口调用失败，请检查是否引入微信js！");
     }
     wx.config({
-        debug: true,
+        debug: false,
         appId: '{{ .Wxappid }}',
         timestamp: {{ .Timestamp }},
         nonceStr: '{{ .Noncestr }}',
@@ -296,7 +301,6 @@ const NOTICEPAGE = `
         <div class="weui-msg__text-area">
             <h2 class="weui-msg__title">{{ .Msgtitle }}</h2>
             <p class="weui-msg__desc">{{ .Msgbody }}</p>
-            {{ template AHREF }}
         </div>
         <div class="weui-msg__extra-area">
             <div class="weui-footer">
@@ -325,7 +329,7 @@ const COMPANYSTAT = `
     <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
     <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
 </head>
-<body>j
+<body>
     <div class="weui-cell">
         <div class="weui-cell__bd">
             <p>公司</p>
@@ -347,4 +351,63 @@ const COMPANYSTAT = `
     <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
 </body>
 
+`
+
+const SUBSCRIBE = `
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>本日拍照进度</title>
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
+    <link rel="stylesheet" href="/html/weui.css">
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+</head>
+<body>
+<div class="page article js_show">
+    <div class="page__hd">
+        <h1 class="page__title">Article</h1>
+        <p class="page__desc"></p>
+    </div>
+    <div class="page__bd">
+        <article class="weui-article">
+            <h1>大标题</h1>
+            <section>
+                <h2 class="title">章标题</h2>
+                <section>
+                    <h3>1.1 节标题</h3>
+                    <p>
+                        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+                        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+                        consequat.
+                    </p>
+                    <p>
+                        <img src="./images/pic_article.png" alt="">
+                        <img src="./images/pic_article.png" alt="">
+                    </p>
+                </section>
+                <section>
+                    <h3>1.2 节标题</h3>
+                    <p>
+                        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+                        cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+                        proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                    </p>
+                </section>
+            </section>
+        </article>
+    </div>
+    <div class="page__ft j_bottom">
+        <a href="javascript:home()"><img src="./images/icon_footer_link.png"></a>
+    </div>
+</div>
+    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+    <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
+    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+</body>
+</html>
 `
