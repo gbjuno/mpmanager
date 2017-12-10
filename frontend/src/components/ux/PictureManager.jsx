@@ -48,8 +48,8 @@ class PictureManager extends React.Component {
             
         };
 
-        this.fetchPlaceType();
         this.fetchPlaceData();
+        this.fetchPlaceType();
         //this.fetchPictureData();
     };
 
@@ -200,22 +200,26 @@ class PictureManager extends React.Component {
      * 经过混沌的洗礼，数据得以重组
      */
     chaos = (placesData, placeTypes, picLocationMap) => {
-        let picturesDataWithType =[]
-        if(_.isEmpty(placeTypes) || _.isEmpty(placesData)) return
-        for(let placeType of placeTypes.data){
-            picturesDataWithType.push({
-                placeTypeId: placeType.id,
-                placeTypeName: placeType.name,
-                picturesData: [...placesData.data.map(val => {
-                    val.key = val.id;
-                    let picMap = picLocationMap[`${PIC_LOCATION_PREFIX}${val.id}`]
-                    val.thumb_pic = picMap.thumb_uri
-                    val.full_pic = picMap.full_uri
-                    return val;
-                }).filter(val => val.monitor_type_id === placeType.id)],
-            });
+        if(placeTypes === undefined || placesData === undefined 
+            || _.isEmpty(placeTypes.data) || _.isEmpty(placesData.data)) {
+            return []
+        }else{
+            let picturesDataWithType =[]
+            for(let placeType of placeTypes.data){
+                picturesDataWithType.push({
+                    placeTypeId: placeType.id,
+                    placeTypeName: placeType.name,
+                    picturesData: [...placesData.data.map(val => {
+                        val.key = val.id;
+                        let picMap = picLocationMap[`${PIC_LOCATION_PREFIX}${val.id}`]
+                        val.thumb_pic = picMap.thumb_uri
+                        val.full_pic = picMap.full_uri
+                        return val;
+                    }).filter(val => val.monitor_type_id === placeType.id)],
+                });
+            }
+            return picturesDataWithType
         }
-        return picturesDataWithType
     }
 
     render() {
@@ -235,14 +239,16 @@ class PictureManager extends React.Component {
 
         let picLocationMap = genPicLocationMap(this.props)
         let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
-        let pictureGrids = this.generateGrid(picturesDataWithType)
-        console.log('all location pic ---> mycs', picturesDataWithType)
+        // let pictureGrids = this.generateGrid(picturesDataWithType)
+        console.log('all location pic P ---> mycs', placesData)
+        console.log('all location pic T ---> mycs', placeTypes)
+        //console.log('all location pic ---> mycs', picturesDataWithType)
         
         return (
             <div id="scPic" className="gutter-example button-demo">
                 <BreadcrumbCustom first="安监管理" second="图片管理" />
                 <PictureSearch style={{paddingBottom: 13}} fetchData={fetchData}/>
-                {pictureGrids}
+                {}
                 <div className="pswp" tabIndex="-1" role="dialog" aria-hidden="true" ref={(div) => {this.pswpElement = div;} }>
 
                     <div className="pswp__bg" />
@@ -306,7 +312,6 @@ class PictureManager extends React.Component {
 }
 
 const mapStateToProps = state => {
-    const { placesData = {data: []}, placeTypes = {data : []} } = state.httpData;
     return { ...state.httpData };
 };
 const mapDispatchToProps = dispatch => ({
