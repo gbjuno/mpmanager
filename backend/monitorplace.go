@@ -14,9 +14,14 @@ import (
 	"time"
 )
 
+type MonitorPlaceWithPicture struct {
+	*MonitorPlace
+	Pictures []Picture `json:"pictures"`
+}
+
 type MonitorPlaceList struct {
-	Count         int            `json:"count"`
-	MonitorPlaces []MonitorPlace `json:"monitor_places"`
+	Count         int                       `json:"count"`
+	MonitorPlaces []MonitorPlaceWithPicture `json:"monitor_places"`
 }
 
 type PictureWithMonitorPlace struct {
@@ -32,10 +37,10 @@ func (m MonitorPlace) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/monitor_place").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(m.findMonitorPlace))
+	ws.Route(ws.GET("?scope={scope}&day={day}&pageSize={pageSize}&pageNo={pageNo}&order={order}&company_id={company_id}").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}/").To(m.findMonitorPlace))
-	ws.Route(ws.GET("/{monitor_place_id}/{scope}/").To(m.findMonitorPlace))
-	ws.Route(ws.GET("/{monitor_place_id}/{scope}/?day={day}&pageSize={pageSize}&pageNo={pageNo}&order={order}").To(m.findMonitorPlace))
+	ws.Route(ws.GET("/{monitor_place_id}/?scope={scope}&day={day}&pageSize={pageSize}&pageNo={pageNo}&order={order}").To(m.findMonitorPlace))
 	ws.Route(ws.POST("").To(m.createMonitorPlace))
 	ws.Route(ws.PUT("/{monitor_place_id}").To(m.updateMonitorPlace))
 	ws.Route(ws.DELETE("/{monitor_place_id}").To(m.deleteMonitorPlace))
@@ -46,26 +51,110 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 	prefix := fmt.Sprintf("[%s] [findMonitorPlace]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	monitor_place_id := request.PathParameter("monitor_place_id")
-	scope := request.PathParameter("scope")
+	scope := request.QueryParameter("scope")
 	day := request.QueryParameter("day")
 	pageSize := request.QueryParameter("pageSize")
 	pageNo := request.QueryParameter("pageNo")
 	order := request.QueryParameter("order")
+	company_id := request.QueryParameter("company_id")
 
 	//get monitor_place list
 	if monitor_place_id == "" {
+		//search company
+		var searchMonitorPlaceDB *gorm.DB = db.Debug()
+		isCompanyIdOk := false
+		companyId, err := strconv.Atoi(company_id)
+		var searchCompanyName string
+		if err != nil {
+			errmsg := fmt.Sprintf("invalid company_id %s, parameter ignore", company_id)
+			glog.Infof("%s %s", prefix, errmsg)
+		} else {
+			isCompanyIdOk = true
+			c := Company{}
+			db.Debug().First(&c, companyId)
+			searchCompanyName = c.Name
+			searchMonitorPlaceDB = searchMonitorPlaceDB.Where("company_id = ?", companyId)
+		}
+
 		monitor_placeList := MonitorPlaceList{}
-		monitor_placeList.MonitorPlaces = make([]MonitorPlace, 0)
-		db.Debug().Find(&monitor_placeList.MonitorPlaces)
-		monitor_placeList.Count = len(monitor_placeList.MonitorPlaces)
-		for i, _ := range monitor_placeList.MonitorPlaces {
-			company := Company{}
-			db.First(&company, monitor_placeList.MonitorPlaces[i].CompanyId)
-			monitor_placeList.MonitorPlaces[i].CompanyName = company.Name
+		monitorPlaces := make([]MonitorPlace, 0)
+		searchMonitorPlaceDB.Find(&monitorPlaces)
+		monitor_placeList.Count = len(monitorPlaces)
+		monitor_placeList.MonitorPlaces = make([]MonitorPlaceWithPicture, monitor_placeList.Count)
+
+		//search picture
+		isDayOk := false
+		var dayCondition string
+		if day != "" {
+			loc, _ := time.LoadLocation("Local")
+			const shortFormat = "20060102"
+			_, err = time.ParseInLocation(shortFormat, day, loc)
+			if err != nil {
+				errmsg := fmt.Sprintf("cannot find object with day %s, err %s, ignore", day, err)
+				glog.Errorf("%s %s", prefix, errmsg)
+			} else {
+				isDayOk = true
+			}
+			dayCondition = fmt.Sprintf("to_days(create_at) = to_days(str_to_date(%s, '%%Y%%m%%d'))", day)
+			glog.Infof("%s find today_summary on day %s", prefix, day)
+		}
+
+		if order != "asc" && order != "desc" {
+			errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
+			glog.Errorf("%s %s", prefix, errmsg)
+			order = "desc"
+		}
+
+		if order == "" {
+			order = "desc"
+		}
+		glog.Infof("%s find picture with order %s", prefix, order)
+
+		isPageSizeOk := true
+		pageSizeInt, err := strconv.Atoi(pageSize)
+		if err != nil {
+			isPageSizeOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageSize %s, err %s, ignore", pageSize, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		}
+
+		//pageNo depends on pageSize
+		isPageNoOk := true
+		pageNoInt, err := strconv.Atoi(pageNo)
+		if err != nil {
+			isPageNoOk = false
+			errmsg := fmt.Sprintf("cannot find object with pageNo %s, err %s, ignore", pageNo, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		}
+
+		for i, _ := range monitorPlaces {
+			monitor_placeList.MonitorPlaces[i].MonitorPlace = &monitorPlaces[i]
+			var company = Company{}
+			if !isCompanyIdOk {
+				db.First(&company, monitor_placeList.MonitorPlaces[i].CompanyId)
+				monitorPlaces[i].CompanyName = company.Name
+			} else {
+				monitorPlaces[i].CompanyName = searchCompanyName
+			}
 
 			monitor_type := MonitorType{}
-			db.First(&monitor_type, monitor_placeList.MonitorPlaces[i].MonitorTypeId)
-			monitor_placeList.MonitorPlaces[i].MonitorTypeName = monitor_type.Name
+			db.Debug().First(&monitor_type, monitor_placeList.MonitorPlaces[i].MonitorTypeId)
+			monitorPlaces[i].MonitorTypeName = monitor_type.Name
+
+			var searchPictureDB *gorm.DB = db.Debug()
+			searchPictureDB = searchPictureDB.Order("create_at " + order)
+			if isDayOk {
+				searchPictureDB = searchPictureDB.Where(dayCondition)
+			}
+			if isPageSizeOk && isPageNoOk {
+				limit := pageSizeInt
+				offset := (pageNoInt - 1) * limit
+				glog.Infof("%s set find picture db with pageSize %s, pageNo %s(limit %d, offset %d)", prefix, pageSize, pageNo, limit, offset)
+				searchPictureDB = searchPictureDB.Offset(offset).Limit(limit)
+			}
+
+			monitor_placeList.MonitorPlaces[i].Pictures = make([]Picture, 0)
+			searchPictureDB.Debug().Where("monitor_place_id = ?", monitorPlaces[i].ID).Find(&monitor_placeList.MonitorPlaces[i].Pictures)
 		}
 		response.WriteHeaderAndEntity(http.StatusOK, monitor_placeList)
 		glog.Infof("%s return monitor_place list", prefix)
