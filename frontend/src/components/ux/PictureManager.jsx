@@ -193,7 +193,7 @@ class PictureManager extends React.Component {
                             alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicFull(v2.picList)}/>
                     </div>
                     <div className="pa-m">
-                        <h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
+                        <h3>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
                         <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.create_at.substring(0, 10)}</span></a></small>
                     </div>
                 </Card>

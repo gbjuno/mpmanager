@@ -78,7 +78,7 @@ class CountryManager extends React.Component {
         townsData: [],
         countriesData: [],
         selectedTown: '',
-        selectedTownId: '',
+        selectedTownId: 0,
     };
     componentDidMount() {
         this.start();
@@ -101,6 +101,7 @@ class CountryManager extends React.Component {
                 })],
                 loading: false,
                 selectedTown: res.data.towns[0].name || '',
+                selectedTownId: tempTownId || 0,
             });
 
             this.fetchCountriesData(tempTownId);
@@ -140,6 +141,7 @@ class CountryManager extends React.Component {
         const { townSelectedRowKeys } = this.state
         this.setState({
             selectedTown: record.name,
+            selectedTownId: record.id,
             townSelectedRowKeys: townSelectedRowKeys.length > 0 && 
                 townSelectedRowKeys[0] === record.id ? [] : [record.id],
         });
@@ -177,7 +179,6 @@ class CountryManager extends React.Component {
     handleCancelEditTown = () => {
         let tmpTownsData = [...this.state.townsData.filter(item => item.id !== -1)]
         console.log('tmpTownsData', tmpTownsData)
-        alert(tmpTownsData[0].name)
         this.setState({
             townsData: tmpTownsData,
             selectedTown: tmpTownsData[0].name,
@@ -208,32 +209,43 @@ class CountryManager extends React.Component {
 
     handleAddCountry = () => {
         this.setState({
-            townsData: [{
+            countriesData: [{
                 key: -1,
                 id: -1,
                 name: '',
-            }, ...this.state.townsData]
+            }, ...this.state.countriesData]
         });
+    }
+
+    handleCancelEditCountry = () => {
+        let tmpCountriesData = [...this.state.countriesData.filter(item => item.id !== -1)]
+        this.setState({
+            countriesData: tmpCountriesData
+        })
     }
 
     handleDeleteCountry = () => {
         const { fetchData } = this.props
-        const { townSelectedRowKeys } = this.state
-        if(townSelectedRowKeys.length === 0) return
-        fetchData({funcName: 'deleteTown', params: {townId: townSelectedRowKeys[0]}, stateName: 'deleteTownStatus'})
+        const { countrySelectedRowKeys, selectedTownId } = this.state
+        if(countrySelectedRowKeys.length === 0) return
+        fetchData({funcName: 'deleteCountry', params: {countryId: countrySelectedRowKeys[0]}, stateName: 'deleteCountryStatus'})
             .then(res => {
-                console.log('delete town successfully', res)
-                this.fetchTownsData() 
-            }).catch(err => console.log(err));
+                console.log('delete country successfully', res)
+                this.fetchCountriesData(selectedTownId)
+            }).catch(err => console.log(err))
     }
 
     onNewCountrySave = (name) => {
         const { fetchData } = this.props
-        fetchData({funcName: 'newTown', params: {name}, stateName: 'newTownStatus'})
+        const { selectedTownId } = this.state
+        fetchData({funcName: 'newCountry', params: {name, town_id: selectedTownId}, stateName: 'newCountryStatus'})
             .then(res => {
-                console.log('create new town successfully', res)
-                this.fetchTownsData() 
-            }).catch(err => console.log(err));
+                console.log('create new coutry successfully', res)
+                this.fetchCountriesData(selectedTownId)
+            }).catch(err => {
+                console.log(err)
+                this.fetchCountriesData(selectedTownId)
+            });
         console.log('value--->', name)
     }
 
@@ -266,12 +278,22 @@ class CountryManager extends React.Component {
         const countryColumns = [{
             title: '村名',
             dataIndex: 'name',
-            width: 40
+            width: 40,
+            render: (text, record) => {
+                if(record.id === -1){
+                    return <EditableCell value={record.name} onChange={this.onNewCountrySave} onCancel={this.handleCancelEditCountry}/>
+                }else{
+                    return <a href={record.url} target="_blank">{text}</a>
+                }
+            }
         }, {
             title: '创建时间',
             dataIndex: 'create_at',
             width: 80,
             render: (text, record) => {
+                if (record.id === -1){
+                    return ''
+                }
                 var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
                 return createAt;
             }
@@ -369,7 +391,7 @@ class CountryManager extends React.Component {
                                     <Button type="primary" onClick={this.handleAddCountry}
                                             disabled={loading} 
                                     >新增</Button>
-                                    <Button type="primary" onClick={this.start}
+                                    <Button type="primary" onClick={this.handleDeleteCountry}
                                             disabled={loading} 
                                     >删除</Button>
                                 </div>

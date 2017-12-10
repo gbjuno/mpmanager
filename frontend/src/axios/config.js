@@ -21,7 +21,8 @@ export const SERVER_URL = `${PROTOCOL}://${HOST}/${CONTEXT}/${VERSION}`
 export const SECURITY_PIC_URL = 'http://localhost:8081/pic'
 
 export const TOWN_URL = SERVER_URL + '/town'
-export const COUNTRY_URL = townId => `${TOWN_URL}/${townId}/country`
+export const TOWN_COUNTRY_URL = townId => `${TOWN_URL}/${townId}/country`
+export const COUNTRY_URL = SERVER_URL + '/country'
 
 export const COMPANY_URL = SERVER_URL + "/company"
 export const USER_URL = SERVER_URL + "/user"
