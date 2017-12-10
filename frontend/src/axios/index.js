@@ -117,6 +117,6 @@ export const fetchPictures = (filter={}) => {
 export const fetchPicturesByPlaceId = (filter={}) => {
     let placeId = filter.placeId
     let day = filter.day
-    let url = `${config.PLACE_URL}/${placeId}/picture?day=${day}`
+    let url = `${config.PLACE_URL}/${placeId}?scope=picture&day=${day}`
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }

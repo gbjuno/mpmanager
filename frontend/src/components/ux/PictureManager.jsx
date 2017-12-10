@@ -18,13 +18,16 @@ import 'photoswipe/dist/photoswipe.css';
 import 'photoswipe/dist/default-skin/default-skin.css';
 
 const PIC_LOCATION_PREFIX = 'picPlaceId_'
+const DEFAULT_PIC_URL = '/html/static/null.png'
 
 class PictureManager extends React.Component {
     state = {
         gallery: null,
         rate: 1,
         responsive: false,
-        standardHeight: 230,
+        standardHeight: 200,
+        placeTypes: [],
+        placesData: [],
         selectedDay: utils.getDateQueryString(new Date()),
     };
     componentDidMount = () => {
@@ -49,8 +52,8 @@ class PictureManager extends React.Component {
         };
 
         // TODO: 需要同时能再render方法中获取到以下两个数据
-        this.fetchPlaceType();
         this.fetchPlaceData();
+        
         //this.fetchPictureData();
     };
 
@@ -71,6 +74,7 @@ class PictureManager extends React.Component {
             this.setState({
                 placesData: [...res.data.monitor_places],
             })
+            this.fetchPlaceType();
             this.fetchPictureData(res.data.monitor_places)
         }).catch(err => {
             console.log('err.response ---> ', err.response)
@@ -158,13 +162,35 @@ class PictureManager extends React.Component {
         return matrix
     };
 
+    hasPicture = picList => {
+        if (picList === undefined ) return false
+        if (picList.data === undefined || _.isEmpty(picList.data)) return false
+        if (picList.data.picture === undefined)  return false
+        if (picList.data.picture.length === 0) return false
+        if (picList.data.picture[0].full_uri == undefined) return false
+        if (picList.data.picture[0].thumb_uri == undefined) return false
+        return true
+    }
+
+    getPicThumb = picList => {
+        console.log('test has picture...', this.hasPicture(picList));
+        let picThumb = this.hasPicture(picList)? picList.data.picture[0].thumb_uri : DEFAULT_PIC_URL
+        return picThumb
+    }
+
+    getPicFull = picList => {
+        let picFull = this.hasPicture(picList)? picList.data.picture[0].full_uri : DEFAULT_PIC_URL
+        return picFull
+    }
+
     generateCard = imgs => imgs.map(v1 => (
         v1.map(v2 => (
             <div key={v2.id} className="gutter-box" style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate + 80}}>
                 <Card bordered={false} bodyStyle={this.state.responsive? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
                     <div>
-                        <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} onClick={() => this.openGallery(config.SERVER_ROOT + v2.full_pic)} 
-                            alt="example" width="100%" src={config.SERVER_ROOT + v2.thumb_pic} />
+                        <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} 
+                            onClick={() => this.openGallery(config.SERVER_ROOT + this.getPicFull(v2.picList))} 
+                            alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicFull(v2.picList)}/>
                     </div>
                     <div className="pa-m">
                         <h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
@@ -220,9 +246,7 @@ class PictureManager extends React.Component {
                     placeTypeName: placeType.name,
                     picturesData: [...placesData.map(val => {
                         val.key = val.id;
-                        let picMap = picLocationMap[`${PIC_LOCATION_PREFIX}${val.id}`]
-                        val.thumb_pic = picMap.thumb_uri
-                        val.full_pic = picMap.full_uri
+                        val.picList = picLocationMap[`${PIC_LOCATION_PREFIX}${val.id}`]
                         return val;
                     }).filter(val => val.monitor_type_id === placeType.id)],
                 });
