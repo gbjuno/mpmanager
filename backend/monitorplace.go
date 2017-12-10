@@ -20,9 +20,12 @@ type MonitorPlaceList struct {
 }
 
 type PictureWithMonitorPlace struct {
-	MonitorPlaceId int       `json:"monitor_place_id"`
-	Count          int       `json:"count"`
-	Pictures       []Picture `json:"picture"`
+	MonitorPlaceId   int       `json:"monitor_place_id"`
+	MonitorPlaceName string    `json:"monitor_place_name"`
+	CompanyId        int       `json:"company_id"`
+	CompanyName      string    `json:"company_name"`
+	Count            int       `json:"count"`
+	Pictures         []Picture `json:"picture"`
 }
 
 func (m MonitorPlace) Register(container *restful.Container) {
@@ -32,7 +35,7 @@ func (m MonitorPlace) Register(container *restful.Container) {
 	ws.Route(ws.GET("/{monitor_place_id}").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}/").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}/{scope}/").To(m.findMonitorPlace))
-	ws.Route(ws.GET("/{monitor_place_id}/{scope}/?after={after}&pageSize={pageSize}&pageNo={pageNo}&order={order}").To(m.findMonitorPlace))
+	ws.Route(ws.GET("/{monitor_place_id}/{scope}/?day={day}&pageSize={pageSize}&pageNo={pageNo}&order={order}").To(m.findMonitorPlace))
 	ws.Route(ws.POST("").To(m.createMonitorPlace))
 	ws.Route(ws.PUT("/{monitor_place_id}").To(m.updateMonitorPlace))
 	ws.Route(ws.DELETE("/{monitor_place_id}").To(m.deleteMonitorPlace))
@@ -44,7 +47,7 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	monitor_place_id := request.PathParameter("monitor_place_id")
 	scope := request.PathParameter("scope")
-	after := request.QueryParameter("after")
+	day := request.QueryParameter("day")
 	pageSize := request.QueryParameter("pageSize")
 	pageNo := request.QueryParameter("pageNo")
 	order := request.QueryParameter("order")
@@ -55,6 +58,15 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 		monitor_placeList.MonitorPlaces = make([]MonitorPlace, 0)
 		db.Debug().Find(&monitor_placeList.MonitorPlaces)
 		monitor_placeList.Count = len(monitor_placeList.MonitorPlaces)
+		for i, _ := range monitor_placeList.MonitorPlaces {
+			company := Company{}
+			db.First(&company, monitor_placeList.MonitorPlaces[i].CompanyId)
+			monitor_placeList.MonitorPlaces[i].CompanyName = company.Name
+
+			monitor_type := MonitorType{}
+			db.First(&monitor_type, monitor_placeList.MonitorPlaces[i].MonitorTypeId)
+			monitor_placeList.MonitorPlaces[i].MonitorTypeName = monitor_type.Name
+		}
 		response.WriteHeaderAndEntity(http.StatusOK, monitor_placeList)
 		glog.Infof("%s return monitor_place list", prefix)
 		return
@@ -79,6 +91,14 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 		return
 	}
 
+	company := Company{}
+	db.First(&company, monitor_place.CompanyId)
+	monitor_place.CompanyName = company.Name
+
+	monitor_type := MonitorType{}
+	db.First(&monitor_type, monitor_place.MonitorTypeId)
+	monitor_place.MonitorTypeName = monitor_type.Name
+
 	//find monitor_place, set QrcodePath
 	if scope == "" {
 		glog.Infof("%s return monitor_place with id %s", prefix, monitor_place_id)
@@ -91,16 +111,16 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 
 		var searchPicture *gorm.DB = db.Debug().Where("monitor_place_id = ?", monitor_place.ID)
 
-		if after != "" {
+		if day != "" {
 			loc, _ := time.LoadLocation("Local")
 			const shortFormat = "20060102"
-			_, err = time.ParseInLocation(shortFormat, after, loc)
+			_, err = time.ParseInLocation(shortFormat, day, loc)
 			if err != nil {
-				errmsg := fmt.Sprintf("cannot find object with after %s, err %s, ignore", after, err)
+				errmsg := fmt.Sprintf("cannot find object with day %s, err %s, ignore", day, err)
 				glog.Errorf("%s %s", prefix, errmsg)
 			}
-			condition := fmt.Sprintf("create_at >= str_to_date(%s, '%%Y%%m%%d')", after)
-			glog.Infof("%s find today_summary on after %s", prefix, after)
+			condition := fmt.Sprintf("to_days(create_at) = to_days(str_to_date(%s, '%%Y%%m%%d'))", day)
+			glog.Infof("%s find today_summary on day %s", prefix, day)
 			searchPicture = searchPicture.Where(condition)
 		}
 
@@ -143,6 +163,9 @@ func (m MonitorPlace) findMonitorPlace(request *restful.Request, response *restf
 
 		pictureList := PictureWithMonitorPlace{}
 		pictureList.MonitorPlaceId = monitor_place.ID
+		pictureList.MonitorPlaceName = monitor_place.Name
+		pictureList.CompanyId = company.ID
+		pictureList.CompanyName = company.Name
 		pictureList.Pictures = make([]Picture, 0)
 
 		searchPicture.Find(&pictureList.Pictures)

@@ -296,6 +296,7 @@ const NOTICEPAGE = `
         <div class="weui-msg__text-area">
             <h2 class="weui-msg__title">{{ .Msgtitle }}</h2>
             <p class="weui-msg__desc">{{ .Msgbody }}</p>
+            {{ template AHREF }}
         </div>
         <div class="weui-msg__extra-area">
             <div class="weui-footer">
@@ -309,6 +310,8 @@ const NOTICEPAGE = `
 </body>
 
 `
+
+const AHREF = `<a href="{{ .URL }}">{{ .Content }}</a>`
 
 const COMPANYSTAT = `
 <html>

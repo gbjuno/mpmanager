@@ -74,7 +74,6 @@ func WechatBackendInit() {
 
 	token, _ = wechatClient.Token()
 	glog.Infof("%s get token %s", prefix, token)
-	sendTemplateMsg()
 
 	if wechatMenu, _, err := menu.Get(wechatClient); err != nil {
 		glog.Errorf("%s cannot get menu, err %s", prefix, err)
@@ -407,7 +406,12 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		}*/
 
 	// password match
-	if password == user.Password {
+
+	hashCode := md5.New()
+	io.WriteString(hashCode, password)
+	md5pass := fmt.Sprintf("%x", hashCode.Sum(nil))
+
+	if md5pass == user.Password {
 		user.WxOpenId = openId
 		db.Debug().Save(&user)
 		response.Status = true
@@ -418,13 +422,13 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		io.WriteString(w, string(returnContent))
 		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
 
 		return
 	} else {
 		//password not match
-		glog.Infof("%s password not match, input password %s, actual password %s", prefix, password, user.Password)
+		glog.Infof("%s password not match, input password %s(encrypt %s), actual password %s", prefix, password, md5pass, user.Password)
 		response.Status = false
 		response.Message = "手机号或密码错误，请重试"
 		returnContent, err := json.Marshal(response)
@@ -518,7 +522,12 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	if user.ID == 0 {
 		// openid isn't related to a user
 		glog.Infof("%s openid is not related to a user", prefix)
-		msgbody := "在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢"
+		redirectURIPrefix := fmt.Sprintf("https://%s/backend/%%s", domain)
+		oauth2Scope := "snsapi_base"
+		bindingRedirectURI := fmt.Sprintf(redirectURIPrefix, "binding")
+		bindingState := "binding"
+		bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
+		msgbody := fmt.Sprintf("在菜单中或<a href=\"%s\">点击此处</a>绑定企业，绑定企业后再进行拍照，谢谢", bindingURI)
 		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
@@ -926,7 +935,12 @@ func companystatHandler(w http.ResponseWriter, r *http.Request) {
 	if user.ID == 0 {
 		// openid isn't related to a user
 		glog.Infof("%s openid is not related to a user", prefix)
-		msgbody := "在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢"
+		redirectURIPrefix := fmt.Sprintf("https://%s/backend/%%s", domain)
+		oauth2Scope := "snsapi_base"
+		bindingRedirectURI := fmt.Sprintf(redirectURIPrefix, "binding")
+		bindingState := "binding"
+		bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
+		msgbody := fmt.Sprintf("在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢", bindingURI)
 		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)

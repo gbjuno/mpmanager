@@ -88,15 +88,17 @@ func (MonitorType) TableName() string {
 }
 
 type MonitorPlace struct {
-	ID            int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
-	CreateAt      time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
-	UpdateAt      time.Time `gorm:"column:update_at;not null;" json:"update_at"`
-	Name          string    `gorm:"column:name;size:20;not null" json:"name"`
-	CompanyId     int       `gorm:"column:company_id;not null;index" json:"company_id"`
-	MonitorTypeId int       `gorm:"column:monitor_type_id;index" json:"monitor_type_id"`
-	QrcodePath    string    `gorm:"column:qrcode_path" json:"qrcode_path"`
-	QrcodeURI     string    `gorm:"column:qrcode_uri" json:"qrcode_uri"`
-	Pictures      []Picture `gorm:"ForeignKey:MonitorPlaceId" json:"-"`
+	ID              int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	CreateAt        time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
+	UpdateAt        time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	Name            string    `gorm:"column:name;size:20;not null" json:"name"`
+	CompanyId       int       `gorm:"column:company_id;not null" json:"company_id"`
+	CompanyName     string    `gorm:"-" json:"company_name"`
+	MonitorTypeId   int       `gorm:"column:monitor_type_id;index" json:"monitor_type_id"`
+	MonitorTypeName string    `gorm:"-" json:"monitor_type_name"`
+	QrcodePath      string    `gorm:"column:qrcode_path" json:"qrcode_path"`
+	QrcodeURI       string    `gorm:"column:qrcode_uri" json:"qrcode_uri"`
+	Pictures        []Picture `gorm:"ForeignKey:MonitorPlaceId" json:"-"`
 }
 
 func (MonitorPlace) TableName() string {

@@ -2,13 +2,14 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/chanxuehong/rand"
 	"github.com/emicklei/go-restful"
 	"github.com/gbjuno/mpmanager/backend/utils"
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -162,9 +163,11 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 	user := User{}
 	err := request.ReadEntity(&user)
 	if err == nil {
-		if user.Password == "" {
-			rawBytes := rand.New()
-			user.Password = string(rawBytes[:6])
+		if user.Phone == "" {
+			errmsg := fmt.Sprintf("please provide phone number")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
 		}
 
 		samePhoneUser := User{}
@@ -191,6 +194,19 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 			return
 		}
+
+		var rawPass string
+		if user.Password == "" {
+			rawPass = user.Phone[5:]
+		} else {
+			rawPass = user.Password
+		}
+
+		glog.Infof("%s set user password %s", rawPass)
+
+		hashCode := md5.New()
+		io.WriteString(hashCode, rawPass)
+		user.Password = fmt.Sprintf("%x", hashCode.Sum(nil))
 
 		//user.EncryptPassword()
 		db.Debug().Create(&user)
@@ -261,8 +277,11 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 
 	//find user and update
 	if user.Password != "" {
-		//if user password is update
-		//user.EncryptPassword()
+		rawPass := user.Password
+		hashCode := md5.New()
+		io.WriteString(hashCode, rawPass)
+		glog.Infof("%s set user password %s", rawPass)
+		user.Password = fmt.Sprintf("%x", hashCode.Sum(nil))
 	}
 	db.Debug().Model(&realUser).Update(user)
 	glog.Infof("%s update user with id %d successfully and return", prefix, realUser.ID)
