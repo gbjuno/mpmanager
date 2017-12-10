@@ -113,3 +113,10 @@ export const fetchPictures = (filter={}) => {
     let url = config.PICTURE_URL
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
+
+export const fetchPicturesByPlaceId = (filter={}) => {
+    let placeId = filter.placeId
+    let day = filter.day
+    let url = `${config.PLACE_URL}/${placeId}/picture?day=${day}`
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}

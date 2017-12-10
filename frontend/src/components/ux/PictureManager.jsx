@@ -5,24 +5,27 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Row, Col, Card } from 'antd';
+import * as _ from 'lodash'
 import { fetchData, receiveData } from '../../action';
 import BreadcrumbCustom from '../BreadcrumbCustom';
 import PictureSearch from './search/PictureSearch'
 import * as config from '../../axios/config'
+import * as utils from '../../utils'
 import PhotoSwipe from 'photoswipe';
 import PhotoswipeUIDefault from 'photoswipe/dist/photoswipe-ui-default';
 
 import 'photoswipe/dist/photoswipe.css';
 import 'photoswipe/dist/default-skin/default-skin.css';
 
+const PIC_LOCATION_PREFIX = 'picPlaceId_'
+
 class PictureManager extends React.Component {
     state = {
         gallery: null,
         rate: 1,
         responsive: false,
-        picturesData: [],
-        picturesDataWithType: [],
-        standardHeight: 430,
+        standardHeight: 230,
+        selectedDay: utils.getDateQueryString(new Date()),
     };
     componentDidMount = () => {
         this.resizePicture();
@@ -45,49 +48,35 @@ class PictureManager extends React.Component {
             
         };
 
-       this.fetchPlaceType();
+        this.fetchPlaceType();
+        this.fetchPlaceData();
+        //this.fetchPictureData();
     };
 
     fetchPlaceType = () => {
         const { fetchData } = this.props
-        let tempTownId
-        fetchData({funcName: 'fetchPlaceTypes', stateName: 'placeTypes'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.monitor_types === undefined) return
-            this.setState({
-                placeTypes: [...res.data.monitor_types.map(val => {
-                    val.key = val.id;
-                    return val;
-                })],
-                placeTypeLoading: false,
-            }, () => {
-                this.fetchPictureData();
-            });
-        });
+        fetchData({funcName: 'fetchPlaceTypes', stateName: 'placeTypes'});
     }
 
-    fetchPictureData = () => {
+    fetchPlaceData = () => {
         const { fetchData } = this.props
-        const { placeTypeLoading, placeTypes } = this.state
-        fetchData({funcName: 'fetchPictures', stateName: 'picturesData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.pictures === undefined) return
-            let picturesDataWithType = []
-            for(let placeType of placeTypes){
-                console.log('placeType.id', placeType.id)
-                picturesDataWithType.push(
-                    {
-                    placeTypeId: placeType.id,
-                    placeTypeName: placeType.name,
-                    picturesData: [...res.data.pictures.map(val => {
-                            val.key = val.id;
-                            return val;
-                        }).filter(val => val.monitor_type_id === placeType.id)],
-                    }
-                );
-            }
-            this.setState({
-                picturesDataWithType,
-            });
+        fetchData({funcName: 'fetchPlaces', stateName: 'placesData'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
+            this.fetchPictureData(res.data.monitor_places)
+        }).catch(err => {
+            console.log('err.response ---> ', err.response)
         });
+    }
+    
+
+    fetchPictureData = (places) => {
+        let { fetchData } = this.props
+
+        if( _.isEmpty(places)) return
+        for(let place of places){
+            fetchData({funcName: 'fetchPicturesByPlaceId', params: {placeId: place.id, day: this.state.selectedDay}, 
+                stateName: `${PIC_LOCATION_PREFIX}${place.id}`})
+        }
     }
 
     componentDidUpdate = (nextProps, nextState) => {
@@ -177,7 +166,7 @@ class PictureManager extends React.Component {
         ))
     ))
 
-    generateGrid = datasWithType => datasWithType.map(dataWithType => {
+    generateGrid = (datasWithType=[]) => datasWithType.map(dataWithType => {
         let imgs = this.transpositionToMatrix( dataWithType.picturesData);
         const imgsTag = this.generateCard(imgs)
         return (
@@ -207,11 +196,47 @@ class PictureManager extends React.Component {
         )
     })
 
+    /**
+     * 经过混沌的洗礼，数据得以重组
+     */
+    chaos = (placesData, placeTypes, picLocationMap) => {
+        let picturesDataWithType =[]
+        if(_.isEmpty(placeTypes) || _.isEmpty(placesData)) return
+        for(let placeType of placeTypes.data){
+            picturesDataWithType.push({
+                placeTypeId: placeType.id,
+                placeTypeName: placeType.name,
+                picturesData: [...placesData.data.map(val => {
+                    val.key = val.id;
+                    let picMap = picLocationMap[`${PIC_LOCATION_PREFIX}${val.id}`]
+                    val.thumb_pic = picMap.thumb_uri
+                    val.full_pic = picMap.full_uri
+                    return val;
+                }).filter(val => val.monitor_type_id === placeType.id)],
+            });
+        }
+        return picturesDataWithType
+    }
+
     render() {
-        const { rate, responsive, picturesDataWithType } = this.state
-        const { picData, fetchData} = this.props
+        const { rate, responsive, placesDataWithType } = this.state
+        const { placesData, placeTypes} = this.props
+
+        let genPicLocationMap = (props) => {
+            let tempMap = {}
+            let keys = _.keys(props)
+            for(let key of keys){
+                if(key.indexOf(PIC_LOCATION_PREFIX) > -1){
+                    tempMap[key] = this.props[key]
+                }
+            }
+            return tempMap
+        }
+
+        let picLocationMap = genPicLocationMap(this.props)
+        let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
         let pictureGrids = this.generateGrid(picturesDataWithType)
-        console.log('pictureGrids ---> ', pictureGrids)
+        console.log('all location pic ---> mycs', picturesDataWithType)
         
         return (
             <div id="scPic" className="gutter-example button-demo">
@@ -281,8 +306,8 @@ class PictureManager extends React.Component {
 }
 
 const mapStateToProps = state => {
-    const { picData = {data: []} } = state.httpData;
-    return { picData };
+    const { placesData = {data: []}, placeTypes = {data : []} } = state.httpData;
+    return { ...state.httpData };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),

@@ -52,7 +52,7 @@ class PlaceManager extends React.Component {
             
         };
 
-        this.fetchPlaceType();        
+        this.fetchPlaceType();
     };
 
     fetchPlaceType = () => {

@@ -3,7 +3,7 @@
  */
 import React, { Component } from 'react';
 
-import { Form, Icon, Input, Button } from 'antd';
+import { Form, Icon, Input, Button, DatePicker } from 'antd';
 const FormItem = Form.Item;
 const Search = Input.Search;
 
@@ -26,6 +26,11 @@ class PictureSearch extends Component {
             }
         });
     };
+
+    onDateChange = () => {
+
+    }
+
     render() {
         const { getFieldDecorator, getFieldsError, getFieldError, isFieldTouched } = this.props.form;
         const { style } = this.props
@@ -34,6 +39,15 @@ class PictureSearch extends Component {
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
             <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
+                <FormItem
+                    validateStatus={fileNameError ? 'error' : ''}
+                    help={fileNameError || ''}
+                >
+                    {getFieldDecorator('selectedDate', {
+                    })(
+                        <DatePicker onChange={this.onDateChange} />
+                    )}
+                </FormItem>
                 <FormItem
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
