@@ -1,5 +1,5 @@
 /**
- * Created by 叶子 on 2017/7/30.
+ * Created by Jingle on 2017/12/11.
  */
 import { combineReducers } from 'redux';
 import * as type from '../action/type';
@@ -27,6 +27,20 @@ const httpData = (state = {}, action) => {
     }
 };
 
+const searchFilter = (state = {}, action) => {
+    switch (action.type){
+        case type.SEARCH_PICTURE:
+            console.log('search picture reducer', action)
+            return {
+                ...state,
+                [action.collection]: {...action.condition},
+            };
+        default:
+            return {...state};
+    }
+}
+
 export default combineReducers({
-    httpData
+    httpData,
+    searchFilter,
 });

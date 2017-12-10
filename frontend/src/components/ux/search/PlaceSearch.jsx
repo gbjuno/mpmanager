@@ -22,7 +22,7 @@ class PlaceSearch extends Component {
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 const { fetchData } = this.props
-                fetchData({funcName: 'fetchScPic', stateName: 'picData', params: {picName: values.fileName}});
+                //fetchData({funcName: 'fetchScPic', stateName: 'picData', params: {picName: values.fileName}});
             }
         });
     };

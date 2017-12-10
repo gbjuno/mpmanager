@@ -18,7 +18,6 @@ const VERSION = 'v1'
 export const SERVER_ROOT = `${PROTOCOL}://${HOST}`
 export const SERVER_URL = `${PROTOCOL}://${HOST}/${CONTEXT}/${VERSION}`
 
-export const SECURITY_PIC_URL = 'http://localhost:8081/pic'
 
 export const TOWN_URL = SERVER_URL + '/town'
 export const TOWN_COUNTRY_URL = townId => `${TOWN_URL}/${townId}/country`
@@ -29,4 +28,4 @@ export const USER_URL = SERVER_URL + "/user"
 export const PLACE_URL = SERVER_URL + "/monitor_place"
 export const PLACETYPE_URL = SERVER_URL + "/monitor_type"
 export const SUMMARY_URL = SERVER_URL + "/summary"
-export const PICTURE_URL = SERVER_URL + "/picture"
+export const PICTURE_URL = (filter) => SERVER_URL + `/monitor_place?day=${filter.day}&pageNo=1&pageSize=1`

@@ -38,13 +38,6 @@ export const admin = () => get({url: config.MOCK_AUTH_ADMIN});
 // 访问权限获取
 export const guest = () => get({url: config.MOCK_AUTH_VISITOR});
 
-// 安检图片获取
-export const fetchScPic = (filter={}) => {
-    let url = config.SECURITY_PIC_URL
-    if(filter.picName !== undefined) url = `${config.SECURITY_PIC_URL}?picName=${filter.picName}`
-    console.log('url...', url)
-    return axios.get(url ,{picName:filter.picName}).then(res => res.data).catch(err => console.log(err));
-}
 
 // 村镇管理API
 
@@ -126,9 +119,17 @@ export const fetchPictures = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
-export const fetchPicturesByPlaceId = (filter={}) => {
+// 效率低，查询很难用
+// export const fetchPicturesByPlaceId = (filter={}) => {
+//     let placeId = filter.placeId
+//     let day = filter.day
+//     let url = `${config.PLACE_URL}/${placeId}?scope=picture&day=${day}`
+//     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+// }
+
+export const fetchPicturesWithPlace = (filter={}) => {
     let placeId = filter.placeId
     let day = filter.day
-    let url = `${config.PLACE_URL}/${placeId}?scope=picture&day=${day}`
+    let url = config.PICTURE_URL({day})
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }

@@ -1,5 +1,5 @@
 /**
- * Created by 叶子 on 2017/7/30.
+ * Created by Jingle on 2017/12/11.
  */
 import * as type from './type';
 import * as http from '../axios/index';
@@ -23,3 +23,13 @@ export const fetchData = ({funcName, params, stateName}) => dispatch => {
     dispatch(requestData(stateName));
     return http[funcName](params).then(res => dispatch(receiveData(res, stateName)));
 };
+
+/**
+ * 设置图片查询条件
+ * @param {*} filter 
+ */
+export const searchPicture = filter => ({
+    type: type.SEARCH_PICTURE,
+    collection: "picture",
+    condition: {...filter},
+})

@@ -6,7 +6,9 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Row, Col, Card } from 'antd';
 import * as _ from 'lodash'
+import moment from 'moment';
 import { fetchData, receiveData } from '../../action';
+import * as CONSTANTS from '../../constants';
 import BreadcrumbCustom from '../BreadcrumbCustom';
 import PictureSearch from './search/PictureSearch'
 import * as config from '../../axios/config'
@@ -28,8 +30,9 @@ class PictureManager extends React.Component {
         standardHeight: 200,
         placeTypes: [],
         placesData: [],
-        selectedDay: utils.getDateQueryString(new Date()),
+        selectedDay: moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT),
     };
+
     componentDidMount = () => {
         this.resizePicture();
         const clientWidth = document.body.clientWidth;
@@ -51,11 +54,27 @@ class PictureManager extends React.Component {
             
         };
 
+        console.log('ddddd', moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT))
+        this.setState({
+            selectedDay: this.getSelectedDate(),
+        })
+
         // TODO: 需要同时能再render方法中获取到以下两个数据
-        this.fetchPlaceData();
+        this.fetchPlaceType();
         
         //this.fetchPictureData();
     };
+
+    /** 查询条件组装 */
+    getSelectedDate = () => {
+        if(this.props.filter === undefined 
+            || this.props.filter.picture === undefined
+            || this.props.filter.picture.date === undefined){
+            return moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT)
+        }else{
+            return this.props.filter.picture.date
+        }  
+    }
 
     fetchPlaceType = () => {
         const { fetchData } = this.props
@@ -63,33 +82,61 @@ class PictureManager extends React.Component {
             if(res === undefined || res.data === undefined || res.data.monitor_types === undefined) return
             this.setState({
                 placeTypes: [...res.data.monitor_types],
+            }, () => {
+                this.fetchPictureData();
             })
         });
     }
 
-    fetchPlaceData = () => {
-        const { fetchData } = this.props
-        fetchData({funcName: 'fetchPlaces', stateName: 'placesData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
-            this.setState({
-                placesData: [...res.data.monitor_places],
-            })
-            this.fetchPlaceType();
-            this.fetchPictureData(res.data.monitor_places)
-        }).catch(err => {
-            console.log('err.response ---> ', err.response)
-        });
-    }
+    // fetchPlaceData = () => {
+    //     const { fetchData } = this.props
+    //     fetchData({funcName: 'fetchPlaces', stateName: 'placesData'}).then(res => {
+    //         if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
+    //         this.setState({
+    //             placesData: [...res.data.monitor_places],
+    //         })
+    //         this.fetchPlaceType();
+    //         this.fetchPictureData(res.data.monitor_places)
+    //     }).catch(err => {
+    //         console.log('err.response ---> ', err.response)
+    //     });
+    // }
     
 
-    fetchPictureData = (places) => {
-        let { fetchData } = this.props
+    // fetchPictureData = (places) => {
+    //     let { fetchData } = this.props
 
-        if( _.isEmpty(places)) return
-        for(let place of places){
-            fetchData({funcName: 'fetchPicturesByPlaceId', params: {placeId: place.id, day: this.state.selectedDay}, 
-                stateName: `${PIC_LOCATION_PREFIX}${place.id}`})
-        }
+    //     if( _.isEmpty(places)) return
+    //     for(let place of places){
+    //         fetchData({funcName: 'fetchPicturesByPlaceId', params: {placeId: place.id, day: this.state.selectedDay}, 
+    //             stateName: `${PIC_LOCATION_PREFIX}${place.id}`})
+    //     }
+    // }
+
+    fetchPictureData = () => {
+        const { fetchData } = this.props
+        const { placeTypes } = this.state
+
+        fetchData({funcName: 'fetchPicturesWithPlace', params: { day: this.state.selectedDay}, 
+                stateName: ''}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
+            let picturesDataWithType = []
+            for(let placeType of placeTypes){
+                picturesDataWithType.push(
+                    {
+                    placeTypeId: placeType.id,
+                    placeTypeName: placeType.name,
+                    placesData: [...res.data.monitor_places.map(val => {
+                            val.key = val.id;
+                            return val;
+                        }).filter(val => val.monitor_type_id === placeType.id)],
+                    }
+                );
+            }
+            this.setState({
+                picturesDataWithType,
+            });
+        });
     }
 
     componentDidUpdate = (nextProps, nextState) => {
@@ -162,24 +209,21 @@ class PictureManager extends React.Component {
         return matrix
     };
 
-    hasPicture = picList => {
-        if (picList === undefined ) return false
-        if (picList.data === undefined || _.isEmpty(picList.data)) return false
-        if (picList.data.picture === undefined)  return false
-        if (picList.data.picture.length === 0) return false
-        if (picList.data.picture[0].full_uri == undefined) return false
-        if (picList.data.picture[0].thumb_uri == undefined) return false
+    hasPicture = pictures => {
+        if (pictures === undefined ) return false
+        if (pictures.length === 0) return false
+        if (pictures[0].full_uri == undefined) return false
+        if (pictures[0].thumb_uri == undefined) return false
         return true
     }
 
-    getPicThumb = picList => {
-        console.log('test has picture...', this.hasPicture(picList));
-        let picThumb = this.hasPicture(picList)? picList.data.picture[0].thumb_uri : DEFAULT_PIC_URL
+    getPicThumb = pictures => {
+        let picThumb = this.hasPicture(pictures)? pictures[0].thumb_uri : DEFAULT_PIC_URL
         return picThumb
     }
 
-    getPicFull = picList => {
-        let picFull = this.hasPicture(picList)? picList.data.picture[0].full_uri : DEFAULT_PIC_URL
+    getPicFull = pictures => {
+        let picFull = this.hasPicture(pictures)? pictures[0].full_uri : DEFAULT_PIC_URL
         return picFull
     }
 
@@ -189,8 +233,8 @@ class PictureManager extends React.Component {
                 <Card bordered={false} bodyStyle={this.state.responsive? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
                     <div>
                         <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} 
-                            onClick={() => this.openGallery(config.SERVER_ROOT + this.getPicFull(v2.picList))} 
-                            alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicFull(v2.picList)}/>
+                            onClick={() => this.openGallery(config.SERVER_ROOT + this.getPicFull(v2.pictures))} 
+                            alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicFull(v2.pictures)}/>
                     </div>
                     <div className="pa-m">
                         <h3>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
@@ -202,7 +246,7 @@ class PictureManager extends React.Component {
     ))
 
     generateGrid = (datasWithType=[]) => datasWithType.map(dataWithType => {
-        let imgs = this.transpositionToMatrix( dataWithType.picturesData);
+        let imgs = this.transpositionToMatrix( dataWithType.placesData);
         const imgsTag = this.generateCard(imgs)
         return (
         <div key={dataWithType.placeTypeId}>
@@ -256,7 +300,7 @@ class PictureManager extends React.Component {
     }
 
     render() {
-        const { rate, responsive, placesData, placeTypes, placesDataWithType } = this.state
+        const { rate, responsive, placesData, placeTypes, picturesDataWithType } = this.state
         const { } = this.props
 
         let genPicLocationMap = (props) => {
@@ -270,12 +314,10 @@ class PictureManager extends React.Component {
             return tempMap
         }
 
-        let picLocationMap = genPicLocationMap(this.props)
-        let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
+        console.log('focus on chensha', picturesDataWithType)
+        // let picLocationMap = genPicLocationMap(this.props)
+        // let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
         let pictureGrids = this.generateGrid(picturesDataWithType)
-        console.log('all location pic P ---> mycs', placesData)
-        console.log('all location pic T ---> mycs', placeTypes)
-        console.log('all location pic D ---> mycs', picturesDataWithType)
         
         return (
             <div id="scPic" className="gutter-example button-demo">
@@ -302,6 +344,7 @@ class PictureManager extends React.Component {
 
                                 <button className="pswp__button pswp__button--close" title="Close (Esc)" />
 
+                                <button className="pswp__button pswp__button--share" title="Share" />
                                 <button className="pswp__button pswp__button--share" title="Share" />
 
                                 <button className="pswp__button pswp__button--fs" title="Toggle fullscreen" />
@@ -345,7 +388,7 @@ class PictureManager extends React.Component {
 }
 
 const mapStateToProps = state => {
-    return { ...state.httpData };
+    return { ...state.httpData, filter: state.searchFilter };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
