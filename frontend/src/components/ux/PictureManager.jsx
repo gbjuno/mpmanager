@@ -48,20 +48,29 @@ class PictureManager extends React.Component {
             
         };
 
-        this.fetchPlaceData();
+        // TODO: 需要同时能再render方法中获取到以下两个数据
         this.fetchPlaceType();
+        this.fetchPlaceData();
         //this.fetchPictureData();
     };
 
     fetchPlaceType = () => {
         const { fetchData } = this.props
-        fetchData({funcName: 'fetchPlaceTypes', stateName: 'placeTypes'});
+        fetchData({funcName: 'fetchPlaceTypes', stateName: 'placeTypes'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.monitor_types === undefined) return
+            this.setState({
+                placeTypes: [...res.data.monitor_types],
+            })
+        });
     }
 
     fetchPlaceData = () => {
         const { fetchData } = this.props
         fetchData({funcName: 'fetchPlaces', stateName: 'placesData'}).then(res => {
             if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
+            this.setState({
+                placesData: [...res.data.monitor_places],
+            })
             this.fetchPictureData(res.data.monitor_places)
         }).catch(err => {
             console.log('err.response ---> ', err.response)
@@ -154,8 +163,8 @@ class PictureManager extends React.Component {
             <div key={v2.id} className="gutter-box" style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate + 80}}>
                 <Card bordered={false} bodyStyle={this.state.responsive? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
                     <div>
-                        <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} onClick={() => this.openGallery(config.SERVER_ROOT + v2.full_uri)} 
-                            alt="example" width="100%" src={config.SERVER_ROOT + v2.full_uri} />
+                        <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} onClick={() => this.openGallery(config.SERVER_ROOT + v2.full_pic)} 
+                            alt="example" width="100%" src={config.SERVER_ROOT + v2.thumb_pic} />
                     </div>
                     <div className="pa-m">
                         <h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
@@ -201,15 +210,15 @@ class PictureManager extends React.Component {
      */
     chaos = (placesData, placeTypes, picLocationMap) => {
         if(placeTypes === undefined || placesData === undefined 
-            || _.isEmpty(placeTypes.data) || _.isEmpty(placesData.data)) {
+            || _.isEmpty(placeTypes) || _.isEmpty(placesData)) {
             return []
         }else{
             let picturesDataWithType =[]
-            for(let placeType of placeTypes.data){
+            for(let placeType of placeTypes){
                 picturesDataWithType.push({
                     placeTypeId: placeType.id,
                     placeTypeName: placeType.name,
-                    picturesData: [...placesData.data.map(val => {
+                    picturesData: [...placesData.map(val => {
                         val.key = val.id;
                         let picMap = picLocationMap[`${PIC_LOCATION_PREFIX}${val.id}`]
                         val.thumb_pic = picMap.thumb_uri
@@ -223,8 +232,8 @@ class PictureManager extends React.Component {
     }
 
     render() {
-        const { rate, responsive, placesDataWithType } = this.state
-        const { placesData, placeTypes} = this.props
+        const { rate, responsive, placesData, placeTypes, placesDataWithType } = this.state
+        const { } = this.props
 
         let genPicLocationMap = (props) => {
             let tempMap = {}
@@ -239,16 +248,16 @@ class PictureManager extends React.Component {
 
         let picLocationMap = genPicLocationMap(this.props)
         let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
-        // let pictureGrids = this.generateGrid(picturesDataWithType)
+        let pictureGrids = this.generateGrid(picturesDataWithType)
         console.log('all location pic P ---> mycs', placesData)
         console.log('all location pic T ---> mycs', placeTypes)
-        //console.log('all location pic ---> mycs', picturesDataWithType)
+        console.log('all location pic D ---> mycs', picturesDataWithType)
         
         return (
             <div id="scPic" className="gutter-example button-demo">
                 <BreadcrumbCustom first="安监管理" second="图片管理" />
                 <PictureSearch style={{paddingBottom: 13}} fetchData={fetchData}/>
-                {}
+                {pictureGrids}
                 <div className="pswp" tabIndex="-1" role="dialog" aria-hidden="true" ref={(div) => {this.pswpElement = div;} }>
 
                     <div className="pswp__bg" />
