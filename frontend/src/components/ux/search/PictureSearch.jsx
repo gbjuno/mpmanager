@@ -43,7 +43,9 @@ class PictureSearch extends Component {
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 const { fetchData } = this.props
-                fetchData({funcName: 'fetchScPic', stateName: 'picData', params: {picName: values.fileName}});
+                //fetchData({funcName: 'fetchScPic', stateName: 'picData', params: {picName: values.fileName}});
+                console.log('cccsssss', values)
+                searchPicture({date: values.selectedDate.format(queryDateFormat)});
             }
         });
     };
@@ -51,8 +53,7 @@ class PictureSearch extends Component {
     onDateChange = (date, dateString) => {
         const { searchPicture } = this.props
         if (date === undefined || date === null) return
-        let queryDateString = date.format(queryDateFormat)
-        searchPicture({date: queryDateString});
+        
     }
 
     onTownChange = (value) => {

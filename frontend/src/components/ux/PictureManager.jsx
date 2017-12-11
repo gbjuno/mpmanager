@@ -31,6 +31,7 @@ class PictureManager extends React.Component {
         placeTypes: [],
         placesData: [],
         selectedDay: moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT),
+        filter: {},
     };
 
     componentDidMount = () => {
@@ -64,6 +65,18 @@ class PictureManager extends React.Component {
         
         //this.fetchPictureData();
     };
+
+    componentDidUpdate(prevProps, prevState){
+        const oldFilter = prevProps.filter
+        const newFilter = this.props.filter
+
+        console.log('dddiidddd update', newFilter)
+        if( oldFilter !== newFilter ){
+            this.setState({
+                filter: newFilter,
+            })
+        }
+    }
 
     /** 查询条件组装 */
     getSelectedDate = () => {
@@ -114,8 +127,9 @@ class PictureManager extends React.Component {
     // }
 
     fetchPictureData = () => {
-        const { fetchData } = this.props
-        const { placeTypes } = this.state
+        const { fetchData  } = this.props
+        const { placeTypes, filter } = this.state
+        console.log('current filter .....', filter)
 
         fetchData({funcName: 'fetchPicturesWithPlace', params: { day: this.state.selectedDay}, 
                 stateName: ''}).then(res => {
@@ -314,7 +328,6 @@ class PictureManager extends React.Component {
             return tempMap
         }
 
-        console.log('focus on chensha', picturesDataWithType)
         // let picLocationMap = genPicLocationMap(this.props)
         // let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
         let pictureGrids = this.generateGrid(picturesDataWithType)

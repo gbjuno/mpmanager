@@ -197,7 +197,6 @@ class UserManager extends React.Component {
 
         const { loading, selectedRowKeys, selectedTown,
             usersData } = this.state;
-        console.log('users ...sss...', usersData)
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
