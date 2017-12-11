@@ -25,7 +25,7 @@ class PictureSearch extends Component {
     state = {
         townsData: [],
         villagesData: [],
-        selectedTown: '',
+        selectedTownId: '',
         selectedDate: new Date(),
     }
 
@@ -46,6 +46,8 @@ class PictureSearch extends Component {
                 //fetchData({funcName: 'fetchScPic', stateName: 'picData', params: {picName: values.fileName}});
                 console.log('cccsssss', values)
                 searchPicture({date: values.selectedDate.format(queryDateFormat)});
+                fetchData({funcName: 'fetchPicturesWithPlace', params: { day: values.selectedDate.format(queryDateFormat)}, 
+                    stateName: 'picturesData'})
             }
         });
     };
@@ -58,14 +60,30 @@ class PictureSearch extends Component {
 
     onTownChange = (value) => {
         this.setState({
-            selectedTown: value,
+            selectedTownId: value,
         })
+
     }
+
+    
 
     fetchTownList = () => {
         const { fetchData } = this.props
-        console.log('search picture', this.props)
         fetchData({funcName: 'fetchTowns', stateName: 'townsData'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.towns === undefined) return
+            this.setState({
+                townsData: [...res.data.towns.map(val => {
+                    val.key = val.id;
+                    return val;
+                })],
+                loading: false,
+            });
+        });
+    }
+
+    fetchVillageList = () => {
+        const { fetchData } = this.props
+        fetchData({funcName: 'fetchCountries', stateName: 'villagesData'}).then(res => {
             if(res === undefined || res.data === undefined || res.data.towns === undefined) return
             this.setState({
                 townsData: [...res.data.towns.map(val => {
@@ -141,7 +159,7 @@ class PictureSearch extends Component {
                         <Select
                         showSearch
                         style={{ width: 200 }}
-                        placeholder="请选择镇"
+                        placeholder="请选择村"
                         optionFilterProp="children"
                         onChange={this.onTownChange}
                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
@@ -159,7 +177,7 @@ class PictureSearch extends Component {
                         <Select
                         showSearch
                         style={{ width: 200 }}
-                        placeholder="请选择镇"
+                        placeholder="请选择公司"
                         optionFilterProp="children"
                         onChange={this.onTownChange}
                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}

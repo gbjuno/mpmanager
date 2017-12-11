@@ -132,7 +132,7 @@ class PictureManager extends React.Component {
         console.log('current filter .....', filter)
 
         fetchData({funcName: 'fetchPicturesWithPlace', params: { day: this.state.selectedDay}, 
-                stateName: ''}).then(res => {
+                stateName: 'picturesData'}).then(res => {
             if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
             let picturesDataWithType = []
             for(let placeType of placeTypes){
@@ -241,6 +241,7 @@ class PictureManager extends React.Component {
         return picFull
     }
 
+
     generateCard = imgs => imgs.map(v1 => (
         v1.map(v2 => (
             <div key={v2.id} className="gutter-box" style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate + 80}}>
@@ -252,7 +253,7 @@ class PictureManager extends React.Component {
                     </div>
                     <div className="pa-m">
                         <h3>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
-                        <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.create_at.substring(0, 10)}</span></a></small>
+                        <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.company_name}</span></a></small>
                     </div>
                 </Card>
             </div>
@@ -292,19 +293,20 @@ class PictureManager extends React.Component {
     /**
      * 经过混沌的洗礼，数据得以重组
      */
-    chaos = (placesData, placeTypes, picLocationMap) => {
-        if(placeTypes === undefined || placesData === undefined 
-            || _.isEmpty(placeTypes) || _.isEmpty(placesData)) {
+    chaos = (picturesData, placeTypes) => {
+        if(placeTypes === undefined || picturesData === undefined 
+            || _.isEmpty(placeTypes) || _.isEmpty(picturesData)
+            || picturesData.data === undefined || picturesData.data.monitor_places === undefined) {
             return []
         }else{
             let picturesDataWithType =[]
+            let pictures = picturesData.data
             for(let placeType of placeTypes){
                 picturesDataWithType.push({
                     placeTypeId: placeType.id,
                     placeTypeName: placeType.name,
-                    picturesData: [...placesData.map(val => {
+                    placesData: [...pictures.monitor_places.map(val => {
                         val.key = val.id;
-                        val.picList = picLocationMap[`${PIC_LOCATION_PREFIX}${val.id}`]
                         return val;
                     }).filter(val => val.monitor_type_id === placeType.id)],
                 });
@@ -314,8 +316,8 @@ class PictureManager extends React.Component {
     }
 
     render() {
-        const { rate, responsive, placesData, placeTypes, picturesDataWithType } = this.state
-        const { } = this.props
+        const { rate, responsive, placeTypes, picturesDataWithType } = this.state
+        const { picturesData  } = this.props
 
         let genPicLocationMap = (props) => {
             let tempMap = {}
@@ -330,7 +332,10 @@ class PictureManager extends React.Component {
 
         // let picLocationMap = genPicLocationMap(this.props)
         // let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
-        let pictureGrids = this.generateGrid(picturesDataWithType)
+        let chaosDataWithType = this.chaos(picturesData, placeTypes)
+        let pictureGrids = this.generateGrid(chaosDataWithType)
+
+        console.log('chaos data...', chaosDataWithType)
         
         return (
             <div id="scPic" className="gutter-example button-demo">
@@ -357,7 +362,6 @@ class PictureManager extends React.Component {
 
                                 <button className="pswp__button pswp__button--close" title="Close (Esc)" />
 
-                                <button className="pswp__button pswp__button--share" title="Share" />
                                 <button className="pswp__button pswp__button--share" title="Share" />
 
                                 <button className="pswp__button pswp__button--fs" title="Toggle fullscreen" />
@@ -401,6 +405,7 @@ class PictureManager extends React.Component {
 }
 
 const mapStateToProps = state => {
+    console.log('shaahs', state)
     return { ...state.httpData, filter: state.searchFilter };
 };
 const mapDispatchToProps = dispatch => ({
