@@ -16,6 +16,7 @@ func refreshTodaySummary() {
 	todayStr := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 	shortForm := "20060102"
 	todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
+	condition := fmt.Sprintf("day = str_to_date(%s,'%%Y%%m%%d')", todayStr)
 	glog.Infof("%s start at time %s %d:%d, %s", prefix, todayStr, timeNow.Hour(), timeNow.Minute(), todayTime)
 
 	/*
@@ -31,9 +32,14 @@ func refreshTodaySummary() {
 		monitor_places := make([]MonitorPlace, 0)
 		db.Debug().Where("company_id = ?", company.ID).Find(&monitor_places)
 		for _, monitor_place := range monitor_places {
-			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
-			glog.Infof("%s try to insert todaySummary for company %d, monitor_place %d, should ignore conflict", prefix, company.ID, monitor_place.ID)
-			db.Debug().Create(&todaySummary)
+			t := TodaySummary{}
+			db.Debug().Where(condition).Where("company_id = ?", company.ID).Where("monitor_place_id = ?", monitor_place.ID).First(&t)
+			//create (day,companyid,monitor_place_id) new TodaySummary row
+			if t.ID == 0 {
+				todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
+				glog.Infof("%s try to insert todaySummary for company %d, monitor_place %d, should ignore conflict", prefix, company.ID, monitor_place.ID)
+				db.Debug().Create(&todaySummary)
+			}
 		}
 	}
 }
@@ -45,14 +51,20 @@ func refreshSummary() {
 	todayStr := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 	shortForm := "20060102"
 	todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
+	condition := fmt.Sprintf("day = str_to_date(%s,'%%Y%%m%%d')", todayStr)
 	glog.Infof("%s start at time %s %d:%d, %s", prefix, todayStr, timeNow.Hour(), timeNow.Minute(), todayTime)
 
 	companies := make([]Company, 0)
 	db.Debug().Where("enable = 'T'").Find(&companies)
 	for _, company := range companies {
-		summary := Summary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, IsFinish: "F"}
-		glog.Infof("%s try to insert summary for company %d, should ignore conflict", prefix, company.ID)
-		db.Debug().Create(&summary)
+		s := Summary{}
+		db.Debug().Where(condition).Where("company_id = ?", company.ID).First(&s)
+		//create (day,companyid,monitor_place_id) new TodaySummary row
+		if s.ID == 0 {
+			summary := Summary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, IsFinish: "F"}
+			glog.Infof("%s try to insert summary for company %d, should ignore conflict", prefix, company.ID)
+			db.Debug().Create(&summary)
+		}
 	}
 }
 

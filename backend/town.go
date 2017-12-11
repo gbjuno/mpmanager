@@ -69,7 +69,7 @@ func (t Town) findTown(request *restful.Request, response *restful.Response) {
 	db.Debug().First(&town, id)
 	//cannot find town
 	if town.ID == 0 {
-		errmsg := fmt.Sprintf("cannot find town with id %d", town_id)
+		errmsg := fmt.Sprintf("cannot find town with id %s", town_id)
 		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusNotFound, Response{Status: "error", Error: errmsg})
 		return

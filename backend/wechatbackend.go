@@ -646,7 +646,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	db.Debug().Where("id = ?", place).First(&monitor_place)
 	if monitor_place.ID == 0 {
 		//cannot find place
-		glog.Errorf("%s cannot find monitor_place with id %s", place)
+		glog.Errorf("%s cannot find monitor_place with id %s", prefix, place)
 		w.WriteHeader(http.StatusOK)
 		msgbody := "该监控地点已经失效，如有问题请联系管理员"
 		n := NoticePage{Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "无效地点", Msgbody: msgbody}
@@ -798,7 +798,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.CompanyId != monitor_place.CompanyId {
-		errmsg := fmt.Sprintf("monitor_place belong to company %d, user belong to company %d, unmatch", user)
+		errmsg := fmt.Sprintf("monitor_place belong to company %d, user belong to company %d, unmatch", monitor_place.CompanyId, user.CompanyId)
 		glog.Errorf("%s %s", prefix, errmsg)
 		response.Status = false
 		response.Message = "用户对该地点无权限,请使用该地点的管理人员账户上传"

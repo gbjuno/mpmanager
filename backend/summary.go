@@ -41,7 +41,7 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 	if company_id != "" {
 		db.Debug().Where("id = " + company_id).First(&company)
 		if company.ID == 0 {
-			errmsg := fmt.Sprintf("%s company id %d does not exist", company_id)
+			errmsg := fmt.Sprintf("company id %s does not exist", company_id)
 			glog.Errorf("%s %s", prefix, errmsg)
 			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
 			return
