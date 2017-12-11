@@ -24,8 +24,10 @@ class PictureSearch extends Component {
 
     state = {
         townsData: [],
-        villagesData: [],
+        countriesData: [],
+        companiesData: [],
         selectedTownId: '',
+        selectedCountryId: '',
         selectedDate: new Date(),
     }
 
@@ -35,7 +37,6 @@ class PictureSearch extends Component {
         this.fetchTownList();
     }
 
-    
 
     handleSubmit = (e) => {
         e.preventDefault();
@@ -43,10 +44,10 @@ class PictureSearch extends Component {
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 const { fetchData } = this.props
-                //fetchData({funcName: 'fetchScPic', stateName: 'picData', params: {picName: values.fileName}});
-                console.log('cccsssss', values)
                 searchPicture({date: values.selectedDate.format(queryDateFormat)});
-                fetchData({funcName: 'fetchPicturesWithPlace', params: { day: values.selectedDate.format(queryDateFormat)}, 
+                fetchData({funcName: 'fetchPicturesWithPlace', params: { 
+                    day: values.selectedDate.format(queryDateFormat),
+                    companyId: values.company}, 
                     stateName: 'picturesData'})
             }
         });
@@ -59,13 +60,30 @@ class PictureSearch extends Component {
     }
 
     onTownChange = (value) => {
+        const { form } = this.props
         this.setState({
             selectedTownId: value,
+        },() => this.fetchCountryList(value))
+        form.setFieldsValue({
+            country: undefined,
         })
-
     }
 
-    
+
+    onCountryChange = (value) => {
+        const { form } = this.props
+        this.setState({
+            selectedCountryId: value,
+        },() => this.fetchCompanyList(value))
+        form.setFieldsValue({
+            company: undefined,
+        })
+    }
+
+    onCompanyChange = (value) => {
+        
+    }
+
 
     fetchTownList = () => {
         const { fetchData } = this.props
@@ -81,12 +99,15 @@ class PictureSearch extends Component {
         });
     }
 
-    fetchVillageList = () => {
+    fetchCountryList = (selectedTownId) => {
         const { fetchData } = this.props
-        fetchData({funcName: 'fetchCountries', stateName: 'villagesData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.towns === undefined) return
+        if(selectedTownId === undefined){
+            return
+        }
+        fetchData({funcName: 'fetchCountries', stateName: 'countriesData', params: {townId: selectedTownId}}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.countries === undefined) return
             this.setState({
-                townsData: [...res.data.towns.map(val => {
+                countriesData: [...res.data.countries.map(val => {
                     val.key = val.id;
                     return val;
                 })],
@@ -95,38 +116,38 @@ class PictureSearch extends Component {
         });
     }
 
-    fetchCountriesData = () => {
-        if (this.state.selectedTown === undefined) return
+    fetchCompanyList = (selectedCountryId) => {
         const { fetchData } = this.props
-        fetchData({funcName: 'fetchCountries', stateName: 'villagesData', 
-            params: {townId: this.state.selectedTown}}).then(res => {
+        if(selectedCountryId === undefined){
+            return
+        }
+        fetchData({funcName: 'fetchCompaniesByCountryId', stateName: 'companiesData', params: {countryId: selectedCountryId}}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.companies === undefined) return
             this.setState({
-                villagesData: [...res.data.countries.map(val => {
+                companiesData: [...res.data.companies.map(val => {
                     val.key = val.id;
                     return val;
                 })],
                 loading: false,
             });
-        }).catch(err => {
-            this.setState({
-                villagesData: [],
-            })
         });
     }
 
-    getTownOptions = ( townsData=[] ) => {
+
+    getOptions = ( data=[] ) => {
         
-        return townsData.map(item => {
+        return data.map(item => {
             return <Option key={item.key} value={`${item.id}`}>{item.name}</Option>
         })
     }
 
+
     render() {
         const { getFieldDecorator, getFieldsError, getFieldError, isFieldTouched } = this.props.form;
         const { style, filter } = this.props
-        const { townsData, selectedDate } = this.state
+        const { townsData, countriesData, companiesData, selectedDate } = this.state
 
-        console.log('filter .... search cccc', filter)
+        console.log('filter .... aaaa cccc', townsData)
 
         // Only show error after a field is touched.
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
@@ -137,6 +158,7 @@ class PictureSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('town', {
+                        //initialValue: townsData[0]? townsData[0].name:'',
                     })(
                         <Select
                         showSearch
@@ -146,7 +168,7 @@ class PictureSearch extends Component {
                         onChange={this.onTownChange}
                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                         >
-                            {this.getTownOptions(townsData)}
+                            {this.getOptions(townsData)}
                         </Select>
                     )}
                 </FormItem>
@@ -154,17 +176,17 @@ class PictureSearch extends Component {
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
-                    {getFieldDecorator('village', {
+                    {getFieldDecorator('country', {
                     })(
                         <Select
                         showSearch
                         style={{ width: 200 }}
                         placeholder="请选择村"
                         optionFilterProp="children"
-                        onChange={this.onTownChange}
+                        onChange={this.onCountryChange}
                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                         >
-                            {this.getTownOptions(townsData)}
+                            {this.getOptions(countriesData)}
                         </Select>
                     )}
                 </FormItem>
@@ -179,10 +201,10 @@ class PictureSearch extends Component {
                         style={{ width: 200 }}
                         placeholder="请选择公司"
                         optionFilterProp="children"
-                        onChange={this.onTownChange}
+                        onChange={this.onCompanyChange}
                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                         >
-                            {this.getTownOptions(townsData)}
+                            {this.getOptions(companiesData)}
                         </Select>
                     )}
                 </FormItem>

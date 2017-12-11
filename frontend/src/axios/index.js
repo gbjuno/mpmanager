@@ -82,6 +82,11 @@ export const fetchCompanies = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+export const fetchCompaniesByCountryId = (filter={}) => {
+    let url = `${config.COUNTRY_URL}/${filter.countryId}/company`
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
 
 // 用户管理API
 
@@ -130,6 +135,7 @@ export const fetchPictures = (filter={}) => {
 export const fetchPicturesWithPlace = (filter={}) => {
     let placeId = filter.placeId
     let day = filter.day
-    let url = config.PICTURE_URL({day})
+    let companyId = filter.companyId
+    let url = config.PICTURE_URL({day, companyId})
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }

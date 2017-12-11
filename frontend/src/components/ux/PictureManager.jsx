@@ -232,7 +232,7 @@ class PictureManager extends React.Component {
     }
 
     getPicThumb = pictures => {
-        let picThumb = this.hasPicture(pictures)? pictures[0].thumb_uri : DEFAULT_PIC_URL
+        let picThumb = this.hasPicture(pictures)? pictures[0].full_uri : DEFAULT_PIC_URL
         return picThumb
     }
 
@@ -248,8 +248,12 @@ class PictureManager extends React.Component {
                 <Card bordered={false} bodyStyle={this.state.responsive? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
                     <div>
                         <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} 
-                            onClick={() => this.openGallery(config.SERVER_ROOT + this.getPicFull(v2.pictures))} 
-                            alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicFull(v2.pictures)}/>
+                            onClick={() => {
+                                if(this.hasPicture(v2.pictures)){
+                                    return this.openGallery(config.SERVER_ROOT + this.getPicFull(v2.pictures))
+                                }
+                            }} 
+                            alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicThumb(v2.pictures)}/>
                     </div>
                     <div className="pa-m">
                         <h3>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
