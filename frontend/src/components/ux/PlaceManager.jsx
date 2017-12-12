@@ -143,7 +143,7 @@ class PlaceManager extends React.Component {
                             alt="example" width="100%" src={config.SERVER_ROOT + v2.qrcode_uri} />
                     </div>
                     <div className="pa-m">
-                        <h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.name}</span></h3>
+                        {/*<h3>{v2.companyName}<span style={{paddingLeft: 5}}>{v2.name}</span></h3>*/}
                         <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.create_at.substring(0, 10)}</span></a></small>
                     </div>
                 </Card>

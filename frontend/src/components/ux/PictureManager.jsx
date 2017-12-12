@@ -4,7 +4,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Row, Col, Card } from 'antd';
+import { Row, Col, Card, Tabs, Pagination } from 'antd';
 import * as _ from 'lodash'
 import moment from 'moment';
 import { fetchData, receiveData } from '../../action';
@@ -19,6 +19,7 @@ import PhotoswipeUIDefault from 'photoswipe/dist/photoswipe-ui-default';
 import 'photoswipe/dist/photoswipe.css';
 import 'photoswipe/dist/default-skin/default-skin.css';
 
+const TabPane = Tabs.TabPane;
 const PIC_LOCATION_PREFIX = 'picPlaceId_'
 const DEFAULT_PIC_URL = '/html/static/null.png'
 
@@ -101,35 +102,10 @@ class PictureManager extends React.Component {
         });
     }
 
-    // fetchPlaceData = () => {
-    //     const { fetchData } = this.props
-    //     fetchData({funcName: 'fetchPlaces', stateName: 'placesData'}).then(res => {
-    //         if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
-    //         this.setState({
-    //             placesData: [...res.data.monitor_places],
-    //         })
-    //         this.fetchPlaceType();
-    //         this.fetchPictureData(res.data.monitor_places)
-    //     }).catch(err => {
-    //         console.log('err.response ---> ', err.response)
-    //     });
-    // }
-    
-
-    // fetchPictureData = (places) => {
-    //     let { fetchData } = this.props
-
-    //     if( _.isEmpty(places)) return
-    //     for(let place of places){
-    //         fetchData({funcName: 'fetchPicturesByPlaceId', params: {placeId: place.id, day: this.state.selectedDay}, 
-    //             stateName: `${PIC_LOCATION_PREFIX}${place.id}`})
-    //     }
-    // }
 
     fetchPictureData = () => {
         const { fetchData  } = this.props
         const { placeTypes, filter } = this.state
-        console.log('current filter .....', filter)
 
         fetchData({funcName: 'fetchPicturesWithPlace', params: { day: this.state.selectedDay}, 
                 stateName: 'picturesData'}).then(res => {
@@ -255,8 +231,8 @@ class PictureManager extends React.Component {
                             }} 
                             alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicThumb(v2.pictures)}/>
                     </div>
-                    <div className="pa-m">
-                        <h3>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h3>
+                    <div className="pa-s">
+                        <h4 style={{marginBottom: '0em'}}>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h4>
                         <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.company_name}</span></a></small>
                     </div>
                 </Card>
@@ -268,8 +244,7 @@ class PictureManager extends React.Component {
         let imgs = this.transpositionToMatrix( dataWithType.placesData);
         const imgsTag = this.generateCard(imgs)
         return (
-        <div key={dataWithType.placeTypeId}>
-            <h2>{dataWithType.placeTypeName}</h2>
+        <TabPane tab={dataWithType.placeTypeName} key={dataWithType.placeTypeId}>
             <Row gutter={20}>
                 <Col className="gutter-row" md={4}>
                     {imgsTag[0]}
@@ -290,7 +265,8 @@ class PictureManager extends React.Component {
                     {imgsTag[5]}
                 </Col>
             </Row>
-        </div>
+            <Pagination defaultCurrent={1} total={5} />
+        </TabPane>
         )
     })
 
@@ -323,19 +299,7 @@ class PictureManager extends React.Component {
         const { rate, responsive, placeTypes, picturesDataWithType } = this.state
         const { picturesData  } = this.props
 
-        let genPicLocationMap = (props) => {
-            let tempMap = {}
-            let keys = _.keys(props)
-            for(let key of keys){
-                if(key.indexOf(PIC_LOCATION_PREFIX) > -1){
-                    tempMap[key] = this.props[key]
-                }
-            }
-            return tempMap
-        }
 
-        // let picLocationMap = genPicLocationMap(this.props)
-        // let picturesDataWithType = this.chaos(placesData, placeTypes, picLocationMap)
         let chaosDataWithType = this.chaos(picturesData, placeTypes)
         let pictureGrids = this.generateGrid(chaosDataWithType)
 
@@ -344,8 +308,10 @@ class PictureManager extends React.Component {
         return (
             <div id="scPic" className="gutter-example button-demo">
                 <BreadcrumbCustom first="安监管理" second="图片管理" />
-                <PictureSearch style={{paddingBottom: 13}} fetchData={fetchData}/>
+                <PictureSearch  fetchData={fetchData}/>
+                <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
                 {pictureGrids}
+                </Tabs>
                 <div className="pswp" tabIndex="-1" role="dialog" aria-hidden="true" ref={(div) => {this.pswpElement = div;} }>
 
                     <div className="pswp__bg" />

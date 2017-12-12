@@ -66,6 +66,7 @@ class PictureSearch extends Component {
         },() => this.fetchCountryList(value))
         form.setFieldsValue({
             country: undefined,
+            company: undefined,
         })
     }
 
@@ -153,7 +154,8 @@ class PictureSearch extends Component {
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
             <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
-                <FormItem
+                <FormItem 
+                    style={{paddingBottom: 13}}
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
@@ -173,6 +175,7 @@ class PictureSearch extends Component {
                     )}
                 </FormItem>
                 <FormItem
+                    style={{paddingBottom: 13}}
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
@@ -191,6 +194,7 @@ class PictureSearch extends Component {
                     )}
                 </FormItem>
                 <FormItem
+                    style={{paddingBottom: 13}}
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
@@ -209,6 +213,7 @@ class PictureSearch extends Component {
                     )}
                 </FormItem>
                 <FormItem
+                    style={{paddingBottom: 13}}
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
@@ -218,7 +223,9 @@ class PictureSearch extends Component {
                         <DatePicker onChange={this.onDateChange}/>
                     )}
                 </FormItem>
-                <FormItem>
+                <FormItem 
+                    style={{paddingBottom: 13}}
+                >
                     <Button
                         type="primary"
                         htmlType="submit"
