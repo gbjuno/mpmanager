@@ -27,7 +27,6 @@ class PictureManager extends React.Component {
     state = {
         gallery: null,
         rate: 1,
-        responsive: false,
         standardHeight: 200,
         placeTypes: [],
         placesData: [],
@@ -37,26 +36,10 @@ class PictureManager extends React.Component {
 
     componentDidMount = () => {
         this.resizePicture();
-        const clientWidth = document.body.clientWidth;
-        if(clientWidth <= 992) {
-            this.setState({
-                responsive: true,
-            })
-        }
         window.onresize = () =>{
-            const clientWidth = document.body.clientWidth;
-            if(clientWidth <= 992) {
-                this.setState({
-                    responsive: true,
-                })
-                return;
-            }else{
-                this.resizePicture();
-            }
-            
+            this.resizePicture();
         };
 
-        console.log('ddddd', moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT))
         this.setState({
             selectedDay: this.getSelectedDate(),
         })
@@ -71,12 +54,39 @@ class PictureManager extends React.Component {
         const oldFilter = prevProps.filter
         const newFilter = this.props.filter
 
-        console.log('dddiidddd update', newFilter)
         if( oldFilter !== newFilter ){
             this.setState({
                 filter: newFilter,
             })
         }
+    }
+
+    
+    componentDidUpdate = (nextProps, nextState) => {
+    };
+
+    componentWillUnmount = () => {
+        this.closeGallery();
+    };
+
+    getClientWidth = () => {    // 获取当前浏览器宽度并设置responsive管理响应式
+        const { receiveData } = this.props;
+        const clientWidth = document.body.clientWidth;
+        console.log(clientWidth);
+        receiveData({isMobile: clientWidth <= 992}, 'responsive');
+    };
+
+
+    resizePicture = () => {
+        this.getClientWidth();
+        const scPic = document.getElementById("scPic");
+        if(scPic === undefined || scPic === null) return;
+        const swidth = scPic.clientWidth;
+        const benchmark = 1680
+        this.setState({
+            rate: swidth / benchmark,
+        });
+        
     }
 
     /** 查询条件组装 */
@@ -129,25 +139,6 @@ class PictureManager extends React.Component {
         });
     }
 
-    componentDidUpdate = (nextProps, nextState) => {
-    };
-
-    componentWillUnmount = () => {
-        this.closeGallery();
-    };
-
-
-    resizePicture = () => {
-        const scPic = document.getElementById("scPic");
-        if(scPic === undefined || scPic === null) return;
-        const swidth = scPic.clientWidth;
-        const benchmark = 1680;
-        this.setState({
-            rate: swidth / benchmark,
-            responsive: false,
-        });
-        
-    }
 
     openGallery = (item) => {
         const items = [
@@ -218,12 +209,12 @@ class PictureManager extends React.Component {
     }
 
 
-    generateCard = imgs => imgs.map(v1 => (
+    generateCard = (imgs, isMobile=false) => imgs.map(v1 => (
         v1.map(v2 => (
-            <div key={v2.id} className="gutter-box" style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate + 80}}>
-                <Card bordered={false} bodyStyle={this.state.responsive? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
+            <div key={v2.id} className="gutter-box" style={isMobile? {}: {height: this.state.standardHeight * this.state.rate + 80}}>
+                <Card bordered={false} bodyStyle={isMobile? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
                     <div>
-                        <img style={this.state.responsive? {}: {height: this.state.standardHeight * this.state.rate}} 
+                        <img style={isMobile? {}: {height: this.state.standardHeight * this.state.rate}} 
                             onClick={() => {
                                 if(this.hasPicture(v2.pictures)){
                                     return this.openGallery(config.SERVER_ROOT + this.getPicFull(v2.pictures))
@@ -240,9 +231,9 @@ class PictureManager extends React.Component {
         ))
     ))
 
-    generateGrid = (datasWithType=[]) => datasWithType.map(dataWithType => {
+    generateGrid = (datasWithType=[], isMobile) => datasWithType.map(dataWithType => {
         let imgs = this.transpositionToMatrix( dataWithType.placesData);
-        const imgsTag = this.generateCard(imgs)
+        const imgsTag = this.generateCard(imgs, isMobile)
         return (
         <TabPane tab={dataWithType.placeTypeName} key={dataWithType.placeTypeId}>
             <Row gutter={20}>
@@ -296,14 +287,16 @@ class PictureManager extends React.Component {
     }
 
     render() {
-        const { rate, responsive, placeTypes, picturesDataWithType } = this.state
+        const { rate, placeTypes, picturesDataWithType } = this.state
         const { picturesData  } = this.props
+
+        const isMobile = this.props.responsive.data.isMobile
 
 
         let chaosDataWithType = this.chaos(picturesData, placeTypes)
-        let pictureGrids = this.generateGrid(chaosDataWithType)
+        let pictureGrids = this.generateGrid(chaosDataWithType, isMobile)
 
-        console.log('chaos data...', chaosDataWithType)
+        console.log('is Mobile...', isMobile)
         
         return (
             <div id="scPic" className="gutter-example button-demo">

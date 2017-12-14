@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { Breadcrumb, Switch, Icon } from 'antd';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import themes from '../style/theme';
 
 class BreadcrumbCustom extends React.Component {
@@ -57,7 +57,7 @@ class BreadcrumbCustom extends React.Component {
                         {first}
                         {second}
                 </Breadcrumb>
-                {/** 
+                {/*
                 <div className={`switcher dark-white ${this.state.switcherOn ? 'active' : ''}`}>
                     <a className="sw-btn dark-white" onClick={this.switcherOn}>
                         <Icon type="setting" className="text-dark" />
@@ -66,17 +66,17 @@ class BreadcrumbCustom extends React.Component {
                         { themesTag }
                     </div>
                 </div>
-                */
-                }
+                */}
                 <style>{`
                     ${this.state.theme ?
                     `
                     .custom-theme {
-                        background: ${this.state.theme.header.background} !important;
+                        // background: ${this.state.theme.header.background} !important;
+                        background: linear-gradient(to right,${this.state.theme.header.background} 0,${this.state.theme.header.background}90 100%) !important;
                         color: #fff !important;
                     }
                     .custom-theme .ant-menu {
-                        background: ${this.state.theme.header.background} !important;
+                        background: transparent !important;
                         color: #fff !important;
                     }
                     .custom-theme .ant-menu-item-group-title {

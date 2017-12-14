@@ -6,9 +6,10 @@ import { Menu, Icon, Layout, Badge, Popover } from 'antd';
 import screenfull from 'screenfull';
 import { gitOauthToken, gitOauthInfo } from '../axios';
 import { queryString } from '../utils';
-import avater from '../style/imgs/b2.png';
+import avater from '../style/imgs/b1.png';
 import SiderCustom from './SiderCustom';
 import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
 const { Header } = Layout;
 const SubMenu = Menu.SubMenu;
 const MenuItemGroup = Menu.ItemGroup;
@@ -134,4 +135,4 @@ const mapStateToProps = state => {
     return {responsive};
 };
 
-export default connect(mapStateToProps)(HeaderCustom);
+export default withRouter(connect(mapStateToProps)(HeaderCustom));

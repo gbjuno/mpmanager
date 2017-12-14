@@ -6,7 +6,7 @@ import { Row, Col, Card, Timeline, Icon } from 'antd';
 import BreadcrumbCustom from '../BreadcrumbCustom';
 import EchartsViews from './EchartsViews';
 import EchartsProjects from './EchartsProjects';
-import b1 from '../../style/imgs/b2.png';
+import b1 from '../../style/imgs/b1.png';
 
 
 class Dashboard extends React.Component {
@@ -14,7 +14,6 @@ class Dashboard extends React.Component {
         return (
             <div className="gutter-example button-demo">
                 <BreadcrumbCustom />
-
                 <Row gutter={10}>
                     <Col className="gutter-row" md={4}>
                         <div className="gutter-box">
@@ -79,6 +78,8 @@ class Dashboard extends React.Component {
                             </Card>
                         </div>
                     </Col>
+                </Row>
+                <Row gutter={10}>
                     <Col className="gutter-row" md={8}>
                         <div className="gutter-box">
                             <Card bordered={false}>

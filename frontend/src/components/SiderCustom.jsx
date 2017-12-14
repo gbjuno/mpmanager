@@ -3,7 +3,7 @@
  */
 import React, { Component } from 'react';
 import { Layout, Menu, Icon } from 'antd';
-import { Link } from 'react-router';
+import { Link, withRouter } from 'react-router-dom';
 const { Sider } = Layout;
 const SubMenu = Menu.SubMenu;
 
@@ -24,10 +24,10 @@ class SiderCustom extends Component {
         this.setMenuOpen(nextProps)
     }
     setMenuOpen = props => {
-        const {path} = props;
+        const {pathname} = props.location;
         this.setState({
-            openKey: path.substr(0, path.lastIndexOf('/')),
-            selectedKey: path
+            openKey: pathname.substr(0, pathname.lastIndexOf('/')),
+            selectedKey: pathname
         });
     };
     onCollapse = (collapsed) => {
@@ -70,11 +70,9 @@ class SiderCustom extends Component {
                     openKeys={this.state.firstHide ? null : [this.state.openKey]}
                     onOpenChange={this.openMenu}
                 >
-                    {/**
                     <Menu.Item key="/app/dashboard/index">
                         <Link to={'/app/dashboard/index'}><Icon type="mobile" /><span className="nav-text">首页</span></Link>
                     </Menu.Item>
-                    */}
                     <SubMenu
                         key="/app/ux"
                         title={<span><Icon type="scan" /><span className="nav-text">安监管理</span></span>}
@@ -86,11 +84,12 @@ class SiderCustom extends Component {
                         <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}>地点管理</Link></Menu.Item>
                         <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}>统计报表</Link></Menu.Item>
                     </SubMenu>
-                    {/**
+                    {/*
                     <SubMenu
                         key="/app/ui"
                         title={<span><Icon type="scan" /><span className="nav-text">UI</span></span>}
                     >
+
                         <Menu.Item key="/app/ui/buttons"><Link to={'/app/ui/buttons'}>按钮</Link></Menu.Item>
                         <Menu.Item key="/app/ui/icons"><Link to={'/app/ui/icons'}>图标</Link></Menu.Item>
                         <Menu.Item key="/app/ui/spins"><Link to={'/app/ui/spins'}>加载中</Link></Menu.Item>
@@ -101,7 +100,6 @@ class SiderCustom extends Component {
                         <Menu.Item key="/app/ui/wysiwyg"><Link to={'/app/ui/wysiwyg'}>富文本</Link></Menu.Item>
                         <Menu.Item key="/app/ui/drags"><Link to={'/app/ui/drags'}>拖拽</Link></Menu.Item>
                         <Menu.Item key="/app/ui/gallery"><Link to={'/app/ui/gallery'}>画廊</Link></Menu.Item>
-                        
                     </SubMenu>
                     <SubMenu
                         key="/app/animation"
@@ -163,4 +161,4 @@ class SiderCustom extends Component {
     }
 }
 
-export default SiderCustom;
+export default withRouter(SiderCustom);

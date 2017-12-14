@@ -1,5 +1,5 @@
 /**
- * Created by Jingle on 2017/10/28.
+ * Created by hao.cheng on 2017/4/28.
  */
 // 获取url的参数
 export const queryString = () => {
@@ -19,15 +19,3 @@ export const queryString = () => {
     });
     return _queryString;
 };
-
-/**
- * 传入一个Date对象转成可以传入URL的String对象
- * 例如： 2017/7/3 05:20:00  -> 20170703
- * @param {*} date 
- */
-export const getDateQueryString = (date) => {
-    let year = date.getFullYear()
-    let month = (date.getMonth()+1).toString(); month = month.length === 1 ? '0' + month : month
-    let day = date.getDate().toString(); day = day.length === 1 ? '0' + day : day
-    return `${year}${month}${day}`
-}
