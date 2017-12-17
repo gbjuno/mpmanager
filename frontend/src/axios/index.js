@@ -48,13 +48,13 @@ export const fetchTowns = (filter={}) => {
 
 export const newTown = (town) => {
     return axios.post(config.TOWN_URL, {...town}, {headers: {Accept: 'application/json'}})
-        .then(res => res.data).catch(err => console.log(err));
+        .then(res => res.data);
 }
 
 export const deleteTown = (town) => {
     if(town === undefined || town.townId === -1) return
     return axios.delete(config.TOWN_URL + "/" + town.townId)
-        .then(res => res.data).catch(err => console.log(err));
+        .then(res => res.data);
 }
 
 export const fetchCountries = (filter={}) => {
@@ -64,13 +64,13 @@ export const fetchCountries = (filter={}) => {
 
 export const newCountry = (country) => {
     return axios.post(config.COUNTRY_URL, {...country}, {headers: {Accept: 'application/json'}})
-        .then(res => res.data).catch(err => console.log(err));
+        .then(res => res.data);
 }
 
 export const deleteCountry = (country) => {
     if(country === undefined || country.countryId === -1) return
     return axios.delete(config.COUNTRY_URL + "/" + country.countryId)
-        .then(res => res.data).catch(err => console.log(err));
+        .then(res => res.data);
 }
 
 

@@ -46,7 +46,7 @@ class App extends Component {
             localStorage.setItem('isFirst', JSON.stringify(true));
         };
         const isFirst = JSON.parse(localStorage.getItem('isFirst'));
-        !isFirst && openNotification();
+        //!isFirst && openNotification();
     }
     getClientWidth = () => {    // 获取当前浏览器宽度并设置responsive管理响应式
         const { receiveData } = this.props;

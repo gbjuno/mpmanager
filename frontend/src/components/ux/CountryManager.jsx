@@ -4,7 +4,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Table, Button, Row, Col, Card, Input, Icon } from 'antd';
+import moment from 'moment';
+import * as _ from 'lodash';
+import { Table, Button, Row, Col, Card, Input, Icon, Divider, message } from 'antd';
+import * as CONSTANTS from '../../constants';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
 import BreadcrumbCustom from '../BreadcrumbCustom';
@@ -15,20 +18,25 @@ class EditableCell extends React.Component {
 
     state = {
         value: this.props.value,
+        type: this.props.type,
         editable: true,
     }
     handleChange = (e) => {
         const value = e.target.value;
+        const dataIndex = this.props.dataIndex;
         this.setState({ value });
+        this.props.onChange(dataIndex, value)
     }
-    check = () => {
-        this.setState({ editable: false });
-        if (this.props.onChange) {
-            this.props.onChange(this.state.value);
+    handleSave = (e) => {
+        //防止冒泡事件
+        e.stopPropagation();
+        this.setState({ editable: true });
+        if (this.props.onSave) {
+            this.props.onSave();
         }
     }
 
-    close = () => {
+    handleCancel = () => {
         this.setState({ editable: false });
         if (this.props.onCancel) {
             this.props.onCancel();
@@ -40,28 +48,26 @@ class EditableCell extends React.Component {
     }
 
     render(){
-        const { value, editable } = this.state;
+        const { value, editable, type } = this.state;
         return (
             <div className="editable-cell">
                 {
                 editable ?
-                    <div className="editable-cell-input-wrapper">
-                    <Input
-                        value={value}
-                        onChange={this.handleChange}
-                        onPressEnter={this.check}
-                    />
-                    <Icon
-                        type="check"
-                        className="editable-cell-icon-check"
-                        onClick={this.check}
-                    />
-                    <Icon
-                        type="close"
-                        className="editable-cell-icon-close"
-                        onClick={this.close}
-                    />
-                    </div>
+                    type !== "opt"?
+                        <div className="editable-cell-input-wrapper">
+                        <Input
+                            value={value}
+                            onChange={this.handleChange}
+                            onClick={(e) => e.stopPropagation()}
+                            onPressEnter={()=>{}}
+                        />
+                        </div>
+                        :
+                        <span>
+                            <a className="opt-confirm" onClick={this.handleSave}>保存</a>
+                            <Divider type="vertical" />
+                            <a className="opt-cancel"  onClick={this.handleCancel}>取消</a>
+                        </span>
                     :
                     <a target="_blank">{value}</a>
                 }
@@ -136,8 +142,7 @@ class CountryManager extends React.Component {
         this.setState({ townSelectedRowKeys: selectedRowKeys });
     };
 
-    onTownRowClick = (record, index, event) => {
-        console.log('select record...', record)
+    onTownRowClick = (record) => {
         const { townSelectedRowKeys } = this.state
         this.setState({
             selectedTown: record.name,
@@ -149,7 +154,6 @@ class CountryManager extends React.Component {
     }
 
     onCountrySelectChange = (selectedRowKeys) => {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
         if(selectedRowKeys.length > 0){
             selectedRowKeys = [selectedRowKeys[selectedRowKeys.length-1]]
         }
@@ -158,7 +162,6 @@ class CountryManager extends React.Component {
     };
 
     onCountryRowClick = (record, index, event) => {
-        console.log('select record...', record)
         const { countrySelectedRowKeys } = this.state
         this.setState({
             countrySelectedRowKeys: countrySelectedRowKeys.length > 0 &&
@@ -167,6 +170,8 @@ class CountryManager extends React.Component {
     }
 
     handleAddTown = () => {
+        const hasNewTown = this.state.townsData? this.state.townsData[0].key === -1 : false
+        if(hasNewTown) return
         this.setState({
             townsData: [{
                 key: -1,
@@ -178,7 +183,6 @@ class CountryManager extends React.Component {
 
     handleCancelEditTown = () => {
         let tmpTownsData = [...this.state.townsData.filter(item => item.id !== -1)]
-        console.log('tmpTownsData', tmpTownsData)
         this.setState({
             townsData: tmpTownsData,
             selectedTown: tmpTownsData[0].name,
@@ -189,25 +193,53 @@ class CountryManager extends React.Component {
     handleDeleteTown = () => {
         const { fetchData } = this.props
         const { townSelectedRowKeys } = this.state
-        if(townSelectedRowKeys.length === 0) return
+        if(townSelectedRowKeys.length === 0 || townSelectedRowKeys[0] === -1) return
         fetchData({funcName: 'deleteTown', params: {townId: townSelectedRowKeys[0]}, stateName: 'deleteTownStatus'})
             .then(res => {
-                console.log('delete town successfully', res)
+                message.success('删除成功')
                 this.fetchTownsData() 
-            }).catch(err => console.log(err));
+            }).catch(err => {
+                let errRes = err.response
+                if(errRes.data && errRes.data.status === 'error'){
+                    message.error(errRes.data.error)
+                }
+            });
     }
 
-    onNewTownSave = (name) => {
+    onNewTownChange = (dataIndex, value) => {
+        this.setState({
+            [dataIndex]: value,
+        })
+    }
+
+
+    onNewTownSave = () => {
         const { fetchData } = this.props
-        fetchData({funcName: 'newTown', params: {name}, stateName: 'newTownStatus'})
+        const keys = _.keys(this.state)
+        const PREFIX = 'town.'
+        const PREFIX_LEN = PREFIX.length;
+        let obj = {}
+        for (let key of keys) {
+            if(_.startsWith(key, PREFIX)){
+                let field = key.substring(PREFIX_LEN)
+                obj[field] = this.state[key]
+            }
+        }
+        fetchData({funcName: 'newTown', params: obj, stateName: 'newTownStatus'})
             .then(res => {
-                console.log('create new town successfully', res)
+                message.success('创建成功')
                 this.fetchTownsData() 
-            }).catch(err => console.log(err));
-        console.log('value--->', name)
+            }).catch(err => {
+                let errRes = err.response
+                if(errRes.data && errRes.data.status === 'error'){
+                    message.error(errRes.data.error)
+                }
+            });
     }
 
     handleAddCountry = () => {
+        const hasNewCountry = this.state.townsData? this.state.countriesData[0].key === -1 : false
+        if(hasNewCountry) return
         this.setState({
             countriesData: [{
                 key: -1,
@@ -227,26 +259,50 @@ class CountryManager extends React.Component {
     handleDeleteCountry = () => {
         const { fetchData } = this.props
         const { countrySelectedRowKeys, selectedTownId } = this.state
-        if(countrySelectedRowKeys.length === 0) return
+        if(countrySelectedRowKeys.length === 0 || countrySelectedRowKeys[0] === -1) return
         fetchData({funcName: 'deleteCountry', params: {countryId: countrySelectedRowKeys[0]}, stateName: 'deleteCountryStatus'})
             .then(res => {
-                console.log('delete country successfully', res)
-                this.fetchCountriesData(selectedTownId)
-            }).catch(err => console.log(err))
-    }
-
-    onNewCountrySave = (name) => {
-        const { fetchData } = this.props
-        const { selectedTownId } = this.state
-        fetchData({funcName: 'newCountry', params: {name, town_id: selectedTownId}, stateName: 'newCountryStatus'})
-            .then(res => {
-                console.log('create new coutry successfully', res)
+                message.success('删除成功')
                 this.fetchCountriesData(selectedTownId)
             }).catch(err => {
-                console.log(err)
-                this.fetchCountriesData(selectedTownId)
+                let errRes = err.response
+                if(errRes.data && errRes.data.status === 'error'){
+                    message.error(errRes.data.error)
+                }
             });
-        console.log('value--->', name)
+    }
+
+    onNewCountryChange = (dataIndex, value) => {
+        this.setState({
+            [dataIndex]: value,
+        })
+    }
+
+    onNewCountrySave = () => {
+        const { fetchData } = this.props
+        const { selectedTownId } = this.state
+        const keys = _.keys(this.state)
+        const PREFIX = 'country.'
+        const PREFIX_LEN = PREFIX.length;
+        let obj = {}
+        for (let key of keys) {
+            if(_.startsWith(key, PREFIX)){
+                let field = key.substring(PREFIX_LEN)
+                obj[field] = this.state[key]
+            }
+        }
+        obj.town_id = selectedTownId
+
+        fetchData({funcName: 'newCountry', params: obj, stateName: 'newCountryStatus'})
+            .then(res => {
+                message.success('创建成功')
+                this.fetchCountriesData(selectedTownId)
+            }).catch(err => {
+                let errRes = err.response
+                if(errRes.data && errRes.data.status === 'error'){
+                    message.error(errRes.data.error)
+                }
+            });
     }
 
     render() {
@@ -257,10 +313,9 @@ class CountryManager extends React.Component {
             width: 40,
             render: (text, record) => {
                 if(record.id === -1){
-                    return <EditableCell value={record.name} onChange={this.onNewTownSave} onCancel={this.handleCancelEditTown}/>
-                }else{
-                    return <a href={record.url} target="_blank">{text}</a>
+                    return <EditableCell dataIndex='town.name' value={record.name} onChange={this.onNewTownChange} />
                 }
+                return <a>{text}</a>
             }
         }, {
             title: '创建时间',
@@ -268,9 +323,9 @@ class CountryManager extends React.Component {
             width: 80,
             render: (text, record) => {
                 if (record.id === -1){
-                    return ''
+                    return <EditableCell type="opt" onSave={this.onNewTownSave} onCancel={this.handleCancelEditTown}/>
                 }
-                var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
+                var createAt = moment(new Date(text)).format(CONSTANTS.DATE_TABLE_FORMAT)
                 return createAt;
             }
         }];
@@ -281,9 +336,9 @@ class CountryManager extends React.Component {
             width: 40,
             render: (text, record) => {
                 if(record.id === -1){
-                    return <EditableCell value={record.name} onChange={this.onNewCountrySave} onCancel={this.handleCancelEditCountry}/>
+                    return <EditableCell dataIndex='country.name' value={record.name} onChange={this.onNewCountryChange}/>
                 }else{
-                    return <a href={record.url} target="_blank">{text}</a>
+                    return <a>{text}</a>
                 }
             }
         }, {
@@ -292,9 +347,9 @@ class CountryManager extends React.Component {
             width: 80,
             render: (text, record) => {
                 if (record.id === -1){
-                    return ''
+                    return <EditableCell type="opt" onSave={this.onNewCountrySave} onCancel={this.handleCancelEditCountry}/>
                 }
-                var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
+                var createAt = moment(new Date(text)).format(CONSTANTS.DATE_TABLE_FORMAT)
                 return createAt;
             }
         }];
@@ -304,11 +359,18 @@ class CountryManager extends React.Component {
         const townRowSelection = {
             selectedRowKeys: townSelectedRowKeys,
             onChange: this.onTownSelectChange,
+            hideDefaultSelections: true,
+            type: 'radio'
         };
         const countryRowSelection = {
             selectedRowKeys: countrySelectedRowKeys,
             onChange: this.onCountrySelectChange,
+            ideDefaultSelections: true,
+            type: 'radio'
         }
+
+        const hasSelectedTown = townSelectedRowKeys.length > 0
+        const hasSelectedCountry = countrySelectedRowKeys.length > 0
         return (
             <div className="gutter-example">
                 <style>
@@ -375,11 +437,13 @@ class CountryManager extends React.Component {
                                             disabled={loading} 
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleDeleteTown}
-                                            disabled={loading} 
+                                            disabled={!hasSelectedTown} 
                                     >删除</Button>
                                 </div>
                                 <Table rowSelection={townRowSelection} columns={townColumns} dataSource={townsData} pagination={false}
-                                        onRowClick={this.onTownRowClick}
+                                        onRow={(record) => ({
+                                            onClick: () => this.onTownRowClick(record),
+                                        })}
                                 />
                             </Card>
                         </div>
@@ -392,11 +456,14 @@ class CountryManager extends React.Component {
                                             disabled={loading} 
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleDeleteCountry}
-                                            disabled={loading} 
+                                            disabled={!hasSelectedCountry} 
                                     >删除</Button>
                                 </div>
                                 <Table rowSelection={countryRowSelection} columns={countryColumns} dataSource={countriesData} pagination={false}
-                                        onRowClick={this.onCountryRowClick}/>
+                                        onRow={(record) => ({
+                                            onClick: () => this.onCountryRowClick(record),
+                                        })}
+                                />
                             </Card>
                         </div>
                     </Col>
