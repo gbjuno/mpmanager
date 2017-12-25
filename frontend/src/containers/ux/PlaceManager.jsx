@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Row, Col, Card } from 'antd';
 import { fetchData, receiveData } from '../../action';
-import BreadcrumbCustom from '../BreadcrumbCustom';
+import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import PlaceSearch from './search/PlaceSearch'
 import * as config from '../../axios/config'
 import PhotoSwipe from 'photoswipe';

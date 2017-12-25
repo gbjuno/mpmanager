@@ -9,7 +9,7 @@ import * as _ from 'lodash'
 import moment from 'moment';
 import { fetchData, receiveData } from '../../action';
 import * as CONSTANTS from '../../constants';
-import BreadcrumbCustom from '../BreadcrumbCustom';
+import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import PictureSearch from './search/PictureSearch'
 import * as config from '../../axios/config'
 import * as utils from '../../utils'
@@ -193,8 +193,8 @@ class PictureManager extends React.Component {
     hasPicture = pictures => {
         if (pictures === undefined ) return false
         if (pictures.length === 0) return false
-        if (pictures[0].full_uri == undefined) return false
-        if (pictures[0].thumb_uri == undefined) return false
+        if (pictures[0].full_uri === undefined) return false
+        if (pictures[0].thumb_uri === undefined) return false
         return true
     }
 

@@ -7,7 +7,7 @@ import { bindActionCreators } from 'redux';
 import { Table, Button, Row, Col, Card, Input, Icon } from 'antd';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
-import BreadcrumbCustom from '../BreadcrumbCustom';
+import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 
 
 

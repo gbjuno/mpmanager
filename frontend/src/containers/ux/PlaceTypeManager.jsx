@@ -4,10 +4,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Table, Button, Row, Col, Card, Input, Icon, Pagination } from 'antd';
+import { Table, Button, Row, Col, Card, Input, Icon } from 'antd';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
-import BreadcrumbCustom from '../BreadcrumbCustom';
+import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 
 
 
@@ -67,7 +67,6 @@ class CompanyManager extends React.Component {
         companiesData: [],
         selectedCompany: '',
         selectedCompanyId: '',
-        currentPage: 1
     };
     componentDidMount() {
         this.start();
@@ -79,10 +78,8 @@ class CompanyManager extends React.Component {
 
     fetchData = () => {
         const { fetchData } = this.props
-        const { currentPage } = this.state
         let tempTownId
-        fetchData({funcName: 'fetchCompanies', params: {
-                pageNo: currentPage, pageSize: 20}, stateName: 'companiesData'}).then(res => {
+        fetchData({funcName: 'fetchCompanies', stateName: 'companiesData'}).then(res => {
             if(res === undefined || res.data === undefined || res.data.companies === undefined) return
             this.setState({
                 companiesData: [...res.data.companies.map(val => {
@@ -125,10 +122,9 @@ class CompanyManager extends React.Component {
 
     handleDeleteTown = () => {
         const { fetchData } = this.props
-        const { townSelectedRowKeys, currentPage } = this.state
+        const { townSelectedRowKeys } = this.state
         if(townSelectedRowKeys.length === 0) return
-        fetchData({funcName: 'deleteTown', params: {townId: townSelectedRowKeys[0], 
-            pageNo: currentPage, pageSize: 20}, stateName: 'deleteTownStatus'})
+        fetchData({funcName: 'deleteTown', params: {townId: townSelectedRowKeys[0]}, stateName: 'deleteTownStatus'})
             .then(res => {
                 console.log('delete town successfully', res)
                 this.fetchTownsData() 
@@ -143,16 +139,6 @@ class CompanyManager extends React.Component {
                 this.fetchTownsData() 
             }).catch(err => console.log(err));
         console.log('value--->', name)
-    }
-
-    getPagination = () => {
-        return <Pagination onChange={this.handlePageChange}/>
-    }
-
-    handlePageChange = (page, pageSize) => {
-        this.setState({
-            currentPage: page,
-        })
     }
 
     render() {
@@ -271,7 +257,7 @@ class CompanyManager extends React.Component {
                                     >删除</Button>
                                 </div>
                                 <Table rowSelection={rowSelection} columns={companyColumns} dataSource={companiesData}
-                                        onRowClick={this.onRowClick} pagination={this.getPagination()}
+                                        onRowClick={this.onRowClick}
                                 />
                             </Card>
                         </div>

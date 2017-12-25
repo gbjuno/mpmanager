@@ -7,14 +7,13 @@ import { bindActionCreators } from 'redux';
 import { Table, Button, Row, Col, Card, Input, Icon } from 'antd';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
-import BreadcrumbCustom from '../BreadcrumbCustom';
+import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 
 
 
 class EditableCell extends React.Component {
 
     state = {
-        dataIndex : this.props.dataIndex,
         value: this.props.value,
         editable: true,
     }
@@ -60,11 +59,11 @@ class EditableCell extends React.Component {
     }
 }
 
-class CompanyManager extends React.Component {
+class UserManager extends React.Component {
     state = {
         selectedRowKeys: [],  // Check here to configure the default column
         loading: false,
-        companiesData: [],
+        usersData: [],
         selectedCompany: '',
         selectedCompanyId: '',
     };
@@ -79,10 +78,10 @@ class CompanyManager extends React.Component {
     fetchData = () => {
         const { fetchData } = this.props
         let tempTownId
-        fetchData({funcName: 'fetchCompanies', stateName: 'companiesData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.companies === undefined) return
+        fetchData({funcName: 'fetchUsers', stateName: 'usersData'}).then(res => {
+            if(res === undefined || res.data === undefined || res.data.users === undefined) return
             this.setState({
-                companiesData: [...res.data.companies.map(val => {
+                usersData: [...res.data.users.map(val => {
                     val.key = val.id;
                     return val;
                 })],
@@ -110,13 +109,13 @@ class CompanyManager extends React.Component {
 
     handleAdd = () => {
         this.setState({
-            companiesData: [{
+            usersData: [{
                 key: -1,
                 id: -1,
                 name: '',
                 address: '',
                 country_id: '',
-            }, ...this.state.companiesData]
+            }, ...this.state.usersData]
         });
     }
 
@@ -143,8 +142,8 @@ class CompanyManager extends React.Component {
 
     render() {
 
-        const companyColumns = [{
-            title: '公司名',
+        const userColumns = [{
+            title: '用户名',
             dataIndex: 'name',
             width: 40,
             render: (text, record) => {
@@ -155,8 +154,8 @@ class CompanyManager extends React.Component {
                 }
             }
         }, {
-            title: '所在镇',
-            dataIndex: 'country_id',
+            title: '手机号',
+            dataIndex: 'phone',
             width: 40,
             render: (text, record) => {
                 if(record.id === -1){
@@ -166,8 +165,8 @@ class CompanyManager extends React.Component {
                 }
             }
         }, {
-            title: '详细地址',
-            dataIndex: 'address',
+            title: '职位',
+            dataIndex: 'job',
             width: 40,
             render: (text, record) => {
                 if(record.id === -1){
@@ -177,20 +176,27 @@ class CompanyManager extends React.Component {
                 }
             }
         }, {
-            title: '创建时间',
-            dataIndex: 'create_at',
+            title: '所在公司',
+            dataIndex: 'company_name',
+            width: 40,
+            render: (text, record) => {
+                if(record.id === -1){
+                    return <EditableCell value={record.address} onChange={this.onNewTownSave} />
+                }else{
+                    return <a href={record.url} target="_blank">{text}</a>
+                }
+            }
+        },{
+            title: '微信号',
+            dataIndex: 'wx_openid',
             width: 80,
             render: (text, record) => {
-                if (record.id === -1){
-                    return ''
-                }
-                var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
-                return createAt;
+                return <a href={record.url} target="_blank">{text}</a>
             }
         }];
 
         const { loading, selectedRowKeys, selectedTown,
-            companiesData } = this.state;
+            usersData } = this.state;
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
@@ -243,11 +249,11 @@ class CompanyManager extends React.Component {
                       }
                 `}
                 </style>
-                <BreadcrumbCustom first="安监管理" second="公司管理" />
+                <BreadcrumbCustom first="安监管理" second="用户管理" />
                 <Row gutter={16}>
                     <Col className="gutter-row" md={24}>
                         <div className="gutter-box">
-                            <Card title="公司列表" bordered={false}>
+                            <Card title="用户列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
                                     <Button type="primary" onClick={this.handleAdd}
                                             disabled={loading} 
@@ -256,7 +262,7 @@ class CompanyManager extends React.Component {
                                             disabled={loading} 
                                     >删除</Button>
                                 </div>
-                                <Table rowSelection={rowSelection} columns={companyColumns} dataSource={companiesData}
+                                <Table rowSelection={rowSelection} columns={userColumns} dataSource={usersData}
                                         onRowClick={this.onRowClick}
                                 />
                             </Card>
@@ -280,5 +286,5 @@ const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch)
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(CompanyManager)
+export default connect(mapStateToProps, mapDispatchToProps)(UserManager)
 

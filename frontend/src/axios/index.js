@@ -59,7 +59,11 @@ export const deleteTown = (town) => {
 
 export const fetchCountries = (filter={}) => {
     let url = config.TOWN_COUNTRY_URL(filter.townId)
-    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+    return axios.get(url ,{}).then(res => res.data);
+}
+
+export const fetchCountriesWithoutTownId = (filter={}) => {
+    return axios.get(config.COUNTRY_URL ,{}).then(res => res.data);
 }
 
 export const newCountry = (country) => {
@@ -87,6 +91,16 @@ export const fetchCompaniesByCountryId = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+export const newCompany = (company) => {
+    return axios.post(config.COMPANY_URL, {...company}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
+export const deleteCompany = (company) => {
+    if(company === undefined || company.id === -1) return
+    return axios.delete(config.COMPANY_URL + "/" + company.id)
+        .then(res => res.data);
+}
 
 // 用户管理API
 

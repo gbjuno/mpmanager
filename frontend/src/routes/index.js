@@ -26,12 +26,12 @@ import AuthBasic from '../components/auth/Basic';
 import RouterEnter from '../components/auth/RouterEnter';
 import Wysiwyg from 'bundle-loader?lazy!../components/ui/Wysiwyg';  // 按需加载富文本配置
 import Bundle from '../components/widget/Bundle';
-import PictureManager from '../components/ux/PictureManager';
-import CountryManager from '../components/ux/CountryManager';
-import CompanyManager from '../components/ux/CompanyManager';
-import PlaceManager from '../components/ux/PlaceManager';
-import UserManager from '../components/ux/UserManager';
-import SummaryManager from '../components/ux/SummaryManager';
+import PictureManager from '../containers/ux/PictureManager';
+import CountryManager from '../containers/ux/CountryManager';
+import CompanyManager from '../containers/ux/CompanyManager';
+import PlaceManager from '../containers/ux/PlaceManager';
+import UserManager from '../containers/ux/UserManager';
+import SummaryManager from '../containers/ux/SummaryManager';
 
 const WysiwygBundle = (props) => (
     <Bundle load={Wysiwyg}>

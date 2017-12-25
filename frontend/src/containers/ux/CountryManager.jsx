@@ -6,75 +6,13 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import moment from 'moment';
 import * as _ from 'lodash';
-import { Table, Button, Row, Col, Card, Input, Icon, Divider, message } from 'antd';
+import { Table, Button, Row, Col, Card, Input, Icon, message } from 'antd';
 import * as CONSTANTS from '../../constants';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
-import BreadcrumbCustom from '../BreadcrumbCustom';
+import BreadcrumbCustom from '../../components/BreadcrumbCustom';
+import EditableCell from '../../components/cells/EditableCell';
 
-
-
-class EditableCell extends React.Component {
-
-    state = {
-        value: this.props.value,
-        type: this.props.type,
-        editable: true,
-    }
-    handleChange = (e) => {
-        const value = e.target.value;
-        const dataIndex = this.props.dataIndex;
-        this.setState({ value });
-        this.props.onChange(dataIndex, value)
-    }
-    handleSave = (e) => {
-        //防止冒泡事件
-        e.stopPropagation();
-        this.setState({ editable: true });
-        if (this.props.onSave) {
-            this.props.onSave();
-        }
-    }
-
-    handleCancel = () => {
-        this.setState({ editable: false });
-        if (this.props.onCancel) {
-            this.props.onCancel();
-        }
-    }
-
-    edit = () => {
-        this.setState({ editable: true });
-    }
-
-    render(){
-        const { value, editable, type } = this.state;
-        return (
-            <div className="editable-cell">
-                {
-                editable ?
-                    type !== "opt"?
-                        <div className="editable-cell-input-wrapper">
-                        <Input
-                            value={value}
-                            onChange={this.handleChange}
-                            onClick={(e) => e.stopPropagation()}
-                            onPressEnter={()=>{}}
-                        />
-                        </div>
-                        :
-                        <span>
-                            <a className="opt-confirm" onClick={this.handleSave}>保存</a>
-                            <Divider type="vertical" />
-                            <a className="opt-cancel"  onClick={this.handleCancel}>取消</a>
-                        </span>
-                    :
-                    <a target="_blank">{value}</a>
-                }
-            </div>
-        )
-    }
-}
 
 class CountryManager extends React.Component {
     state = {
@@ -310,7 +248,6 @@ class CountryManager extends React.Component {
         const townColumns = [{
             title: '镇名',
             dataIndex: 'name',
-            width: 40,
             render: (text, record) => {
                 if(record.id === -1){
                     return <EditableCell dataIndex='town.name' value={record.name} onChange={this.onNewTownChange} />
@@ -320,7 +257,6 @@ class CountryManager extends React.Component {
         }, {
             title: '创建时间',
             dataIndex: 'create_at',
-            width: 80,
             render: (text, record) => {
                 if (record.id === -1){
                     return <EditableCell type="opt" onSave={this.onNewTownSave} onCancel={this.handleCancelEditTown}/>
@@ -333,7 +269,6 @@ class CountryManager extends React.Component {
         const countryColumns = [{
             title: '村名',
             dataIndex: 'name',
-            width: 40,
             render: (text, record) => {
                 if(record.id === -1){
                     return <EditableCell dataIndex='country.name' value={record.name} onChange={this.onNewCountryChange}/>
@@ -344,7 +279,6 @@ class CountryManager extends React.Component {
         }, {
             title: '创建时间',
             dataIndex: 'create_at',
-            width: 80,
             render: (text, record) => {
                 if (record.id === -1){
                     return <EditableCell type="opt" onSave={this.onNewCountrySave} onCancel={this.handleCancelEditCountry}/>
@@ -373,60 +307,6 @@ class CountryManager extends React.Component {
         const hasSelectedCountry = countrySelectedRowKeys.length > 0
         return (
             <div className="gutter-example">
-                <style>
-                {`
-                    .editable-cell {
-                        position: relative;
-                      }
-                      
-                      .editable-cell-input-wrapper,
-                      .editable-cell-text-wrapper {
-                        padding-right: 44px;
-                      }
-                      
-                      .editable-cell-text-wrapper {
-                        padding: 5px 24px 5px 5px;
-                      }
-                      
-                      .editable-cell-icon,
-                      .editable-cell-icon-check {
-                        position: absolute;
-                        right: 20px;
-                        width: 20px;
-                        cursor: pointer;
-                      }
-
-                      .editable-cell-icon-close {
-                        position: absolute;
-                        right: 0;
-                        width: 20px;
-                        cursor: pointer;
-                      }
-                      
-                      .editable-cell-icon {
-                        line-height: 18px;
-                        display: none;
-                      }
-                      
-                      .editable-cell-icon-check,
-                      .editable-cell-icon-close {
-                        line-height: 28px;
-                      }
-                      
-                      .editable-cell:hover .editable-cell-icon {
-                        display: inline-block;
-                      }
-                      
-                      .editable-cell-icon:hover,
-                      .editable-cell-icon-check:hover {
-                        color: #108ee9;
-                      }
-                      
-                      .editable-add-btn {
-                        margin-bottom: 8px;
-                      }
-                `}
-                </style>
                 <BreadcrumbCustom first="安监管理" second="村镇管理" />
                 <Row gutter={16}>
                     <Col className="gutter-row" md={12}>
@@ -450,7 +330,7 @@ class CountryManager extends React.Component {
                     </Col>
                     <Col className="gutter-row" md={12}>
                         <div className="gutter-box">
-                            <Card title={`${selectedTown + "-"}村列表`} bordered={false}>
+                            <Card title={`${selectedTown + (selectedTown?"-":"")}村列表`} bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
                                     <Button type="primary" onClick={this.handleAddCountry}
                                             disabled={loading} 

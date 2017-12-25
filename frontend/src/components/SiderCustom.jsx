@@ -73,18 +73,18 @@ class SiderCustom extends Component {
                     <Menu.Item key="/app/dashboard/index">
                         <Link to={'/app/dashboard/index'}><Icon type="mobile" /><span className="nav-text">首页</span></Link>
                     </Menu.Item>
+                    <Menu.Item key="/app/ux/tp"><Link to={'/app/ux/tp'}><Icon type="picture" />图片管理</Link></Menu.Item>
+                    <Menu.Item key="/app/ux/cz"><Link to={'/app/ux/cz'}><Icon type="appstore-o" />村镇管理</Link></Menu.Item>
+                    <Menu.Item key="/app/ux/gs"><Link to={'/app/ux/gs'}><Icon type="home" />公司管理</Link></Menu.Item>
+                    <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}><Icon type="user" />用户管理</Link></Menu.Item>
+                    <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}><Icon type="environment-o" />地点管理</Link></Menu.Item>
+                    <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}><Icon type="line-chart" />统计报表</Link></Menu.Item>
+                    {/*
                     <SubMenu
                         key="/app/ux"
                         title={<span><Icon type="scan" /><span className="nav-text">安监管理</span></span>}
                     >
-                        <Menu.Item key="/app/ux/tp"><Link to={'/app/ux/tp'}>图片管理</Link></Menu.Item>
-                        <Menu.Item key="/app/ux/cz"><Link to={'/app/ux/cz'}>村镇管理</Link></Menu.Item>
-                        <Menu.Item key="/app/ux/gs"><Link to={'/app/ux/gs'}>公司管理</Link></Menu.Item>
-                        <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}>用户管理</Link></Menu.Item>
-                        <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}>地点管理</Link></Menu.Item>
-                        <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}>统计报表</Link></Menu.Item>
                     </SubMenu>
-                    {/*
                     <SubMenu
                         key="/app/ui"
                         title={<span><Icon type="scan" /><span className="nav-text">UI</span></span>}
