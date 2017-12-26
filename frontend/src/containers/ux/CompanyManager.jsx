@@ -6,7 +6,8 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import moment from 'moment';
 import * as _ from 'lodash'
-import { Table, Button, Row, Col, Card, Input, Icon, Pagination, Modal, message } from 'antd';
+import * as download from 'downloadjs'
+import { Table, Button, Row, Col, Card, Input, Icon, Pagination, Modal, Upload, message } from 'antd';
 import * as CONSTANTS from '../../constants';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
@@ -67,6 +68,7 @@ class CompanyManager extends React.Component {
             });
         });
     }
+
 
     onNewRowChange = (dataIndex, value) => {
         this.setState({
@@ -168,6 +170,33 @@ class CompanyManager extends React.Component {
         })
     }
 
+    uploadProps = () => {
+        const props = 
+        {
+            name: 'file',
+            action: '//jsonplaceholder.typicode.com/posts/', //TODO: 换成上传地址
+            headers: {
+            authorization: 'authorization-text',
+            },
+            onChange(info) {
+                if (info.file.status !== 'uploading') {
+                    console.log(info.file, info.fileList);
+                }
+                if (info.file.status === 'done') {
+                    message.success(`${info.file.name}上传成功`);
+                } else if (info.file.status === 'error') {
+                    message.error(`${info.file.name}上传失败`);
+                }
+            },
+        }
+        return props
+    }
+
+    downloadFile = () => {
+        let url = 'http://localhost:3006/static/media/b1.25566666.png'; //TODO: 换成下载公司数据url,及相应的文件格式
+        download(`${url}`)
+    }
+
     /**
      * 准备删
      */
@@ -259,7 +288,7 @@ class CompanyManager extends React.Component {
                                         disabled={loading}
                                     >新增</Button>
                                     <Button type="primary" onClick={this.showModal}
-                                        disabled={loading}
+                                        disabled={!hasSelected}
                                     >修改</Button>
                                     <Modal
                                         title="还没做"
@@ -274,6 +303,14 @@ class CompanyManager extends React.Component {
                                     <Button type="primary" onClick={this.handleDelete}
                                         disabled={!hasSelected}
                                     >删除</Button>
+                                    <Button type="primary" onClick={this.downloadFile}
+                                        disabled={loading}
+                                    >下载</Button>
+                                    <Upload style={{marginLeft: '10px'}} {...this.uploadProps}>
+                                        <Button type="primary">上传
+                                        </Button>
+                                    </Upload>
+                                    
                                 </div>
                                 <Table rowSelection={rowSelection} columns={companyColumns} dataSource={companiesData}
                                     onRow={(record) => ({

@@ -108,7 +108,10 @@ class CountryManager extends React.Component {
     }
 
     handleAddTown = () => {
-        const hasNewTown = this.state.townsData? this.state.townsData[0].key === -1 : false
+        let hasNewTown = false
+        if(this.state.townsData && this.state.townsData[0] && this.state.townsData[0].key === -1) {
+            hasNewTown = true
+        }
         if(hasNewTown) return
         this.setState({
             townsData: [{
@@ -176,7 +179,10 @@ class CountryManager extends React.Component {
     }
 
     handleAddCountry = () => {
-        const hasNewCountry = this.state.townsData? this.state.countriesData[0].key === -1 : false
+        let hasNewCountry = false
+        if(this.state.countriesData && this.state.countriesData[0] && this.state.countriesData[0].key === -1) {
+            hasNewCountry = true
+        }
         if(hasNewCountry) return
         this.setState({
             countriesData: [{
