@@ -7,7 +7,7 @@ import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
 import { Form, Icon, Input, Button, Select, DatePicker } from 'antd';
-import { fetchData, receiveData, searchPicture } from '../../../action';
+import { fetchData, receiveData, searchPicture } from '../../action';
 
 const FormItem = Form.Item;
 const Search = Input.Search;

@@ -13,7 +13,7 @@ class EditableCell extends React.Component {
     state = {
         value: this.props.value,
         type: this.props.type,
-        editable: true,
+        editable: this.props.editable || true,
         editType: this.props.editType || INPUT,
         valueType: this.props.valueType || STRING,
         options: this.props.options || [],
@@ -46,7 +46,8 @@ class EditableCell extends React.Component {
         }
     }
 
-    handleCancel = () => {
+    handleCancel = (e) => {
+        e.stopPropagation();
         this.setState({ editable: false });
         if (this.props.onCancel) {
             this.props.onCancel();
@@ -82,6 +83,7 @@ class EditableCell extends React.Component {
                     return (
                         <Select
                             showSearch
+                            defaultValue={`${value}`}
                             placeholder={placeholder}
                             onChange={this.handleChange}
                             style={{...style, width: '100%'}}

@@ -10,7 +10,7 @@ import moment from 'moment';
 import { fetchData, receiveData } from '../../action';
 import * as CONSTANTS from '../../constants';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
-import PictureSearch from './search/PictureSearch'
+import PictureSearch from '../search/PictureSearch'
 import * as config from '../../axios/config'
 import * as utils from '../../utils'
 import PhotoSwipe from 'photoswipe';

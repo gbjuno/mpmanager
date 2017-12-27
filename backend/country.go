@@ -82,6 +82,9 @@ func (c Country) findCountry(request *restful.Request, response *restful.Respons
 		companyList.Companies = make([]Company, 0)
 		db.Debug().Model(&country).Related(&companyList.Companies)
 		companyList.Count = len(companyList.Companies)
+		for i, _ := range companyList.Companies {
+			companyList.Companies[i].CountryName = country.Name
+		}
 		glog.Infof("%s return companies related country with id %d", prefix, country.ID)
 		response.WriteHeaderAndEntity(http.StatusOK, companyList)
 		return

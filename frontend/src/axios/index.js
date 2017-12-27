@@ -96,6 +96,11 @@ export const newCompany = (company) => {
         .then(res => res.data);
 }
 
+export const updateCompany = (company) => {
+    return axios.put(config.COMPANY_URL  + "/" + company.id, {...company}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
 export const deleteCompany = (company) => {
     if(company === undefined || company.id === -1) return
     return axios.delete(config.COMPANY_URL + "/" + company.id)

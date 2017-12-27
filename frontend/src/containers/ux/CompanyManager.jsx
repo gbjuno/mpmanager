@@ -13,7 +13,7 @@ import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import EditableCell from '../../components/cells/EditableCell';
-import CompanySearch from './search/CompanySearch';
+import CompanySearch from '../search/CompanySearch';
 
 
 class CompanyManager extends React.Component {
@@ -25,6 +25,7 @@ class CompanyManager extends React.Component {
         selectedCompanyId: '',
         currentPage: 1,
         visible: false,
+        editable: false,
     };
     componentDidMount() {
         this.start();
@@ -87,7 +88,10 @@ class CompanyManager extends React.Component {
     };
 
     onRowClick = (record, index, event) => {
-        const { selectedRowKeys } = this.state
+        const { selectedRowKeys, editable } = this.state
+        if(record.id === -1 || editable){
+            return
+        }
         this.setState({
             selectedRowKeys: selectedRowKeys.length > 0 && selectedRowKeys[0] === record.id ? [] : [record.id],
         });
@@ -106,9 +110,17 @@ class CompanyManager extends React.Component {
     }
 
     handleCancelEditRow = () => {
-        let tmpCompaniesDataa = [...this.state.companiesData.filter(item => item.id !== -1)]
+        let tmpCompaniesData = [...this.state.companiesData.filter(item => item.id !== -1)]
         this.setState({
-            companiesData: tmpCompaniesDataa
+            editable: false,
+            companiesData: tmpCompaniesData,
+            selectedRowKeys: [],
+        })
+    }
+
+    handleModify = () => {
+        this.setState({
+            editable: true,
         })
     }
 
@@ -135,6 +147,46 @@ class CompanyManager extends React.Component {
         })
     }
 
+    onRowSave = () => {
+        const { editable } = this.state
+        console.log('zhenxi sha de yuanfen', editable)
+        if(editable){
+            this.onUpdateRowSave()
+        }else{
+            this.onNewRowSave()
+        }
+    }
+
+    onUpdateRowSave = () => {
+        const { fetchData } = this.props
+        const { selectedRowKeys } = this.state
+        const keys = _.keys(this.state)
+        const PREFIX = 'company.'
+        const PREFIX_LEN = PREFIX.length;
+        let obj = {}
+        for (let key of keys) {
+            if(_.startsWith(key, PREFIX)){
+                let field = key.substring(PREFIX_LEN)
+                obj[field] = this.state[key]
+            }
+        }
+        obj.id = selectedRowKeys[0]
+
+        fetchData({funcName: 'updateCompany', params: obj, stateName: 'updateCompanyStatus'})
+            .then(res => {
+                message.success('更新成功')
+                this.fetchData()
+                this.setState({
+                    editable: false,
+                })
+            }).catch(err => {
+                let errRes = err.response
+                if(errRes.data && errRes.data.status === 'error'){
+                    message.error(errRes.data.error)
+                }
+            });
+    }
+
     onNewRowSave = () => {
         const { fetchData } = this.props
         const keys = _.keys(this.state)
@@ -152,6 +204,9 @@ class CompanyManager extends React.Component {
             .then(res => {
                 message.success('创建成功')
                 this.fetchData()
+                this.setState({
+                    editable: false,
+                })
             }).catch(err => {
                 let errRes = err.response
                 if(errRes.data && errRes.data.status === 'error'){
@@ -214,7 +269,7 @@ class CompanyManager extends React.Component {
 
     render() {
 
-        const { loading, selectedRowKeys, selectedTown,
+        const { loading, selectedRowKeys, selectedTown, editable,
             companiesData } = this.state;
         const { countriesC2Data } = this.props
         const rowSelection = {
@@ -228,14 +283,14 @@ class CompanyManager extends React.Component {
             options = [...countriesC2Data.data.countries.map(item => {item.key = item.id; return item})]
         }
 
-        const hasSelected = selectedRowKeys.length > 0
+        const hasSelected = selectedRowKeys.length > 0 && selectedRowKeys[0] !== -1
 
         const companyColumns = [{
             title: '公司名',
             dataIndex: 'name',
             width: "20%",
             render: (text, record) => {
-                if (record.id === -1) {
+                if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='company.name' value={record.name} onChange={this.onNewRowChange} />
                 }
                 return <a>{text}</a>
@@ -245,7 +300,7 @@ class CompanyManager extends React.Component {
             dataIndex: 'country_name',
             width: "20%",
             render: (text, record) => {
-                if (record.id === -1) {
+                if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='company.country_id' value={record.country_id} onChange={this.onNewRowChange}
                     editType="select" valueType="int" options={options} placeholder="请选择村"/>
                 }
@@ -256,7 +311,7 @@ class CompanyManager extends React.Component {
             dataIndex: 'address',
             width: "30%",
             render: (text, record) => {
-                if (record.id === -1) {
+                if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='company.address' value={record.address} onChange={this.onNewRowChange} />
                 }
                 return <a href={record.url} target="_blank">{text}</a>
@@ -266,8 +321,8 @@ class CompanyManager extends React.Component {
             dataIndex: 'create_at',
             width: "30%",
             render: (text, record) => {
-                if (record.id === -1) {
-                    return <EditableCell type="opt" onSave={this.onNewRowSave} onCancel={this.handleCancelEditRow}/>
+                if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
+                    return <EditableCell type="opt" onSave={this.onRowSave} onCancel={this.handleCancelEditRow}/>
                 }
                 var createAt = moment(new Date(text)).format(CONSTANTS.DATE_TABLE_FORMAT)
                 return createAt;
@@ -287,22 +342,22 @@ class CompanyManager extends React.Component {
                                     <Button type="primary" onClick={this.handleAdd}
                                         disabled={loading}
                                     >新增</Button>
-                                    <Button type="primary" onClick={this.showModal}
+                                    <Button type="primary" onClick={this.handleModify}
                                         disabled={!hasSelected}
                                     >修改</Button>
+                                    <Button type="primary" onClick={this.handleDelete}
+                                        disabled={!hasSelected}
+                                    >删除</Button>
                                     <Modal
-                                        title="还没做"
+                                        title="警告"
                                         visible={this.state.visible}
                                         onOk={this.hideModal}
                                         onCancel={this.hideModal}
                                         okText="确认"
                                         cancelText="取消"
                                         >
-                                        <p>别点了，没有做</p>
+                                        <p>确认删除</p>
                                     </Modal>
-                                    <Button type="primary" onClick={this.handleDelete}
-                                        disabled={!hasSelected}
-                                    >删除</Button>
                                     <Button type="primary" onClick={this.downloadFile}
                                         disabled={loading}
                                     >下载</Button>
