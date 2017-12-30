@@ -26,10 +26,14 @@ class CompanyManager extends React.Component {
         currentPage: 1,
         visible: false,
         editable: false,
+        hasNewRow: false,
+        pageSize: 10,
+        total: 0,
     };
-    componentDidMount() {
+    componentDidMount = () => {
         this.start();
     }
+
     start = () => {
         this.setState({ loading: true });
         this.fetchData();
@@ -38,11 +42,11 @@ class CompanyManager extends React.Component {
 
     fetchData = () => {
         const { fetchData } = this.props
-        const { currentPage } = this.state
+        const { currentPage, pageSize } = this.state
         let tempTownId
         fetchData({
             funcName: 'fetchCompanies', params: {
-                pageNo: currentPage, pageSize: 20
+                pageNo: currentPage, pageSize: pageSize
             }, stateName: 'companiesData'
         }).then(res => {
             if (res === undefined || res.data === undefined || res.data.companies === undefined) return
@@ -51,6 +55,7 @@ class CompanyManager extends React.Component {
                     val.key = val.id;
                     return val;
                 })],
+                total: res.data.count,
                 loading: false,
             });
         });
@@ -99,13 +104,8 @@ class CompanyManager extends React.Component {
 
     handleAdd = () => {
         this.setState({
-            companiesData: [{
-                key: -1,
-                id: -1,
-                name: '',
-                address: '',
-                country_id: '',
-            }, ...this.state.companiesData]
+            currentPage: 1,
+            hasNewRow: true,
         });
     }
 
@@ -113,6 +113,7 @@ class CompanyManager extends React.Component {
         let tmpCompaniesData = [...this.state.companiesData.filter(item => item.id !== -1)]
         this.setState({
             editable: false,
+            hasNewRow: false,
             companiesData: tmpCompaniesData,
             selectedRowKeys: [],
         })
@@ -149,7 +150,6 @@ class CompanyManager extends React.Component {
 
     onRowSave = () => {
         const { editable } = this.state
-        console.log('zhenxi sha de yuanfen', editable)
         if(editable){
             this.onUpdateRowSave()
         }else{
@@ -206,6 +206,7 @@ class CompanyManager extends React.Component {
                 this.fetchData()
                 this.setState({
                     editable: false,
+                    hasNewRow: false,
                 })
             }).catch(err => {
                 let errRes = err.response
@@ -215,14 +216,12 @@ class CompanyManager extends React.Component {
             });
     }
 
-    getPagination = () => {
-        return <Pagination onChange={this.handlePageChange} />
-    }
 
     handlePageChange = (page, pageSize) => {
+        console.log('changing page...', page)
         this.setState({
             currentPage: page,
-        })
+        }, () => this.fetchData())
     }
 
     uploadProps = () => {
@@ -269,16 +268,33 @@ class CompanyManager extends React.Component {
 
     render() {
 
-        const { loading, selectedRowKeys, selectedTown, editable,
-            companiesData } = this.state;
-        const { countriesC2Data } = this.props
+        const { loading, selectedRowKeys, selectedTown, editable, hasNewRow, 
+            currentPage, pageSize, total } = this.state;
+        const { companiesData, countriesC2Data } = this.props
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
             type: 'radio',
         };
 
-        let options = [];//[...countriesC2Data.map(item => item.key = item.id)];
+        console.log('currentPage...', currentPage)
+        let companiesWrappedData = []
+        if(companiesData.data && companiesData.data.companies){
+            companiesWrappedData = [...companiesData.data.companies.map(item => {item.key = item.id; return item})]
+        }
+        if(hasNewRow){
+            companiesWrappedData = [{
+                key: -1,
+                id: -1,
+                name: '',
+                address: '',
+                country_id: '',
+            }, ...companiesWrappedData]
+        }else{
+            companiesWrappedData = [...companiesWrappedData.filter(item => item.id !== -1)]
+        }
+
+        let options = [];
         if(countriesC2Data.data && countriesC2Data.data.countries){
             options = [...countriesC2Data.data.countries.map(item => {item.key = item.id; return item})]
         }
@@ -367,11 +383,17 @@ class CompanyManager extends React.Component {
                                     </Upload>
                                     
                                 </div>
-                                <Table rowSelection={rowSelection} columns={companyColumns} dataSource={companiesData}
+                                <Table rowSelection={rowSelection} columns={companyColumns} dataSource={companiesWrappedData}
                                     onRow={(record) => ({
                                         onClick: () => this.onRowClick(record),
                                     })}
-                                    pagination={this.getPagination()}
+                                    pagination={{
+                                        onChange: this.handlePageChange,
+                                        current: currentPage,
+                                        defaultCurrent: 1,
+                                        pageSize,
+                                        total,
+                                    }}
                                 />
                             </Card>
                         </div>
@@ -384,11 +406,12 @@ class CompanyManager extends React.Component {
 
 const mapStateToProps = state => {
     const {
+        companiesData = { data: { count: 0, towns: [] } },
         townsData = { data: { count: 0, towns: [] } },
         countriesData = { data: { count: 0, countries: [] } },
         countriesC2Data = { data: { count: 0, countries: [] } },
     } = state.httpData;
-    return { townsData, countriesC2Data };
+    return { companiesData, townsData, countriesC2Data };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),

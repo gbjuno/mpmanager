@@ -64,6 +64,10 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 	}
 
 	glog.Infof("%s find company with order %s", prefix, order)
+	
+	companies := make([]Company, 0)
+	count := 0
+	searchCompany.Find(&companies).Count(&count)
 	searchCompany = searchCompany.Order("id " + order)
 
 	if company_id == "" {
@@ -95,7 +99,8 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		companyList.Companies = make([]Company, 0)
 		searchCompany.Find(&companyList.Companies)
 
-		companyList.Count = len(companyList.Companies)
+		//companyList.Count = len(companyList.Companies)
+		companyList.Count = count
 		for i, _ := range companyList.Companies {
 			country := Country{}
 			db.Debug().First(&country, companyList.Companies[i].CountryId)

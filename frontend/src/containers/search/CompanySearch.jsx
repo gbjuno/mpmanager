@@ -43,11 +43,9 @@ class PictureSearch extends Component {
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 const { fetchData } = this.props
-                searchPicture({date: values.selectedDate.format(queryDateFormat)});
-                fetchData({funcName: 'fetchPicturesWithPlace', params: { 
-                    day: values.selectedDate.format(queryDateFormat),
-                    companyId: values.company}, 
-                    stateName: 'picturesData'})
+                fetchData({funcName: 'fetchCompaniesByCountryId', params: { 
+                    countryId: values.country}, 
+                    stateName: 'companiesData'})
             }
         });
     };
