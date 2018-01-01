@@ -114,12 +114,44 @@ export const fetchUsers = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+export const newUser = (user) => {
+    return axios.post(config.USER_URL, {...user}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
+export const updateUser = (user) => {
+    return axios.put(config.USER_URL  + "/" + user.id, {...user}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
+export const deleteUser = (user) => {
+    if(user === undefined || user.id === -1) return
+    return axios.delete(config.USER_URL + "/" + user.id)
+        .then(res => res.data);
+}
+
 
 // 地点管理API
 
 export const fetchPlaces = (filter={}) => {
     let url = config.PLACE_URL
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
+export const newPlace = (place) => {
+    return axios.post(config.PLACE_URL, {...place}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
+export const updatePlace = (place) => {
+    return axios.put(config.PLACE_URL  + "/" + place.id, {...place}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
+export const deletePlace = (place) => {
+    if(place === undefined || place.id === -1) return
+    return axios.delete(config.PLACE_URL + "/" + place.id)
+        .then(res => res.data);
 }
 
 // 地点类型管理API

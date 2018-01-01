@@ -50,7 +50,6 @@ class UserManager extends React.Component {
     fetchCompanyList = () => {
         const { fetchData } = this.props
         fetchData({funcName: 'fetchCompanies', stateName: 'companiesData', params: {}}).then(res => {
-            console.log('res chen chen yi beizi...', res)
             if(res === undefined || res.data === undefined || res.data.companies === undefined) return
             this.setState({
                 companiesData: [...res.data.companies.map(val => {
@@ -95,8 +94,10 @@ class UserManager extends React.Component {
                 key: -1,
                 id: -1,
                 name: '',
-                address: '',
-                country_id: '',
+                phone: '',
+                job: '',
+                company_id: '',
+                //wx_openid: null,
             }, ...this.state.usersData]
         });
     }
@@ -121,7 +122,7 @@ class UserManager extends React.Component {
         const { selectedRowKeys, currentPage } = this.state
         if (selectedRowKeys.length === 0) return
         fetchData({
-            funcName: 'deleteCompany', params: { id: selectedRowKeys[0] }, stateName: 'deleteCompanyStatus'
+            funcName: 'deleteUser', params: { id: selectedRowKeys[0] }, stateName: 'deleteUserStatus'
             }).then(res => {
                 message.success('删除成功')
                 this.fetchData()
@@ -152,7 +153,7 @@ class UserManager extends React.Component {
         const { fetchData } = this.props
         const { selectedRowKeys } = this.state
         const keys = _.keys(this.state)
-        const PREFIX = 'company.'
+        const PREFIX = 'user.'
         const PREFIX_LEN = PREFIX.length;
         let obj = {}
         for (let key of keys) {
@@ -163,7 +164,7 @@ class UserManager extends React.Component {
         }
         obj.id = selectedRowKeys[0]
 
-        fetchData({funcName: 'updateCompany', params: obj, stateName: 'updateCompanyStatus'})
+        fetchData({funcName: 'updateUser', params: obj, stateName: 'updateUserStatus'})
             .then(res => {
                 message.success('更新成功')
                 this.fetchData()
@@ -181,7 +182,7 @@ class UserManager extends React.Component {
     onNewRowSave = () => {
         const { fetchData } = this.props
         const keys = _.keys(this.state)
-        const PREFIX = 'company.'
+        const PREFIX = 'user.'
         const PREFIX_LEN = PREFIX.length;
         let obj = {}
         for (let key of keys) {
@@ -191,7 +192,7 @@ class UserManager extends React.Component {
             }
         }
 
-        fetchData({funcName: 'newCompany', params: obj, stateName: 'newCompanyStatus'})
+        fetchData({funcName: 'newUser', params: obj, stateName: 'newUseryStatus'})
             .then(res => {
                 message.success('创建成功')
                 this.fetchData()
@@ -216,7 +217,6 @@ class UserManager extends React.Component {
             type: 'radio',
         };
 
-        console.log('companies & love sha...', companiesData)
         let options = [];
         if(companiesData){
             options = [...companiesData.map(item => {item.key = item.id; return item})]
@@ -230,9 +230,9 @@ class UserManager extends React.Component {
             width: '15%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell value={record.name} onChange={this.onNewTownSave} />
+                    return <EditableCell dataIndex='user.name' value={record.name} onChange={this.onNewRowChange} />
                 }
-                return <a href={record.url} target="_blank">{text}</a>
+                return <a>{text}</a>
             }
         }, {
             title: '手机号',
@@ -240,9 +240,9 @@ class UserManager extends React.Component {
             width: '20%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell value={record.country_id} onChange={this.onNewTownSave} />
+                    return <EditableCell dataIndex='user.phone' value={record.phone} onChange={this.onNewRowChange} />
                 }
-                return <a href={record.url} target="_blank">{text}</a>
+                return <a>{text}</a>
             }
         }, {
             title: '职位',
@@ -250,9 +250,9 @@ class UserManager extends React.Component {
             width: '15%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell value={record.address} onChange={this.onNewTownSave} />
+                    return <EditableCell dataIndex='user.job'  value={record.job} onChange={this.onNewRowChange} />
                 }
-                return <a href={record.url} target="_blank">{text}</a>
+                return <a>{text}</a>
             }
         }, {
             title: '所在公司',
@@ -263,7 +263,7 @@ class UserManager extends React.Component {
                     return <EditableCell dataIndex='user.company_id' value={record.company_id} onChange={this.onNewRowChange}
                         editType="select" valueType="int" options={options} placeholder="请选择公司"/>
                 }
-                return <a href={record.url} target="_blank">{text}</a>
+                return <a>{text}</a>
             }
         },{
             title: '微信号',
@@ -273,7 +273,7 @@ class UserManager extends React.Component {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell type="opt" onSave={this.onRowSave} onCancel={this.handleCancelEditRow}/>
                 }
-                return <a href={record.url} target="_blank">{text}</a>
+                return <a>{text}</a>
             }
         }];
 

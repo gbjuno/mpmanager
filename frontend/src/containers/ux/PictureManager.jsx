@@ -287,7 +287,7 @@ class PictureManager extends React.Component {
     }
 
     render() {
-        const { rate, placeTypes, picturesDataWithType } = this.state
+        const { rate, placeTypes } = this.state
         const { picturesData  } = this.props
 
         const isMobile = this.props.responsive.data.isMobile
@@ -296,8 +296,7 @@ class PictureManager extends React.Component {
         let chaosDataWithType = this.chaos(picturesData, placeTypes)
         let pictureGrids = this.generateGrid(chaosDataWithType, isMobile)
 
-        console.log('is Mobile...', isMobile)
-        
+
         return (
             <div id="scPic" className="gutter-example button-demo">
                 <BreadcrumbCustom first="安监管理" second="图片管理" />

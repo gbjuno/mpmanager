@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
-import { Form, Icon, Input, Button, Select, DatePicker } from 'antd';
+import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
 import { fetchData, receiveData, searchPicture } from '../../action';
 
 const FormItem = Form.Item;
@@ -20,9 +20,16 @@ function hasErrors(fieldsError) {
     return Object.keys(fieldsError).some(field => fieldsError[field]);
 }
 
-class PlaceSearch extends Component {
+const ACTION = {
+    CREATE: 'create',
+    UPDATE: 'update',
+}
+
+class PlaceForm extends Component {
 
     state = {
+        value: this.props.value,
+        action: this.props.action || ACTION.CREATE,
         townsData: [],
         countriesData: [],
         companiesData: [],
@@ -33,25 +40,45 @@ class PlaceSearch extends Component {
 
     componentDidMount() {
         // To disabled submit button at the beginning.
-        this.props.form.validateFields();
+        //this.props.form.validateFields();
         this.fetchTownList();
     }
 
 
     handleSubmit = (e) => {
+        console.log('submit my sally you are always beatifully')
         e.preventDefault();
-        
+        const { value } = this.state
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 const { fetchData } = this.props
-                searchPicture({date: values.selectedDate.format(queryDateFormat)});
-                fetchData({funcName: 'fetchPicturesWithPlace', params: { 
-                    day: values.selectedDate.format(queryDateFormat),
-                    companyId: values.company}, 
-                    stateName: 'picturesData'})
+                let saveObj = {
+                    name: values.name,
+                    company_id: parseInt(values.company_id),
+                    monitor_type_id: value.monitor_type_id,
+                }
+                fetchData({funcName: 'newPlace', params: saveObj, 
+                    stateName: 'newPlaceStatus'}).then(res => {
+                        message.success('创建成功')
+                        if(this.props.onSave){
+                            this.props.onSave();
+                        }
+                    }).catch(err => {
+                        let errRes = err.response
+                        if(errRes && errRes.data && errRes.data.status === 'error'){
+                            message.error(errRes.data.error)
+                        }
+                    }
+                );
             }
         });
     };
+
+    handleCancel = (e) => {
+        if(this.props.onCancel){
+            this.props.onCancel()
+        }
+    }
 
     onDateChange = (date, dateString) => {
         const { searchPicture } = this.props
@@ -81,9 +108,7 @@ class PlaceSearch extends Component {
         })
     }
 
-    onCompanyChange = (value) => {
-        
-    }
+
 
 
     fetchTownList = () => {
@@ -135,6 +160,7 @@ class PlaceSearch extends Component {
     }
 
 
+
     getOptions = ( data=[] ) => {
         
         return data.map(item => {
@@ -144,26 +170,31 @@ class PlaceSearch extends Component {
 
 
     render() {
-        const { getFieldDecorator, getFieldsError, getFieldError, isFieldTouched } = this.props.form;
+        const { getFieldDecorator } = this.props.form;
         const { style, filter } = this.props
         const { townsData, countriesData, companiesData, selectedDate } = this.state
 
-
-        // Only show error after a field is touched.
-        const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
-            <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
+            <Form style={style} onSubmit={this.handleSubmit}>
                 <FormItem 
-                    style={{paddingBottom: 13}}
-                    validateStatus={fileNameError ? 'error' : ''}
-                    help={fileNameError || ''}
+                    style={{}}
                 >
-                    {getFieldDecorator('town', {
-                        //initialValue: townsData[0]? townsData[0].name:'',
+                    {getFieldDecorator('name', {
+                        rules: [{
+                            required: true, message: '地点必填!',
+                        }],
+                    })(
+                        <Input placeholder="请输入地点名称"/>
+                    )}
+                </FormItem>
+                <FormItem 
+                    style={{}}
+                >
+                    {getFieldDecorator('town_id', {                       
                     })(
                         <Select
                         showSearch
-                        style={{ width: 200 }}
+                        style={{ }}
                         placeholder="请选择镇"
                         optionFilterProp="children"
                         onChange={this.onTownChange}
@@ -174,15 +205,13 @@ class PlaceSearch extends Component {
                     )}
                 </FormItem>
                 <FormItem
-                    style={{paddingBottom: 13}}
-                    validateStatus={fileNameError ? 'error' : ''}
-                    help={fileNameError || ''}
+                    style={{}}
                 >
-                    {getFieldDecorator('country', {
+                    {getFieldDecorator('country_id', {
                     })(
                         <Select
                         showSearch
-                        style={{ width: 200 }}
+                        style={{ }}
                         placeholder="请选择村"
                         optionFilterProp="children"
                         onChange={this.onCountryChange}
@@ -193,15 +222,16 @@ class PlaceSearch extends Component {
                     )}
                 </FormItem>
                 <FormItem
-                    style={{paddingBottom: 13}}
-                    validateStatus={fileNameError ? 'error' : ''}
-                    help={fileNameError || ''}
+                    style={{}}
                 >
-                    {getFieldDecorator('company', {
+                    {getFieldDecorator('company_id', {
+                         rules: [{
+                            required: true, message: '公司必选!',
+                        }],
                     })(
                         <Select
                         showSearch
-                        style={{ width: 200 }}
+                        style={{ }}
                         placeholder="请选择公司"
                         optionFilterProp="children"
                         onChange={this.onCompanyChange}
@@ -212,13 +242,17 @@ class PlaceSearch extends Component {
                     )}
                 </FormItem>
                 <FormItem 
-                    style={{paddingBottom: 13}}
+                    style={{}}
                 >
                     <Button
                         type="primary"
                         htmlType="submit"
                     >
-                       搜索
+                       保存
+                    </Button>
+                    <Button onClick={this.handleCancel}
+                    >
+                       取消
                     </Button>
                 </FormItem>
             </Form>
@@ -236,4 +270,4 @@ const mapDispatchToProps = dispatch => ({
     searchPicture: bindActionCreators(searchPicture, dispatch),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PlaceSearch))
+export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PlaceForm))

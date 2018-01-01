@@ -115,7 +115,7 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 		userList.Count = len(userList.Users)
 		for i, u := range userList.Users {
 			company := Company{}
-			db.First(&company, u.ID)
+			db.First(&company, u.CompanyId)
 			userList.Users[i].CompanyName = company.Name
 		}
 

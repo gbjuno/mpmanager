@@ -84,7 +84,6 @@ class CompanyManager extends React.Component {
 
 
     onSelectChange = (selectedRowKeys) => {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
         if (selectedRowKeys.length > 0) {
             selectedRowKeys = [selectedRowKeys[selectedRowKeys.length - 1]]
         }
@@ -218,7 +217,6 @@ class CompanyManager extends React.Component {
 
 
     handlePageChange = (page, pageSize) => {
-        console.log('changing page...', page)
         this.setState({
             currentPage: page,
         }, () => this.fetchData())
@@ -277,7 +275,6 @@ class CompanyManager extends React.Component {
             type: 'radio',
         };
 
-        console.log('currentPage...', currentPage)
         let companiesWrappedData = []
         if(companiesData.data && companiesData.data.companies){
             companiesWrappedData = [...companiesData.data.companies.map(item => {item.key = item.id; return item})]
