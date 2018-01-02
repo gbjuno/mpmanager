@@ -93,7 +93,6 @@ class CompanyManager extends React.Component {
 
 
     onSelectChange = (selectedRowKeys) => {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
         if(selectedRowKeys.length > 0){
             selectedRowKeys = [selectedRowKeys[selectedRowKeys.length-1]]
         }
@@ -126,19 +125,16 @@ class CompanyManager extends React.Component {
         if(townSelectedRowKeys.length === 0) return
         fetchData({funcName: 'deleteTown', params: {townId: townSelectedRowKeys[0]}, stateName: 'deleteTownStatus'})
             .then(res => {
-                console.log('delete town successfully', res)
                 this.fetchTownsData() 
-            }).catch(err => console.log(err));
+            }).catch(err => {});
     }
 
     onNewTownSave = (name) => {
         const { fetchData } = this.props
         fetchData({funcName: 'newTown', params: {name}, stateName: 'newTownStatus'})
             .then(res => {
-                console.log('create new town successfully', res)
                 this.fetchTownsData() 
-            }).catch(err => console.log(err));
-        console.log('value--->', name)
+            }).catch(err => {});
     }
 
     render() {

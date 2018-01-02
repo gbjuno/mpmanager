@@ -47,7 +47,6 @@ class SummaryManager extends React.Component {
     }
 
     onSelectChange = (selectedRowKeys) => {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
         if(selectedRowKeys.length > 0){
             selectedRowKeys = [selectedRowKeys[selectedRowKeys.length-1]]
         }
@@ -104,7 +103,6 @@ class SummaryManager extends React.Component {
         }];
 
         const { loading, selectedRowKeys, selectedTown, summariesData } = this.state;
-        console.log('summaries ...sss...', summariesData)
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,

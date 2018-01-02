@@ -70,7 +70,6 @@ class UserManager extends React.Component {
 
 
     onSelectChange = (selectedRowKeys) => {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
         if (selectedRowKeys.length > 0) {
             selectedRowKeys = [selectedRowKeys[selectedRowKeys.length - 1]]
         }

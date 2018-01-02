@@ -46,7 +46,6 @@ class PlaceForm extends Component {
 
 
     handleSubmit = (e) => {
-        console.log('submit my sally you are always beatifully')
         e.preventDefault();
         const { value } = this.state
         this.props.form.validateFields((err, values) => {

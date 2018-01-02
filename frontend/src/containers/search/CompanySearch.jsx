@@ -184,7 +184,6 @@ class PictureSearch extends Component {
 
 const mapStateToProps = state => {
     const { searchFilter } = state
-    console.log('pic state------======>>>>>', state)
     return { ...state.httpData, filter: searchFilter};
 };
 const mapDispatchToProps = dispatch => ({

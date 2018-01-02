@@ -30,7 +30,6 @@ const httpData = (state = {}, action) => {
 const searchFilter = (state = {}, action) => {
     switch (action.type){
         case type.SEARCH_PICTURE:
-            console.log('search picture reducer', action)
             return {
                 ...state,
                 [action.collection]: {...action.condition},

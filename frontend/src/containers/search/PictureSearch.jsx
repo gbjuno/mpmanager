@@ -148,8 +148,6 @@ class PictureSearch extends Component {
         const { style, filter } = this.props
         const { townsData, countriesData, companiesData, selectedDate } = this.state
 
-        console.log('filter .... aaaa cccc', townsData)
-
         // Only show error after a field is touched.
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
@@ -240,7 +238,6 @@ class PictureSearch extends Component {
 
 const mapStateToProps = state => {
     const { searchFilter } = state
-    console.log('pic state------======>>>>>', state)
     return { ...state.httpData, filter: searchFilter};
 };
 const mapDispatchToProps = dispatch => ({

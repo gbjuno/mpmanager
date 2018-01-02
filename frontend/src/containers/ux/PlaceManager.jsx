@@ -67,7 +67,6 @@ class PlaceManager extends React.Component {
             if(res === undefined || res.data === undefined || res.data.monitor_places === undefined) return
             let placesDataWithType = []
             for(let placeType of placeTypes){
-                console.log('placeType.id', placeType.id)
                 placesDataWithType.push(
                     {
                     placeTypeId: placeType.id,
@@ -146,7 +145,6 @@ class PlaceManager extends React.Component {
     getClientWidth = () => {    // 获取当前浏览器宽度并设置responsive管理响应式
         const { receiveData } = this.props;
         const clientWidth = document.body.clientWidth;
-        console.log('try to get responsive...', clientWidth)
         receiveData({isMobile: clientWidth <= 992}, 'responsive');
     };
 
@@ -156,7 +154,6 @@ class PlaceManager extends React.Component {
         const placeQRs = document.getElementById("placeQRs");
         if(placeQRs === undefined || placeQRs === null) return;
         const swidth = document.body.clientWidth - 200;
-        console.log('swidth', swidth)
         const benchmark = 1680
         this.setState({
             contentWidth: swidth,
@@ -282,10 +279,8 @@ class PlaceManager extends React.Component {
         if(responsive){
             isMobile = responsive.data.isMobile
         }
-        console.log('isMobile, qu ai sha, ren zhen dian, wu lun jie guo...', isMobile)
         
         let placesDataWithType = this.transform(placesData, placeTypes)
-        console.log('after transform', placesDataWithType)
         let placeGrids = this.generateGrid(placesDataWithType, isMobile)
 
         
