@@ -20,7 +20,6 @@ import 'photoswipe/dist/photoswipe.css';
 import 'photoswipe/dist/default-skin/default-skin.css';
 
 const TabPane = Tabs.TabPane;
-const PIC_LOCATION_PREFIX = 'picPlaceId_'
 const DEFAULT_PIC_URL = '/html/static/null.png'
 
 class PictureManager extends React.Component {
@@ -81,7 +80,7 @@ class PictureManager extends React.Component {
         this.getClientWidth();
         const scPic = document.getElementById("scPic");
         if(scPic === undefined || scPic === null) return;
-        const swidth = scPic.clientWidth;
+        const swidth = document.body.clientWidth - 200;
         const benchmark = 1680
         this.setState({
             rate: swidth / benchmark,
@@ -367,7 +366,6 @@ class PictureManager extends React.Component {
 }
 
 const mapStateToProps = state => {
-    console.log('shaahs', state)
     return { ...state.httpData, filter: state.searchFilter };
 };
 const mapDispatchToProps = dispatch => ({

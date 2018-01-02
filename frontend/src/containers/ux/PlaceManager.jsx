@@ -28,7 +28,7 @@ class PlaceManager extends React.Component {
         placesDataWithType: [],
         rate: 1,
         placeTypeLoading: false,
-        standardHeight: 256,
+        standardHeight: 276,
         hasNew: false,
         deleteModal: false,
         deleteRecord: {},
@@ -139,23 +139,27 @@ class PlaceManager extends React.Component {
     }
 
     componentDidUpdate = (nextProps, nextState) => {
+        
     };
 
     
     getClientWidth = () => {    // 获取当前浏览器宽度并设置responsive管理响应式
         const { receiveData } = this.props;
         const clientWidth = document.body.clientWidth;
+        console.log('try to get responsive...', clientWidth)
         receiveData({isMobile: clientWidth <= 992}, 'responsive');
     };
 
 
     resizeWindow = () => {
         this.getClientWidth();
-        const scPic = document.getElementById("placeQRs");
-        if(scPic === undefined || scPic === null) return;
-        const swidth = scPic.clientWidth;
+        const placeQRs = document.getElementById("placeQRs");
+        if(placeQRs === undefined || placeQRs === null) return;
+        const swidth = document.body.clientWidth - 200;
+        console.log('swidth', swidth)
         const benchmark = 1680
         this.setState({
+            contentWidth: swidth,
             rate: swidth / benchmark,
         });
         
@@ -278,7 +282,7 @@ class PlaceManager extends React.Component {
         if(responsive){
             isMobile = responsive.data.isMobile
         }
-        //const isMobile = false
+        console.log('isMobile, qu ai sha, ren zhen dian, wu lun jie guo...', isMobile)
         
         let placesDataWithType = this.transform(placesData, placeTypes)
         console.log('after transform', placesDataWithType)
@@ -314,7 +318,7 @@ class PlaceManager extends React.Component {
 
 const mapStateToProps = state => {
     const { placesData = {data: []} } = state.httpData;
-    return { placesData };
+    return { ...state.httpData };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),

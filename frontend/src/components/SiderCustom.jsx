@@ -70,15 +70,17 @@ class SiderCustom extends Component {
                     openKeys={this.state.firstHide ? null : [this.state.openKey]}
                     onOpenChange={this.openMenu}
                 >
+                    {/*
                     <Menu.Item key="/app/dashboard/index">
                         <Link to={'/app/dashboard/index'}><Icon type="mobile" /><span className="nav-text">首页</span></Link>
                     </Menu.Item>
-                    <Menu.Item key="/app/ux/tp"><Link to={'/app/ux/tp'}><Icon type="picture" />图片管理</Link></Menu.Item>
-                    <Menu.Item key="/app/ux/cz"><Link to={'/app/ux/cz'}><Icon type="appstore-o" />村镇管理</Link></Menu.Item>
-                    <Menu.Item key="/app/ux/gs"><Link to={'/app/ux/gs'}><Icon type="home" />公司管理</Link></Menu.Item>
-                    <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}><Icon type="user" />用户管理</Link></Menu.Item>
-                    <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}><Icon type="environment-o" />地点管理</Link></Menu.Item>
-                    <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}><Icon type="line-chart" />统计报表</Link></Menu.Item>
+                    */}
+                    <Menu.Item key="/app/ux/tp"><Link to={'/app/ux/tp'}><Icon type="picture" /><span className="nav-text">图片管理</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/cz"><Link to={'/app/ux/cz'}><Icon type="appstore-o" /><span className="nav-text">村镇管理</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/gs"><Link to={'/app/ux/gs'}><Icon type="home" /><span className="nav-text">公司管理</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}><Icon type="user" /><span className="nav-text">用户管理</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}><Icon type="environment-o" /><span className="nav-text">地点管理</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}><Icon type="line-chart" /><span className="nav-text">统计报表</span></Link></Menu.Item>
                     {/*
                     <SubMenu
                         key="/app/ux"
