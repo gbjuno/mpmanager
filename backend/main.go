@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -30,7 +31,7 @@ func main() {
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 
-	InitializeDB()
+	InitializeDB(dbuser, dbpass, dbip, dbport)
 
 	if debug {
 		glog.Info("DEBUG MODE")

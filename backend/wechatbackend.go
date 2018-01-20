@@ -5,6 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"time"
+
 	"github.com/golang/glog"
 	"gopkg.in/chanxuehong/wechat.v2/mp/core"
 	"gopkg.in/chanxuehong/wechat.v2/mp/jssdk"
@@ -13,13 +21,6 @@ import (
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/callback/request"
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/callback/response"
 	msgTemplate "gopkg.in/chanxuehong/wechat.v2/mp/message/template"
-	"html/template"
-	"io"
-	"net/http"
-	"net/url"
-	"os"
-	"path"
-	"time"
 
 	"github.com/chanxuehong/rand"
 	"github.com/chanxuehong/session"
@@ -415,7 +416,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		}*/
 
 	// password match
-	if len(user.WxOpenId) > 5 {
+	if len(*user.WxOpenId) > 5 {
 		glog.Errorf("%s user with phone %s has been bound to another wechat user", prefix, phone)
 		response.Status = false
 		response.Message = "该账户已经被其他微信用户绑定，请联系管理员进行确认，谢谢"
@@ -435,7 +436,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	md5pass := fmt.Sprintf("%x", hashCode.Sum(nil))
 
 	if md5pass == user.Password {
-		user.WxOpenId = openId
+		user.WxOpenId = &openId
 		db.Debug().Save(&user)
 		response.Status = true
 		response.Message = fmt.Sprintf("用户%s首次成功绑定企业%s，可以进行拍照", user.Name, company.Name)

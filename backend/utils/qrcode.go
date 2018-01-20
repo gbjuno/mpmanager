@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/fogleman/gg"
-	"github.com/golang/glog"
-	"github.com/skip2/go-qrcode"
 	"image"
 	"os"
 	"path"
+
+	"github.com/fogleman/gg"
+	"github.com/golang/glog"
+	"github.com/skip2/go-qrcode"
 )
 
 var fontFile = "/opt/workspace/src/github.com/gbjuno/mpmanager/backend/templates/simhei.ttf"

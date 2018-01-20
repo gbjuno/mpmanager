@@ -3,13 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/emicklei/go-restful"
-	"github.com/golang/glog"
-	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/emicklei/go-restful"
+	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 )
 
 type CompanyList struct {
@@ -64,7 +65,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 	}
 
 	glog.Infof("%s find company with order %s", prefix, order)
-	
+
 	companies := make([]Company, 0)
 	count := 0
 	searchCompany.Find(&companies).Count(&count)

@@ -3,10 +3,11 @@ package main
 import (
 	//	"github.com/emicklei/go-restful"
 	"fmt"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"time"
 )
 
 var db *gorm.DB
@@ -65,7 +66,7 @@ type User struct {
 	Job         string    `gorm:"column:job;size:20" json:"job"`
 	CompanyId   int       `gorm:"column:company_id;not null" json:"company_id"`
 	CompanyName string    `gorm:"-" json:"company_name"`
-	WxOpenId    string    `gorm:"column:wx_openid;size:50;unique_index" json:"wx_openid"`
+	WxOpenId    *string   `gorm:"column:wx_openid;size:50;unique_index" json:"wx_openid"`
 	Enable      string    `gorm:"column:enable;size:1;default:'T';not null" json:"enable"`
 	Pictures    []Picture `gorm:"ForeignKey:UserId" json:"-"`
 }
@@ -157,7 +158,7 @@ type Response struct {
 	Error  string `json:"error"`
 }
 
-func InitializeDB() {
+func InitializeDB(dbuser, dbpass, dbip, dbport string) {
 	var err error
 	db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/mpmanager?charset=utf8&parseTime=True&loc=Local", dbuser, dbpass, dbip, dbport))
 	if err != nil {

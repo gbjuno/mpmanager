@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/robfig/cron"
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/template"
-	"time"
 )
 
 func refreshTodaySummary() {
@@ -155,7 +156,7 @@ func sendTemplateMsg() {
 			msg := TMsgData{First: first, Keyword1: k1, Keyword2: k2, Keyword3: k3, Remark: remark}
 			t := template.TemplateMessage2{TemplateId: wxTemplateId, Data: msg}
 			for _, u := range users {
-				t.ToUser = u.WxOpenId
+				t.ToUser = *u.WxOpenId
 				tStr, _ := json.Marshal(t)
 				msgId, err := template.Send(wechatClient, json.RawMessage(tStr))
 				if err != nil {

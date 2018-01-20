@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/emicklei/go-restful"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/emicklei/go-restful"
+	"github.com/golang/glog"
 )
 
 type MonitorTypeList struct {
