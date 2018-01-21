@@ -113,6 +113,15 @@ func refreshSummaryStat() {
 			db.Save(&summary)
 		}
 	}
+
+	summaryList := make([]Summary, 0)
+	db.Debug().Where(condition).Find(&summaryList)
+	for _, s := range summaryList {
+		if s.UnfinishIds == "" {
+			s.IsFinish = "T"
+			db.Save(&s)
+		}
+	}
 }
 
 type Keyword struct {

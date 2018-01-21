@@ -92,7 +92,7 @@ func main() {
 	http.HandleFunc("/backend/companystat", companystatHandler)
 	http.HandleFunc("/backend/photo", photoHandler)
 	http.HandleFunc("/backend/download", downloadHandler)
-	http.HandleFunc("/excel", excelHandler)
+	http.HandleFunc("/backend/excel", excelHandler)
 	glog.Info(http.ListenAndServe(":8001", nil))
 
 }

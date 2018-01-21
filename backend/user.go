@@ -5,14 +5,15 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/emicklei/go-restful"
-	"github.com/gbjuno/mpmanager/backend/utils"
-	"github.com/golang/glog"
-	"github.com/jinzhu/gorm"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/emicklei/go-restful"
+	"github.com/gbjuno/mpmanager/backend/utils"
+	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 )
 
 type UserList struct {
@@ -52,7 +53,7 @@ func (u User) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/user").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").Doc("get user object").To(u.findUser))
-	ws.Route(ws.GET("/?pageNo={pageNo}&pageSize={pageSize}&order={order}").Doc("get user object").To(u.findUser))
+	ws.Route(ws.GET("/?name={name}&phone={phone}&pageNo={pageNo}&pageSize={pageSize}&order={order}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.POST("").To(u.createUser))
 	ws.Route(ws.PUT("/{user_id}").To(u.updateUser))
@@ -64,12 +65,14 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [findUser]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	user_id := request.PathParameter("user_id")
-	//phone := request.QueryParameter("phone")
+	name := request.QueryParameter("name")
+	phone := request.QueryParameter("phone")
 	pageSize := request.QueryParameter("pageSize")
 	pageNo := request.QueryParameter("pageNo")
 	order := request.QueryParameter("order")
 
 	var searchUser *gorm.DB = db.Debug()
+	var noPageSearchUser *gorm.DB = db.Debug()
 	if order != "asc" && order != "desc" {
 		errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -84,6 +87,18 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 	searchUser = searchUser.Order("id " + order)
 	//get user list
 	if user_id == "" {
+		if name != "" {
+			glog.Infof("%s set find user db with name %s", prefix, name)
+			searchUser = searchUser.Where(fmt.Sprintf("name LIKE \"%%%s%%\"", name))
+			noPageSearchUser = noPageSearchUser.Where(fmt.Sprintf("name LIKE \"%%%s%%\"", name))
+		}
+
+		if phone != "" {
+			glog.Infof("%s set find user db with name %s", prefix, name)
+			searchUser = searchUser.Where("phone = ?", phone)
+			noPageSearchUser = noPageSearchUser.Where("phone = ?", phone)
+		}
+
 		isPageSizeOk := true
 		pageSizeInt, err := strconv.Atoi(pageSize)
 		if err != nil {
@@ -111,8 +126,7 @@ func (u User) findUser(request *restful.Request, response *restful.Response) {
 		userList := UserList{}
 		userList.Users = make([]User, 0)
 		searchUser.Find(&userList.Users)
-
-		userList.Count = len(userList.Users)
+		noPageSearchUser.Model(&User{}).Count(&userList.Count)
 		for i, u := range userList.Users {
 			company := Company{}
 			db.First(&company, u.CompanyId)

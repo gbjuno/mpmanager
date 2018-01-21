@@ -3,12 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/emicklei/go-restful"
-	"github.com/golang/glog"
-	"github.com/jinzhu/gorm"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/emicklei/go-restful"
+	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 )
 
 type MonitorPlaceSummary struct {
@@ -140,6 +141,7 @@ func (s TodaySummary) findTodaySummary(request *restful.Request, response *restf
 	}
 
 	var searchCompany *gorm.DB = db.Debug()
+	var noPageSearchCompany *gorm.DB = db.Debug()
 	if order != "asc" && order != "desc" {
 		errmsg := fmt.Sprintf("order %s is not asc or desc, ignore", order)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -207,7 +209,7 @@ func (s TodaySummary) findTodaySummary(request *restful.Request, response *restf
 	}
 
 	csl := CompanySummaryList{}
-	csl.Count = len(company_CompanySummaryMap)
+	noPageSearchCompany.Model(&Company{}).Count(&csl.Count)
 	csl.CompanySummaries = make([]*CompanySummary, 0)
 	for _, c := range companies {
 		csl.CompanySummaries = append(csl.CompanySummaries, company_CompanySummaryMap[c.ID])

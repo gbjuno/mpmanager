@@ -132,7 +132,7 @@ func excelHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer f.Close()
 		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", "attachment; filename=基础数据.xlsx")
+		w.Header().Set("Content-Disposition", "attachment; filename=basedata.xlsx")
 		w.WriteHeader(http.StatusOK)
 		io.Copy(w, f)
 		glog.Infof("%s return data file successfully", prefix)
@@ -198,6 +198,7 @@ func parseExcel(fileName string) (string, string, error) {
 	var errorStr string
 	f, err := excelize.OpenFile(fileName)
 	if err != nil {
+		//errmsg := fmt.Sprintf("cannot open file %s, err %s", fileName, err)
 		errmsg := fmt.Sprintf("cannot open file %s, err %s", fileName, err)
 		glog.Errorf("%s %s", prefix, errmsg)
 		return "", "", errors.New(errmsg)
@@ -209,7 +210,7 @@ OUT:
 	for index, row := range rows {
 		tx := db.Begin()
 		if index == 0 {
-			glog.Infof("%s line %d: session rollback", prefix, index+1)
+			glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 			tx.Rollback()
 			continue
 		}
@@ -220,16 +221,17 @@ OUT:
 
 		townName = row[0]
 		if townName == "" {
-			errmsg := fmt.Sprintf("line %d: town name %s is empty", index+1, countryName)
+			//errmsg := fmt.Sprintf("第%d行: town name %s is empty", index+1, countryName)
+			errmsg := fmt.Sprintf("第%d行: 镇名为空", index+1)
 			if errorLines == "" {
 				errorLines = fmt.Sprintf("%d", index+1)
 				errorStr = errmsg
 			} else {
 				errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
-				errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
+				errorStr = fmt.Sprintf("%s\n%s", errorStr, errmsg)
 			}
 			glog.Errorf("%s %s", prefix, errmsg)
-			glog.Infof("%s line %d: session rollback", prefix, index+1)
+			glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 			tx.Rollback()
 			continue
 		}
@@ -237,31 +239,32 @@ OUT:
 		town := Town{}
 		tx.Debug().Where("name = ?", townName).First(&town)
 		if town.ID == 0 {
-			glog.Infof("%s line %d: town %s does not exist", prefix, index+1, townName)
+			glog.Infof("%s 第%d行: town %s does not exist", prefix, index+1, townName)
 			town.Name = townName
 			tx.Debug().Create(&town)
 			if town.ID == 0 {
-				errmsg := fmt.Sprintf("line %d, town %s created failed", index+1, townName)
+				//errmsg := fmt.Sprintf("第%d行, town %s created failed", index+1, townName)
+				errmsg := fmt.Sprintf("第%d行, 镇类型%s创建失败", index+1, townName)
 				if errorLines == "" {
 					errorLines = fmt.Sprintf("%d", index+1)
 					errorStr = errmsg
 				} else {
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
-					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
+					errorStr = fmt.Sprintf("%s\n%s", errorStr, errmsg)
 				}
 				glog.Errorf("%s %s", prefix, errmsg)
-				glog.Infof("%s line %d: session rollback", prefix, index+1)
+				glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue
 			} else {
-				glog.Infof("%s line %d: town %s created successfully, id %d", prefix, index+1, town.Name, town.ID)
+				glog.Infof("%s 第%d行: town %s created successfully, id %d", prefix, index+1, town.Name, town.ID)
 			}
 		}
 
 		countryName = row[1]
 		if countryName == "" {
-			glog.Infof("%s line %d: country name is empty", prefix, index+1)
-			glog.Infof("%s line %d: session commit", prefix, index+1)
+			glog.Infof("%s 第%d行: country name is empty", prefix, index+1)
+			glog.Infof("%s 第%d行: session commit", prefix, index+1)
 			tx.Commit()
 			continue
 		}
@@ -276,39 +279,40 @@ OUT:
 		}
 
 		if country.ID == 0 {
-			glog.Infof("%s line %d: country %s is not in town %s", prefix, index+1, countryName, townName)
+			glog.Infof("%s 第%d行: country %s is not in town %s", prefix, index+1, countryName, townName)
 			country.Name = countryName
 			country.TownId = town.ID
 			tx.Debug().Create(&country)
 			if country.ID == 0 {
-				errmsg := fmt.Sprintf("line %d: country %s created failed", index+1, countryName)
+				//errmsg := fmt.Sprintf("第%d行: country %s created failed", index+1, countryName)
+				errmsg := fmt.Sprintf("第%d行: 村类型%s创建失败", index+1, countryName)
 				if errorLines == "" {
 					errorLines = fmt.Sprintf("%d", index+1)
 					errorStr = errmsg
 				} else {
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
-					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
+					errorStr = fmt.Sprintf("%s\n%s", errorStr, errmsg)
 				}
 				glog.Errorf("%s %s", prefix, errmsg)
-				glog.Infof("%s line %d: session rollback", prefix, index+1)
+				glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue
 			} else {
-				glog.Infof("%s line %d: country %s created successfully, id %d", prefix, index+1, country.Name, country.ID)
+				glog.Infof("%s 第%d行: country %s created successfully, id %d", prefix, index+1, country.Name, country.ID)
 			}
 		}
 
 		companyName = row[2]
 		if companyName == "" {
-			glog.Infof("%s line %d: company name %s is empty", prefix, index+1)
-			glog.Infof("%s line %d: session commit", prefix, index+1)
+			glog.Infof("%s 第%d行: company name %s is empty", prefix, index+1)
+			glog.Infof("%s 第%d行: session commit", prefix, index+1)
 			tx.Commit()
 			continue
 		}
 		company := Company{}
 		tx.Debug().Where("name = ?", companyName).First(&company)
 		if company.ID == 0 {
-			glog.Infof("%s line %d: company %s (country %s) does not exist", prefix, index+1, companyName, company.CountryName)
+			glog.Infof("%s 第%d行: company %s (country %s) does not exist", prefix, index+1, companyName, company.CountryName)
 			//create new company
 			company.Name = companyName
 			company.CountryName = country.Name
@@ -316,26 +320,27 @@ OUT:
 			company.Address = row[3]
 			tx.Debug().Create(&company)
 			if company.ID == 0 {
-				errmsg := fmt.Sprintf("%s line %d: company %s cannot created", prefix, index+1, companyName)
+				//errmsg := fmt.Sprintf("%s 第%d行: company %s cannot created", prefix, index+1, companyName)
+				errmsg := fmt.Sprintf("%s 第%d行: 公司类型%s创建失败", prefix, index+1, companyName)
 				if errorLines == "" {
 					errorLines = fmt.Sprintf("%d", index+1)
 					errorStr = errmsg
 				} else {
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
-					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
+					errorStr = fmt.Sprintf("%s\n%s", errorStr, errmsg)
 				}
 				glog.Errorf("%s %s", prefix, errmsg)
-				glog.Infof("%s line %d: session rollback", prefix, index+1)
+				glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue
 			} else {
-				glog.Infof("%s line %d: company %s is created successfully, id %d", prefix, index+1, companyName, company.ID)
+				glog.Infof("%s 第%d行: company %s is created successfully, id %d", prefix, index+1, companyName, company.ID)
 			}
 		}
 
 		if company.CountryId != country.ID {
-			glog.Errorf("%s line %d: company %s belongs to country %s, not country %s", prefix, index+1, company.Name, company.CountryName, country.Name)
-			glog.Infof("%s line %d: session rollback", prefix, index+1)
+			glog.Errorf("%s 第%d行: company %s belongs to country %s, not country %s", prefix, index+1, company.Name, company.CountryName, country.Name)
+			glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 			tx.Rollback()
 			continue
 		}
@@ -350,24 +355,25 @@ OUT:
 			hashCode := md5.New()
 			user.Name = row[column]
 			if user.Name == "" {
-				errmsg := fmt.Sprintf("line %d: user cannot created, empty user name", index+1)
+				errmsg := fmt.Sprintf("第%d行: user cannot created, empty user name", index+1)
 				glog.Errorf("%s %s", prefix, errmsg)
-				glog.Infof("%s line %d: session commit", prefix, index+1)
+				glog.Infof("%s 第%d行: session commit", prefix, index+1)
 				tx.Commit()
 				continue OUT
 			}
 			user.Phone = row[column+1]
 			if len(user.Phone) != 11 {
-				errmsg := fmt.Sprintf("line %d: user %s cannot created, phone %s len %d", index+1, user.Name, user.Phone, len(user.Phone))
+				//errmsg := fmt.Sprintf("第%d行: user %s cannot created, phone %s len %d", index+1, user.Name, user.Phone, len(user.Phone))
+				errmsg := fmt.Sprintf("第%d行: 用户%s无法创建成功，电话号码长度为%d", index+1, user.Name, user.Phone, len(user.Phone))
 				if errorLines == "" {
 					errorLines = fmt.Sprintf("%d", index+1)
 					errorStr = errmsg
 				} else {
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
-					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
+					errorStr = fmt.Sprintf("%s\n%s", errorStr, errmsg)
 				}
 				glog.Errorf("%s %s", prefix, errmsg)
-				glog.Infof("%s line %d: session rollback", prefix, index+1)
+				glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue OUT
 			}
@@ -376,16 +382,20 @@ OUT:
 			tx.Debug().Where("phone = ?", user.Phone).First(&samePhoneUser)
 			if samePhoneUser.ID != 0 {
 				if samePhoneUser.Name != user.Name {
-					errmsg := fmt.Sprintf("line %d: user %s cannot created, phone %s confict with user %s(company %s)", index+1, user.Name, user.Phone, samePhoneUser.Name, samePhoneUser.CompanyName)
+					//errmsg := fmt.Sprintf("第%d行: user %s cannot created, phone %s confict with user %s(company %s)", index+1, user.Name, user.Phone, samePhoneUser.Name, samePhoneUser.CompanyName)
+					c := Company{}
+					db.Debug().Where("id = ?", samePhoneUser.CompanyId).First(&c)
+					samePhoneUserCompanyName := c.Name
+					errmsg := fmt.Sprintf("第%d行: 用户%s无法创建，手机%s与已有用户%s(公司%s)冲突", index+1, user.Name, user.Phone, samePhoneUser.Name, samePhoneUserCompanyName)
 					if errorLines == "" {
 						errorLines = fmt.Sprintf("%d", index+1)
 						errorStr = errmsg
 					} else {
 						errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
-						errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
+						errorStr = fmt.Sprintf("%s\n%s", errorStr, errmsg)
 					}
 					glog.Errorf("%s %s", prefix, errmsg)
-					glog.Infof("%s line %d: session rollback", prefix, index+1)
+					glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 					tx.Rollback()
 					continue OUT
 				}
@@ -396,25 +406,25 @@ OUT:
 				user.Password = fmt.Sprintf("%x", hashCode.Sum(nil))
 				tx.Debug().Create(&user)
 				if user.ID == 0 {
-					errmsg := fmt.Sprintf("line %d: user %s cannot created", index+1, user.Name)
+					errmsg := fmt.Sprintf("第%d行: 用户创建失败，联系管理员", index+1, user.Name)
 					if errorLines == "" {
 						errorLines = fmt.Sprintf("%d", index+1)
 						errorStr = errmsg
 					} else {
 						errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
-						errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
+						errorStr = fmt.Sprintf("%s\n%s", errorStr, errmsg)
 					}
 					glog.Errorf("%s %s", prefix, errmsg)
-					glog.Infof("%s line %d: session rollback", prefix, index+1)
+					glog.Infof("%s 第%d行: session rollback", prefix, index+1)
 					tx.Rollback()
 					continue OUT
 				} else {
-					glog.Infof("%s line %d: create user %s, id %d", prefix, index+1, user.Name, user.ID)
+					glog.Infof("%s 第%d行: create user %s, id %d", prefix, index+1, user.Name, user.ID)
 				}
 			}
 			column += 3
 		}
-		glog.Infof("%s line %d, session commit", prefix, index+1)
+		glog.Infof("%s 第%d行, session commit", prefix, index+1)
 		tx.Commit()
 	}
 

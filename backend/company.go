@@ -167,7 +167,7 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		monitorPlaceList.Count = len(monitorPlaceList.MonitorPlaces)
 		for i := range monitorPlaceList.MonitorPlaces {
 			m := MonitorType{}
-			db.Debug().Where("monitor_type_id = ?", monitorPlaceList.MonitorPlaces[i].MonitorTypeId).First(&m)
+			db.Debug().Where("id = ?", monitorPlaceList.MonitorPlaces[i].MonitorTypeId).First(&m)
 			monitorPlaceList.MonitorPlaces[i].MonitorTypeName = m.Name
 		}
 		response.WriteHeaderAndEntity(http.StatusOK, monitorPlaceList)
