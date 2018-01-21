@@ -156,13 +156,13 @@ class SummaryManager extends React.Component {
                       }
                 `}
                 </style>
-                <BreadcrumbCustom first="安监管理" second="统计报表" />
+                <BreadcrumbCustom first="统计报表" second="" />
                 <Row gutter={16}>
                     <Col className="gutter-row" md={24}>
                         <div className="gutter-box">
                             <Card title="统计报告" bordered={false}>
                                 <Table columns={summaryColumns} dataSource={summariesData}
-                                        onRowClick={this.onRowClick}
+                                    size="small" onRowClick={this.onRowClick}
                                 />
                             </Card>
                         </div>

@@ -296,6 +296,7 @@ class UserManager extends React.Component {
                                     >删除</Button>
                                 </div>
                                 <Table rowSelection={rowSelection} columns={userColumns} dataSource={usersData}
+                                    size="small"
                                     onRow={(record) => ({
                                         onClick: () => this.onRowClick(record),
                                     })}

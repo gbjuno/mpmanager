@@ -253,6 +253,7 @@ class CountryManager extends React.Component {
         const townColumns = [{
             title: '镇名',
             dataIndex: 'name',
+            width: '50%',
             render: (text, record) => {
                 if(record.id === -1){
                     return <EditableCell dataIndex='town.name' value={record.name} onChange={this.onNewTownChange} />
@@ -262,11 +263,12 @@ class CountryManager extends React.Component {
         }, {
             title: '创建时间',
             dataIndex: 'create_at',
+            width: '50%',
             render: (text, record) => {
                 if (record.id === -1){
                     return <EditableCell type="opt" onSave={this.onNewTownSave} onCancel={this.handleCancelEditTown}/>
                 }
-                var createAt = moment(new Date(text)).format(CONSTANTS.DATE_TABLE_FORMAT)
+                var createAt = moment(new Date(text)).format(CONSTANTS.DATE_DISPLAY_LONG_FORMAT)
                 return createAt;
             }
         }];
@@ -274,6 +276,7 @@ class CountryManager extends React.Component {
         const countryColumns = [{
             title: '村名',
             dataIndex: 'name',
+            width: '50%',
             render: (text, record) => {
                 if(record.id === -1){
                     return <EditableCell dataIndex='country.name' value={record.name} onChange={this.onNewCountryChange}/>
@@ -284,11 +287,12 @@ class CountryManager extends React.Component {
         }, {
             title: '创建时间',
             dataIndex: 'create_at',
+            width: '50%',
             render: (text, record) => {
                 if (record.id === -1){
                     return <EditableCell type="opt" onSave={this.onNewCountrySave} onCancel={this.handleCancelEditCountry}/>
                 }
-                var createAt = moment(new Date(text)).format(CONSTANTS.DATE_TABLE_FORMAT)
+                var createAt = moment(new Date(text)).format(CONSTANTS.DATE_DISPLAY_LONG_FORMAT)
                 return createAt;
             }
         }];
@@ -312,7 +316,7 @@ class CountryManager extends React.Component {
         const hasSelectedCountry = countrySelectedRowKeys.length > 0
         return (
             <div className="gutter-example">
-                <BreadcrumbCustom first="安监管理" second="村镇管理" />
+                <BreadcrumbCustom first="村镇管理" second="" />
                 <Row gutter={16}>
                     <Col className="gutter-row" md={12}>
                         <div className="gutter-box">
@@ -325,10 +329,11 @@ class CountryManager extends React.Component {
                                             disabled={!hasSelectedTown} 
                                     >删除</Button>
                                 </div>
-                                <Table rowSelection={townRowSelection} columns={townColumns} dataSource={townsData} pagination={false}
-                                        onRow={(record) => ({
-                                            onClick: () => this.onTownRowClick(record),
-                                        })}
+                                <Table rowSelection={townRowSelection} columns={townColumns} dataSource={townsData} 
+                                    pagination={false} size="small"
+                                    onRow={(record) => ({
+                                        onClick: () => this.onTownRowClick(record),
+                                    })}
                                 />
                             </Card>
                         </div>
@@ -344,10 +349,11 @@ class CountryManager extends React.Component {
                                             disabled={!hasSelectedCountry} 
                                     >删除</Button>
                                 </div>
-                                <Table rowSelection={countryRowSelection} columns={countryColumns} dataSource={countriesData} pagination={false}
-                                        onRow={(record) => ({
-                                            onClick: () => this.onCountryRowClick(record),
-                                        })}
+                                <Table rowSelection={countryRowSelection} columns={countryColumns} dataSource={countriesData} 
+                                    pagination={false} size="small"
+                                    onRow={(record) => ({
+                                        onClick: () => this.onCountryRowClick(record),
+                                    })}
                                 />
                             </Card>
                         </div>

@@ -88,7 +88,17 @@ export const fetchCompanies = (filter={}) => {
 
 export const fetchCompaniesByCountryId = (filter={}) => {
     let url = `${config.COUNTRY_URL}/${filter.countryId}/company`
-    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+    return axios.get(url ,{}).then(res => res.data);
+}
+
+export const fetchUsersByCompanyId = (company) => {
+    let url = `${config.COMPANY_URL}/${company.id}/user`
+    return axios.get(url ,{}).then(res => res.data);
+}
+
+export const fetchPlacesByCompanyId = (company) => {
+    let url = `${config.COMPANY_URL}/${company.id}/monitorplace`
+    return axios.get(url ,{}).then(res => res.data);
 }
 
 export const newCompany = (company) => {

@@ -239,7 +239,7 @@ class CompanyManager extends React.Component {
                       }
                 `}
                 </style>
-                <BreadcrumbCustom first="安监管理" second="公司管理" />
+                <BreadcrumbCustom first="地点类型管理" second="" />
                 <Row gutter={16}>
                     <Col className="gutter-row" md={24}>
                         <div className="gutter-box">

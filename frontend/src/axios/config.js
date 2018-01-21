@@ -16,6 +16,7 @@ const CONTEXT = 'api'
 const VERSION = 'v1'
 
 export const SERVER_ROOT = `${PROTOCOL}://${HOST}`
+export const SERVER_HOST = `//${HOST}`
 export const SERVER_URL = `${PROTOCOL}://${HOST}/${CONTEXT}/${VERSION}`
 
 
@@ -29,3 +30,7 @@ export const PLACE_URL = SERVER_URL + "/monitor_place"
 export const PLACETYPE_URL = SERVER_URL + "/monitor_type"
 export const SUMMARY_URL = SERVER_URL + "/summary"
 export const PICTURE_URL = (filter) => SERVER_URL + `/monitor_place?day=${filter.day}&company_id=${filter.companyId}&pageNo=1&pageSize=1`
+
+//上传下载公司地址
+export const COMPANY_DOWNLOAD_URL = SERVER_ROOT + '/backend/excel'
+export const COMPANY_UPLOAD_URL = SERVER_ROOT + '/backend/excel'

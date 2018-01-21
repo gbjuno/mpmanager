@@ -286,7 +286,7 @@ class PlaceManager extends React.Component {
         
         return (
             <div id="placeQRs" className="gutter-example button-demo">
-                <BreadcrumbCustom first="安监管理" second="地点管理" />
+                <BreadcrumbCustom first="地点管理" second="" />
                 <PlaceSearch style={{paddingBottom: 13}} fetchData={fetchData}/>
                 <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
                 {placeGrids}

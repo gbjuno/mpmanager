@@ -297,7 +297,7 @@ class PictureManager extends React.Component {
 
         return (
             <div id="scPic" className="gutter-example button-demo">
-                <BreadcrumbCustom first="安监管理" second="图片管理" />
+                <BreadcrumbCustom first="图片管理" second="" />
                 <PictureSearch  fetchData={fetchData}/>
                 <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
                 {pictureGrids}
