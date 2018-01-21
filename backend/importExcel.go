@@ -2,34 +2,214 @@ package main
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/golang/glog"
 )
 
-//ParseExcelNewCompany 用来解析导入的excel文件
-func ParseExcelNewCompany(fileName string) (string, string, error) {
-	glog.Infof("ParseExcelNewCompany")
+func getDataHandler(w http.ResponseWriter, r *http.Request) {
+}
+
+func getData() (string, error) {
+	prefix := fmt.Sprintf("[%s]", "getExcel")
+	glog.Info(prefix)
+
+	f := excelize.NewFile()
+	f.SetCellValue("Sheet1", "A1", "镇")
+	f.SetCellValue("Sheet1", "B1", "村")
+	f.SetCellValue("Sheet1", "C1", "公司")
+	f.SetCellValue("Sheet1", "D1", "公司地址")
+	f.SetCellValue("Sheet1", "E1", "负责人1")
+	f.SetCellValue("Sheet1", "F1", "负责人1的手机")
+	f.SetCellValue("Sheet1", "G1", "负责人1的职位")
+	f.SetCellValue("Sheet1", "H1", "负责人2")
+	f.SetCellValue("Sheet1", "I1", "负责人2的手机")
+	f.SetCellValue("Sheet1", "J1", "负责人2的职位")
+	f.SetCellValue("Sheet1", "K1", "负责人3")
+	f.SetCellValue("Sheet1", "L1", "负责人3的手机")
+	f.SetCellValue("Sheet1", "M1", "负责人3的职位")
+	f.SetCellValue("Sheet1", "N1", "负责人4")
+	f.SetCellValue("Sheet1", "O1", "负责人4的手机")
+	f.SetCellValue("Sheet1", "P1", "负责人4的职位")
+	f.SetCellValue("Sheet1", "Q1", "负责人5")
+	f.SetCellValue("Sheet1", "R1", "负责人5的手机")
+	f.SetCellValue("Sheet1", "S1", "负责人5的职位")
+	townList := make([]Town, 0)
+	db.Debug().Find(&townList)
+	line := 2
+TOWN:
+	for _, town := range townList {
+		countryList := make([]Country, 0)
+		db.Debug().Where("town_id = ?", town.ID).Find(&countryList)
+		if len(countryList) == 0 {
+			f.SetCellValue("Sheet1", fmt.Sprintf("A%d", line), town.Name)
+			line++
+			continue TOWN
+		}
+	COUNTRY:
+		for _, country := range countryList {
+			companyList := make([]Company, 0)
+			db.Debug().Where("country_id = ?", country.ID).Find(&companyList)
+			if len(companyList) == 0 {
+				f.SetCellValue("Sheet1", fmt.Sprintf("A%d", line), town.Name)
+				f.SetCellValue("Sheet1", fmt.Sprintf("B%d", line), country.Name)
+				line++
+				continue COUNTRY
+			}
+			for _, company := range companyList {
+				userList := make([]User, 0)
+				db.Debug().Where("company_id = ?", company.ID).Find(&userList)
+				f.SetCellValue("Sheet1", fmt.Sprintf("A%d", line), town.Name)
+				f.SetCellValue("Sheet1", fmt.Sprintf("B%d", line), country.Name)
+				f.SetCellValue("Sheet1", fmt.Sprintf("C%d", line), company.Name)
+				f.SetCellValue("Sheet1", fmt.Sprintf("D%d", line), company.Address)
+				init := 'E'
+				for index, user := range userList {
+					if index == 5 {
+						break
+					}
+					f.SetCellValue("Sheet1", fmt.Sprintf("%s%d", string(init), line), user.Name)
+					f.SetCellValue("Sheet1", fmt.Sprintf("%s%d", string(init+1), line), user.Phone)
+					f.SetCellValue("Sheet1", fmt.Sprintf("%s%d", string(init+2), line), user.Job)
+					init += 3
+				}
+				line++
+			}
+		}
+	}
+
+	t := time.Now()
+	saveFileName := fmt.Sprintf("/tmp/Data_%d%d%d%d%d_%d.xlsx", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Nanosecond())
+	err := f.SaveAs(saveFileName)
+	if err != nil {
+		errmsg := fmt.Sprintf("cannot save file, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
+		return "", errors.New(errmsg)
+	}
+	glog.Infof("%s save file to %s successfully", prefix, saveFileName)
+	return saveFileName, nil
+}
+
+//ExcelStatus 是返回的状态结构
+type ExcelStatus struct {
+	Status     int
+	Message    string
+	ErrorLines string
+	ErrorStr   string
+}
+
+//excelHandler 用来处理上传或下载excel文件
+func excelHandler(w http.ResponseWriter, r *http.Request) {
+	prefix := fmt.Sprintf("[%s]", "setDataHandler")
+	status := ExcelStatus{}
+	if r.Method == "GET" {
+		fileName, err := getData()
+		if err != nil {
+			glog.Errorf("%s get data failed, err %s", prefix, err)
+			status.Status = http.StatusInternalServerError
+			status.Message = fmt.Sprintf("get data failed, %s", err)
+			returnContent, _ := json.Marshal(status)
+			w.WriteHeader(http.StatusInternalServerError)
+			io.WriteString(w, string(returnContent))
+			return
+		}
+		f, err := os.Open(fileName)
+		if err != nil {
+			glog.Errorf("%s get data failed, err %s", prefix, err)
+			status.Status = http.StatusInternalServerError
+			status.Message = fmt.Sprintf("get data failed, cannot open file")
+			returnContent, _ := json.Marshal(status)
+			w.WriteHeader(http.StatusInternalServerError)
+			io.WriteString(w, string(returnContent))
+			return
+		}
+		defer f.Close()
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment; filename=基础数据.xlsx")
+		w.WriteHeader(http.StatusOK)
+		io.Copy(w, f)
+		glog.Infof("%s return data file successfully", prefix)
+		return
+	} else if r.Method == "POST" {
+		r.ParseMultipartForm(32 << 20)
+		file, handler, err := r.FormFile("uploadFile")
+		if err != nil {
+			glog.Errorf("%s, cannot read file, err %s", prefix, err)
+			status.Status = http.StatusInternalServerError
+			status.Message = "parseExcel failed, cannot open file"
+			returnContent, _ := json.Marshal(status)
+			w.WriteHeader(http.StatusInternalServerError)
+			io.WriteString(w, string(returnContent))
+			return
+		}
+		defer file.Close()
+		saveFileName := fmt.Sprintf("/tmp/%s", handler.Filename)
+		f, err := os.OpenFile(saveFileName, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			glog.Errorf("%s, cannot save file to %s, err %s", prefix, saveFileName, err)
+			status.Status = http.StatusInternalServerError
+			status.Message = "parseExcel failed, cannot open file"
+			returnContent, _ := json.Marshal(status)
+			w.WriteHeader(http.StatusInternalServerError)
+			io.WriteString(w, string(returnContent))
+			return
+		}
+		io.Copy(f, file)
+		f.Close()
+		errorLines, errorStr, err := parseExcel(saveFileName)
+		if err != nil {
+			glog.Errorf("%s, parseExcel %s failed,  err %s", prefix, saveFileName, err)
+			status.Status = http.StatusInternalServerError
+			status.Message = "parseExcel failed, cannot open file"
+			returnContent, _ := json.Marshal(status)
+			w.WriteHeader(http.StatusInternalServerError)
+			io.WriteString(w, string(returnContent))
+		}
+		status.Status = http.StatusOK
+		status.Message = fmt.Sprintf("OK, upload file is parsed!")
+		status.ErrorLines = errorLines
+		status.ErrorStr = errorStr
+		returnContent, _ := json.Marshal(status)
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
+		return
+	} else {
+		status.Status = http.StatusMethodNotAllowed
+		status.Message = "Method Not Allowed"
+		returnContent, _ := json.Marshal(status)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		io.WriteString(w, string(returnContent))
+		return
+	}
+}
+
+//parseExcel 用来解析导入的excel文件
+func parseExcel(fileName string) (string, string, error) {
+	prefix := fmt.Sprintf("[%s]", "parseExcel")
+	glog.Info(prefix)
 	var errorLines string
 	var errorStr string
 	f, err := excelize.OpenFile(fileName)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot open file %s, err %s", fileName, err)
-		glog.Errorf(errmsg)
+		glog.Errorf("%s %s", prefix, errmsg)
 		return "", "", errors.New(errmsg)
 	}
 
 	var townName, countryName, companyName string
-
 	rows := f.GetRows("Sheet1")
 OUT:
 	for index, row := range rows {
 		tx := db.Begin()
 		if index == 0 {
-			glog.Infof("line %d: session rollback", index+1)
+			glog.Infof("%s line %d: session rollback", prefix, index+1)
 			tx.Rollback()
 			continue
 		}
@@ -48,8 +228,8 @@ OUT:
 				errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
 				errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
 			}
-			glog.Error(errmsg)
-			glog.Infof("line %d: session rollback", index+1)
+			glog.Errorf("%s %s", prefix, errmsg)
+			glog.Infof("%s line %d: session rollback", prefix, index+1)
 			tx.Rollback()
 			continue
 		}
@@ -57,7 +237,7 @@ OUT:
 		town := Town{}
 		tx.Debug().Where("name = ?", townName).First(&town)
 		if town.ID == 0 {
-			glog.Infof("line %d: town %s does not exist", index+1, townName)
+			glog.Infof("%s line %d: town %s does not exist", prefix, index+1, townName)
 			town.Name = townName
 			tx.Debug().Create(&town)
 			if town.ID == 0 {
@@ -69,19 +249,19 @@ OUT:
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
 					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
 				}
-				glog.Error(errmsg)
-				glog.Infof("line %d: session rollback", index+1)
+				glog.Errorf("%s %s", prefix, errmsg)
+				glog.Infof("%s line %d: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue
 			} else {
-				glog.Infof("line %d: town %s created successfully, id %d", index+1, town.Name, town.ID)
+				glog.Infof("%s line %d: town %s created successfully, id %d", prefix, index+1, town.Name, town.ID)
 			}
 		}
 
 		countryName = row[1]
 		if countryName == "" {
-			glog.Infof("line %d: country name is empty", index+1)
-			glog.Infof("line %d: session commit", index+1)
+			glog.Infof("%s line %d: country name is empty", prefix, index+1)
+			glog.Infof("%s line %d: session commit", prefix, index+1)
 			tx.Commit()
 			continue
 		}
@@ -96,7 +276,7 @@ OUT:
 		}
 
 		if country.ID == 0 {
-			glog.Infof("line %d: country %s is not in town %s", index+1, countryName, townName)
+			glog.Infof("%s line %d: country %s is not in town %s", prefix, index+1, countryName, townName)
 			country.Name = countryName
 			country.TownId = town.ID
 			tx.Debug().Create(&country)
@@ -109,26 +289,26 @@ OUT:
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
 					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
 				}
-				glog.Error(errmsg)
-				glog.Infof("line %d: session rollback", index+1)
+				glog.Errorf("%s %s", prefix, errmsg)
+				glog.Infof("%s line %d: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue
 			} else {
-				glog.Infof("line %d: country %s created successfully, id %d", index+1, country.Name, country.ID)
+				glog.Infof("%s line %d: country %s created successfully, id %d", prefix, index+1, country.Name, country.ID)
 			}
 		}
 
 		companyName = row[2]
 		if companyName == "" {
-			glog.Infof("line %d: company name %s is empty", index+1)
-			glog.Infof("line %d: session commit", index+1)
+			glog.Infof("%s line %d: company name %s is empty", prefix, index+1)
+			glog.Infof("%s line %d: session commit", prefix, index+1)
 			tx.Commit()
 			continue
 		}
 		company := Company{}
 		tx.Debug().Where("name = ?", companyName).First(&company)
 		if company.ID == 0 {
-			glog.Infof("line %d: company %s (country %s) does not exist", index+1, companyName, company.CountryName)
+			glog.Infof("%s line %d: company %s (country %s) does not exist", prefix, index+1, companyName, company.CountryName)
 			//create new company
 			company.Name = companyName
 			company.CountryName = country.Name
@@ -136,7 +316,7 @@ OUT:
 			company.Address = row[3]
 			tx.Debug().Create(&company)
 			if company.ID == 0 {
-				errmsg := fmt.Sprintf("line %d: company %s cannot created", index+1, companyName)
+				errmsg := fmt.Sprintf("%s line %d: company %s cannot created", prefix, index+1, companyName)
 				if errorLines == "" {
 					errorLines = fmt.Sprintf("%d", index+1)
 					errorStr = errmsg
@@ -144,18 +324,18 @@ OUT:
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
 					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
 				}
-				glog.Error(errmsg)
-				glog.Infof("line %d: session rollback", index+1)
+				glog.Errorf("%s %s", prefix, errmsg)
+				glog.Infof("%s line %d: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue
 			} else {
-				glog.Infof("line %d: company %s is created successfully, id %d", index+1, companyName, company.ID)
+				glog.Infof("%s line %d: company %s is created successfully, id %d", prefix, index+1, companyName, company.ID)
 			}
 		}
 
 		if company.CountryId != country.ID {
-			glog.Errorf("line %d: company %s belongs to country %s, not country %s", index+1, company.Name, company.CountryName, country.Name)
-			glog.Infof("line %d: session rollback", index+1)
+			glog.Errorf("%s line %d: company %s belongs to country %s, not country %s", prefix, index+1, company.Name, company.CountryName, country.Name)
+			glog.Infof("%s line %d: session rollback", prefix, index+1)
 			tx.Rollback()
 			continue
 		}
@@ -163,7 +343,7 @@ OUT:
 		column := 4
 		rowLen := len(row)
 		for {
-			if column > 12 || column+2 >= rowLen {
+			if column > 18 || column+2 >= rowLen {
 				break
 			}
 			user := User{}
@@ -171,8 +351,8 @@ OUT:
 			user.Name = row[column]
 			if user.Name == "" {
 				errmsg := fmt.Sprintf("line %d: user cannot created, empty user name", index+1)
-				glog.Error(errmsg)
-				glog.Infof("line %d: session commit", index+1)
+				glog.Errorf("%s %s", prefix, errmsg)
+				glog.Infof("%s line %d: session commit", prefix, index+1)
 				tx.Commit()
 				continue OUT
 			}
@@ -186,8 +366,8 @@ OUT:
 					errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
 					errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
 				}
-				glog.Error(errmsg)
-				glog.Infof("line %d: session rollback", index+1)
+				glog.Errorf("%s %s", prefix, errmsg)
+				glog.Infof("%s line %d: session rollback", prefix, index+1)
 				tx.Rollback()
 				continue OUT
 			}
@@ -204,8 +384,8 @@ OUT:
 						errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
 						errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
 					}
-					glog.Error(errmsg)
-					glog.Infof("line %d: session rollback", index+1)
+					glog.Errorf("%s %s", prefix, errmsg)
+					glog.Infof("%s line %d: session rollback", prefix, index+1)
 					tx.Rollback()
 					continue OUT
 				}
@@ -224,17 +404,17 @@ OUT:
 						errorLines = fmt.Sprintf("%s,%d", errorLines, index+1)
 						errorStr = fmt.Sprintf("%s|%s", errorStr, errmsg)
 					}
-					glog.Error(errmsg)
-					glog.Infof("line %d: session rollback", index+1)
+					glog.Errorf("%s %s", prefix, errmsg)
+					glog.Infof("%s line %d: session rollback", prefix, index+1)
 					tx.Rollback()
 					continue OUT
 				} else {
-					glog.Infof("line %d: create user %s, id %d", index+1, user.Name, user.ID)
+					glog.Infof("%s line %d: create user %s, id %d", prefix, index+1, user.Name, user.ID)
 				}
 			}
 			column += 3
 		}
-		glog.Infof("line %d, session commit", index+1)
+		glog.Infof("%s line %d, session commit", prefix, index+1)
 		tx.Commit()
 	}
 

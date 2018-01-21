@@ -150,6 +150,9 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		userList.Users = make([]User, 0)
 		db.Debug().Model(&company).Related(&userList.Users)
 		userList.Count = len(userList.Users)
+		for i := range userList.Users {
+			userList.Users[i].CompanyName = company.Name
+		}
 		response.WriteHeaderAndEntity(http.StatusOK, userList)
 		glog.Infof("%s return users related company with id %d", prefix, company.ID)
 		return
@@ -162,6 +165,11 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 		monitorPlaceList.MonitorPlaces = make([]MonitorPlace, 0)
 		db.Debug().Model(&company).Related(&monitorPlaceList.MonitorPlaces)
 		monitorPlaceList.Count = len(monitorPlaceList.MonitorPlaces)
+		for i := range monitorPlaceList.MonitorPlaces {
+			m := MonitorType{}
+			db.Debug().Where("monitor_type_id = ?", monitorPlaceList.MonitorPlaces[i].MonitorTypeId).First(&m)
+			monitorPlaceList.MonitorPlaces[i].MonitorTypeName = m.Name
+		}
 		response.WriteHeaderAndEntity(http.StatusOK, monitorPlaceList)
 		glog.Infof("%s return monitor_places related company with id %d", prefix, company.ID)
 		return
