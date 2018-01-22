@@ -199,8 +199,9 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 		db.Debug().Where("name = ?", company.Name).First(&searchCompany)
 		if searchCompany.ID != 0 {
 			errmsg := fmt.Sprintf("company %s already exists", company.Name)
+			returnmsg := fmt.Sprintf("存在相同的公司名")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
 		db.Debug().Create(&company)
@@ -208,8 +209,9 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 		if company.ID == 0 {
 			//fail to create company on database
 			errmsg := fmt.Sprintf("cannot create company on database")
+			returnmsg := fmt.Sprintf("无法创建公司，清联系管理员")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		} else {
 			//create company on database
@@ -232,8 +234,9 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 	} else {
 		//fail to parse company entity
 		errmsg := fmt.Sprintf("cannot create company, err %s", err)
+		returnmsg := fmt.Sprintf("无法创建信息，提供的公司信息错误")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -252,8 +255,9 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 	//fail to parse company entity
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update company, err %s", err)
+		returnmsg := fmt.Sprintf("无法更新公司信息，提供的公司信息解析失败")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -261,15 +265,17 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 	id, err := strconv.Atoi(company_id)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update company, path company_id is %s, err %s", company_id, err)
+		returnmsg := fmt.Sprintf("无法更新公司信息，提供的公司id不是整数")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
 	if id != company.ID {
 		errmsg := fmt.Sprintf("cannot update company, path company_id %d is not equal to id %d in body content", id, company.ID)
+		returnmsg := fmt.Sprintf("无法更新公司信息，提供的公司id与URL中的公司id不匹配")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -279,8 +285,9 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 	//cannot find company
 	if realCompany.ID == 0 {
 		errmsg := fmt.Sprintf("cannot update company, company_id %d does not exist", company.ID)
+		returnmsg := fmt.Sprintf("公司已被删除")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -305,8 +312,9 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 	//fail to parse company id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot delete company, company_id is not integer, err %s", err)
+		returnmsg := fmt.Sprintf("无法删除公司，提供的公司id不是整数")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -327,8 +335,9 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 	if realCompany.ID != 0 {
 		//fail to delete company
 		errmsg := fmt.Sprintf("cannot delete company,some of other object is referencing")
+		returnmsg := fmt.Sprintf("无法删除公司，公司仍被引用")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	} else {
 		//delete company successfully

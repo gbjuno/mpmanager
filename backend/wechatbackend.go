@@ -416,19 +416,21 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		}*/
 
 	// password match
-	if len(*user.WxOpenId) > 5 {
-		glog.Errorf("%s user with phone %s has been bound to another wechat user", prefix, phone)
-		response.Status = false
-		response.Message = "该账户已经被其他微信用户绑定，请联系管理员进行确认，谢谢"
-		returnContent, err := json.Marshal(response)
-		if err != nil {
-			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
-			w.WriteHeader(http.StatusInternalServerError)
+	if user.WxOpenId != nil {
+		if len(*user.WxOpenId) > 5 {
+			glog.Errorf("%s user with phone %s has been bound to another wechat user", prefix, phone)
+			response.Status = false
+			response.Message = "该账户已经被其他微信用户绑定，请联系管理员进行确认，谢谢"
+			returnContent, err := json.Marshal(response)
+			if err != nil {
+				glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			io.WriteString(w, string(returnContent))
+			w.WriteHeader(http.StatusOK)
 			return
 		}
-		io.WriteString(w, string(returnContent))
-		w.WriteHeader(http.StatusOK)
-		return
 	}
 
 	hashCode := md5.New()
@@ -448,7 +450,6 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, string(returnContent))
-
 		return
 	} else {
 		//password not match

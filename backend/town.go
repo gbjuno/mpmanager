@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/emicklei/go-restful"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/emicklei/go-restful"
+	"github.com/golang/glog"
 )
 
 type TownList struct {
@@ -133,17 +134,19 @@ func (t Town) createTown(request *restful.Request, response *restful.Response) {
 		sameNameTown := Town{}
 		db.Debug().Where("name = ?", town.Name).First(&sameNameTown)
 		if sameNameTown.ID != 0 {
-			errmsg := fmt.Sprintf("monitor_type %s already exists", sameNameTown.Name)
+			errmsg := fmt.Sprintf("town s already exists", sameNameTown.Name)
+			returnmsg := fmt.Sprintf("同名的镇已存在")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
 		db.Debug().Create(&town)
 		if town.ID == 0 {
 			//fail to create town on database
 			errmsg := fmt.Sprintf("cannot create town on database")
+			returnmsg := fmt.Sprintf("无法创建镇，请联系管理员")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		} else {
 			//create town on database
@@ -154,8 +157,9 @@ func (t Town) createTown(request *restful.Request, response *restful.Response) {
 	} else {
 		//fail to parse town entity
 		errmsg := fmt.Sprintf("cannot create town, err %s", err)
+		returnmsg := fmt.Sprintf("无法创建镇，提供的镇信息无法解析")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 }
@@ -173,8 +177,9 @@ func (t Town) updateTown(request *restful.Request, response *restful.Response) {
 	//fail to parse town entity
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update town, err %s", err)
+		returnmsg := fmt.Sprintf("无法更新镇信息，提供的镇信息无法解析")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -182,15 +187,17 @@ func (t Town) updateTown(request *restful.Request, response *restful.Response) {
 	id, err := strconv.Atoi(town_id)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update town, path town_id is %s, err %s", town_id, err)
+		returnmsg := fmt.Sprintf("无法更新镇信息，提供的镇id不是整数")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
 	if id != town.ID {
 		errmsg := fmt.Sprintf("cannot update town, path town_id %d is not equal to id %d in body content", id, town.ID)
+		returnmsg := fmt.Sprintf("无法更新镇信息，提供的镇id与URL中的镇id不匹配")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -200,8 +207,9 @@ func (t Town) updateTown(request *restful.Request, response *restful.Response) {
 	//cannot find town
 	if realTown.ID == 0 {
 		errmsg := fmt.Sprintf("cannot update town, town_id %d is not exist", town.ID)
+		returnmsg := fmt.Sprintf("无法更新镇信息，镇已被删除")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 	//find town and update
@@ -219,8 +227,9 @@ func (t Town) deleteTown(request *restful.Request, response *restful.Response) {
 	//fail to parse town id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot delete town, town_id is not integer, err %s", err)
+		returnmsg := fmt.Sprintf("无法删除镇信息，提供的镇id不是整数")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -241,8 +250,9 @@ func (t Town) deleteTown(request *restful.Request, response *restful.Response) {
 	if realTown.ID != 0 {
 		//fail to delete town
 		errmsg := fmt.Sprintf("cannot delete town,some of other object is referencing")
+		returnmsg := fmt.Sprintf("无法删除镇，镇仍被引用")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	} else {
 		//delete town successfully

@@ -179,8 +179,9 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 	if err == nil {
 		if user.Phone == "" {
 			errmsg := fmt.Sprintf("please provide phone number")
+			returnmsg := fmt.Sprintf("请提供手机号码")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
 
@@ -188,15 +189,17 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 		db.Debug().Where("phone = ?", user.Phone).First(&samePhoneUser)
 		if samePhoneUser.ID != 0 {
 			errmsg := fmt.Sprintf("user with phone %s already exists", samePhoneUser.Phone)
+			returnmsg := fmt.Sprintf("手机号码%s已存在，与现有用户%s冲突", samePhoneUser.Phone, samePhoneUser.Name)
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
 
 		if user.CompanyId == 0 {
 			errmsg := fmt.Sprintf("please provide company id")
+			returnmsg := fmt.Sprintf("请提供/选择公司")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
 
@@ -204,8 +207,9 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 		db.First(&company, user.CompanyId)
 		if company.ID == 0 {
 			errmsg := fmt.Sprintf("company id %d not found", company.ID)
+			returnmsg := fmt.Sprintf("公司%s已被删除", company.Name)
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
 
@@ -227,8 +231,9 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 		if user.ID == 0 {
 			//fail to create user on database
 			errmsg := fmt.Sprintf("cannot create user on database")
+			returnmsg := fmt.Sprintf("无法创建用户，请联系管理员")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		} else {
 			//create user on database
@@ -239,8 +244,9 @@ func (u User) createUser(request *restful.Request, response *restful.Response) {
 	} else {
 		//fail to parse user entity
 		errmsg := fmt.Sprintf("cannot create user, err %s", err)
+		returnmsg := fmt.Sprintf("创建用户失败，提供的信息错误")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 }
@@ -258,8 +264,9 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 	//fail to parse user entity
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update user, err %s", err)
+		returnmsg := fmt.Sprintf("无法更新用户信息，用户信息解析失败")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -267,15 +274,17 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 	//fail to parse user id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update user, path user_id is %s, err %s", user_id, err)
+		returnmsg := fmt.Sprintf("无法更新用户信息，用户id不是整数")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
 	if id != user.ID {
 		errmsg := fmt.Sprintf("cannot update user, path user_id %d is not equal to id %d in body content", id, user.ID)
+		returnmsg := fmt.Sprintf("无法更新用户信息，用户id与URL中的用户id不匹配")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -284,8 +293,9 @@ func (u User) updateUser(request *restful.Request, response *restful.Response) {
 	//cannot find user
 	if realUser.ID == 0 {
 		errmsg := fmt.Sprintf("cannot update user, user_id %d is not exist", user.ID)
+		returnmsg := fmt.Sprintf("无法更新用户信息，用户已被删除")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -311,8 +321,9 @@ func (u User) deleteUser(request *restful.Request, response *restful.Response) {
 	//fail to parse user id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot delete user, user_id %s is not integer, err %s", user_id, err)
+		returnmsg := fmt.Sprintf("删除用户失败，提供的用户id不是整数")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -333,8 +344,9 @@ func (u User) deleteUser(request *restful.Request, response *restful.Response) {
 	if realUser.ID != 0 {
 		//failed to delete user
 		errmsg := fmt.Sprintf("cannot delete user,some of other object is referencing")
+		returnmsg := fmt.Sprintf("无法删除用户，用户仍被引用")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	} else {
 		//delete user successfully

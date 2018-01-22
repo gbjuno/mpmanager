@@ -110,8 +110,9 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 		db.Debug().First(&town, country.TownId)
 		if town.ID == 0 {
 			errmsg := fmt.Sprintf("town id %d not exists", country.TownId)
+			returnmsg := fmt.Sprintf("没有找到id为%s的镇，请先提供/选择镇", town.ID)
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
 
@@ -121,8 +122,9 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 		for _, c := range countries {
 			if c.Name == country.Name {
 				errmsg := fmt.Sprintf("country %s already exists", country.Name)
+				returnmsg := fmt.Sprintf("同名的村已存在")
 				glog.Errorf("%s %s", prefix, errmsg)
-				response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+				response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 				return
 			}
 		}
@@ -131,8 +133,9 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 		if country.ID == 0 {
 			//fail to create company on database
 			errmsg := fmt.Sprintf("cannot create country on database")
+			returnmsg := fmt.Sprintf("无法创建村，请联系管理员")
 			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		} else {
 			//create country on database
@@ -143,7 +146,9 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 	} else {
 		//fail to parse company entity
 		errmsg := fmt.Sprintf("cannot create country, err %s", err)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		returnmsg := fmt.Sprintf("无法创建村，提供的村信息无法解析")
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 }
@@ -161,8 +166,9 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 	//fail to parse country entity
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update country, err %s", err)
+		returnmsg := fmt.Sprintf("无法更新村信息，提供的村信息无法解析")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -170,15 +176,17 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 	id, err := strconv.Atoi(country_id)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update country, path country_id is %s, err %s", country_id, err)
+		returnmsg := fmt.Sprintf("无法更新村信息，提供的村id不是整数")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
 	if id != country.ID {
 		errmsg := fmt.Sprintf("cannot update country, path country_id %d is not equal to id %d in body content", id, country.ID)
+		returnmsg := fmt.Sprintf("无法更新村信息，提供的镇id与URL中的村id不匹配")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -188,8 +196,9 @@ func (c Country) updateCountry(request *restful.Request, response *restful.Respo
 	//cannot find country
 	if realCountry.ID == 0 {
 		errmsg := fmt.Sprintf("cannot update country, country_id %d does not exist", country.ID)
+		returnmsg := fmt.Sprintf("无法更新村信息，村已被删除")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -207,7 +216,9 @@ func (c Country) deleteCountry(request *restful.Request, response *restful.Respo
 	//fail to parse country id
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot delete country, country_id is not integer, err %s", err)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		returnmsg := fmt.Sprintf("无法删除村信息，提供的村id不是整数")
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
@@ -228,8 +239,9 @@ func (c Country) deleteCountry(request *restful.Request, response *restful.Respo
 	if realCountry.ID != 0 {
 		//fail to delete country
 		errmsg := fmt.Sprintf("cannot delete country,some of other object is referencing")
+		returnmsg := fmt.Sprintf("无法删除村，村仍被引用")
 		glog.Errorf("%s %s", prefix, errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	} else {
 		//delete country successfully
