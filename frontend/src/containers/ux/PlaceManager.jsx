@@ -33,6 +33,9 @@ class PlaceManager extends React.Component {
         deleteModal: false,
         deleteRecord: {},
         selectedCompanyId: '',
+        selectedCompanyName: '',
+        newPlaceName: '',
+        selectedPlaceTypeId: '',
     };
 
     componentDidMount = () => {
@@ -55,6 +58,7 @@ class PlaceManager extends React.Component {
                     return val;
                 })],
                 placeTypeLoading: false,
+                selectedPlaceTypeId: res.data.monitor_types[0].id,
             }, () => {
                 //this.fetchPlaceData();
             });
@@ -85,17 +89,73 @@ class PlaceManager extends React.Component {
         });
     }
 
+    searchPlace = (companyId) => {
+        const { fetchData, onSearch } = this.props
+        fetchData({funcName: 'searchPlaces', params: {companyId}, 
+            stateName: 'placesData'})
+            .then(res => {
+                if(onSearch){
+                    onSearch()
+                }
+            })
+    }
+
     handleAdd = () => {
         this.setState({
             hasNew: true,
         })
     }
 
-    handleSave = () => {
+    handleFormChange = (name) => {
         this.setState({
-            hasNew: false
+            newPlaceName: name,
         })
-        this.fetchPlaceData()
+    }
+
+    handleTabChange = (placeTypeId) => {
+        this.setState({
+            hasNew: false,
+            selectedPlaceTypeId: placeTypeId,
+        })
+    }
+
+    handleSearchChange = (companyId, companyName) => {
+        this.setState({
+            selectedCompanyId: companyId,
+            selectedCompanyName: companyName,
+        })
+    }
+
+    handleSearchSubmit = () => {
+        this.setState({
+            hasNew: false,
+        })
+    }
+
+    handleSave = () => {
+        const { fetchData } = this.props
+        const { newPlaceName, selectedCompanyId, selectedPlaceTypeId } = this.state
+        let saveObj = {
+            name: newPlaceName,
+            company_id: parseInt(selectedCompanyId),
+            monitor_type_id: selectedPlaceTypeId,
+        }
+        fetchData({funcName: 'newPlace', params: saveObj, 
+            stateName: 'newPlaceStatus'}).then(res => {
+                message.success('创建成功')
+                this.setState({
+                    hasNew: false
+                })
+                this.searchPlace(selectedCompanyId)
+            }).catch(err => {
+                let errRes = err.response
+                if(errRes && errRes.data && errRes.data.status === 'error'){
+                    message.error(errRes.data.error)
+                }
+            }
+        );
+        
+        //this.fetchPlaceData()
     }
 
     handleCancelEdit = () => {
@@ -184,25 +244,29 @@ class PlaceManager extends React.Component {
 
 
     generateCard = (imgs, isMobile=false) => imgs.map(v1 => (
-        v1.map(v2 => (
-            <div key={v2.id} className="gutter-box" style={isMobile? {}: {height: this.state.standardHeight * this.state.rate + 120}}>
+        v1.map(v2 => { 
+            const { standardHeight, rate, hasNew } = this.state
+            let baseHeight = standardHeight * rate
+            return (
+            <div key={v2.id} className="gutter-box" style={isMobile? {}: {height: baseHeight + 120}}>
                 {v2.id === -1 ?
-                    this.state.hasNew?
+                    hasNew?
                     <Card bordered={false} style={{ }} 
-                    bodyStyle={isMobile? {}: {cursor: 'pointer', verticalAlign: 'middle', height: this.state.standardHeight * this.state.rate + 60 }}
-                    actions={[<a>保存</a>, <a>取消</a>]}>{v2.company_id = this.state.selectedCompanyId}
-                        <PlaceForm onCancel={this.handleCancelEdit} onSave={this.handleSave} value={v2}/>
+                    bodyStyle={isMobile? {}: {cursor: 'pointer', verticalAlign: 'middle', height: baseHeight + 60 }}
+                    actions={[<a onClick={this.handleSave}>保存</a>, <a onClick={this.handleCancelEdit}>取消</a>]}>
+                        <PlaceForm  onChange={this.handleFormChange} value={v2}/>
                     </Card>
                     :
-                    <Card bordered={false} style={{border: '1px dashed #d9d9d9', textAlign: 'center',  fontSize: 33}} onClick={this.handleAdd}
-                    bodyStyle={isMobile? {}: {paddingTop: 133, cursor: 'pointer', verticalAlign: 'middle', height: this.state.standardHeight * this.state.rate + 60 + 45}}>
-                        <Icon type="plus"/>
+                    <Card bordered={false} style={{border: '1px dashed #d9d9d9', textAlign: 'center'}} onClick={this.handleAdd}
+                    bodyStyle={isMobile? {}: {paddingTop: 123, cursor: 'pointer', verticalAlign: 'middle', height: baseHeight + 60 + 45}}
+                    >
+                        <Icon style={{fontSize: 33}} type="plus"/>
                     </Card>
                 :
-                <Card bordered={false} bodyStyle={isMobile? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}
+                <Card bordered={false} bodyStyle={isMobile? {padding: 0}: { padding: 0, height: baseHeight + 60}}
                 actions={[<Icon type="edit" />, <Icon type="delete" onClick={this.handleDelete.bind(this, v2)} />]}>
                     <div>
-                        <img style={isMobile? {}: {height: this.state.standardHeight * this.state.rate}} onClick={() => {}} 
+                        <img style={isMobile? {}: {height: baseHeight}} onClick={() => {}} 
                             alt="example" width="100%" src={config.SERVER_ROOT + v2.qrcode_uri} />
                     </div>
                     <div className="pa-s">
@@ -211,14 +275,15 @@ class PlaceManager extends React.Component {
                 </Card>
                 }
             </div>
-        ))
+        )
+        })
     ))
 
     generateGrid = (datasWithType=[], isMobile) => datasWithType.map(dataWithType => {
         let imgs = this.transpositionToMatrix( dataWithType.placesData);
         const imgsTag = this.generateCard(imgs, isMobile)
         return (
-        <TabPane tab={dataWithType.placeTypeName} key={dataWithType.placeTypeId}>
+        <TabPane tab={dataWithType.placeTypeName} key={dataWithType.placeTypeId} >
             <Row gutter={20}>
                 <Col className="gutter-row" md={4}>
                     {imgsTag[0]}
@@ -239,12 +304,12 @@ class PlaceManager extends React.Component {
                     {imgsTag[5]}
                 </Col>
             </Row>
-            <Pagination defaultCurrent={1} total={5} />
         </TabPane>
         )
     })
 
     transform = (placesData, placeTypes) => {
+        const {selectedCompanyId, selectedCompanyName} = this.state
         if(placeTypes === undefined || placesData === undefined 
             || _.isEmpty(placeTypes) || _.isEmpty(placesData)
             || placesData.data === undefined || placesData.data.monitor_places === undefined) {
@@ -261,8 +326,8 @@ class PlaceManager extends React.Component {
                         return val;
                     }).filter(val => val.monitor_type_id === placeType.id), {
                         id: -1,
-                        company_id: null,
-                        company_name: null,
+                        company_id: selectedCompanyId,
+                        company_name: selectedCompanyName,
                         monitor_type_id: placeType.id,
                         monitor_type_name: placeType.name,
                         qrcode_path: null,
@@ -281,13 +346,14 @@ class PlaceManager extends React.Component {
         
         let placesDataWithType = this.transform(placesData, placeTypes)
         let placeGrids = this.generateGrid(placesDataWithType, isMobile)
-
+        let defaultTabId = placeTypes[0]?`${placeTypes[0].id}`:'0'
         
         return (
             <div id="placeQRs" className="gutter-example button-demo">
                 <BreadcrumbCustom first="地点管理" second="" />
-                <PlaceSearch  fetchData={fetchData}/>
-                <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
+                <PlaceSearch onChange={this.handleSearchChange} onSearch={this.handleSearchSubmit} fetchData={fetchData}/>
+                <Tabs defaultActiveKey={defaultTabId} 
+                    onChange={this.handleTabChange}>
                 {placeGrids}
                 </Tabs>
                 <Modal

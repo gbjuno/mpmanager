@@ -52,9 +52,14 @@ class PlaceSearch extends Component {
     };
 
     searchPlace = (companyId) => {
-        const { fetchData } = this.props
+        const { fetchData, onSearch } = this.props
         fetchData({funcName: 'searchPlaces', params: {companyId}, 
             stateName: 'placesData'})
+            .then(res => {
+                if(onSearch){
+                    onSearch()
+                }
+            })
     }
 
 
@@ -82,10 +87,14 @@ class PlaceSearch extends Component {
         })
     }
 
-    onCompanyChange = (value) => {
+    onCompanySelect = (value, option) => {
         this.setState({
             isFirst: false,
         })
+        if(this.props.onChange){
+            let companyName = option.props.children
+            this.props.onChange(value, companyName)
+        }
     }
 
 
@@ -141,6 +150,9 @@ class PlaceSearch extends Component {
             }, () => {
                 if(isFirst){
                     this.searchPlace(res.data.companies[0].id)
+                    if(this.props.onChange){
+                        this.props.onChange(res.data.companies[0].id, res.data.companies[0].name)
+                    }
                 }
             });
         });
@@ -220,7 +232,7 @@ class PlaceSearch extends Component {
                         style={{ width: 200 }}
                         placeholder="请选择公司"
                         optionFilterProp="children"
-                        onChange={this.onCompanyChange}
+                        onSelect={this.onCompanySelect}
                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                         >
                             {this.getOptions(companiesData)}
