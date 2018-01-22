@@ -7,7 +7,7 @@ import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
 import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
-import { fetchData, receiveData, searchPicture } from '../../action';
+import { fetchData, receiveData } from '../../action';
 
 const FormItem = Form.Item;
 const Search = Input.Search;
@@ -266,7 +266,6 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
-    searchPicture: bindActionCreators(searchPicture, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PlaceForm))

@@ -105,7 +105,7 @@ class PictureManager extends React.Component {
             this.setState({
                 placeTypes: [...res.data.monitor_types],
             }, () => {
-                this.fetchPictureData();
+                //this.fetchPictureData();
             })
         });
     }
@@ -254,7 +254,6 @@ class PictureManager extends React.Component {
                     {imgsTag[5]}
                 </Col>
             </Row>
-            <Pagination defaultCurrent={1} total={5} />
         </TabPane>
         )
     })

@@ -6,15 +6,13 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
-import { Form, Icon, Input, Button, Select, DatePicker } from 'antd';
-import { fetchData, receiveData, searchPicture } from '../../action';
+import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
+import * as CONSTANTS from '../../constants';
+import { fetchData, receiveData } from '../../action';
 
 const FormItem = Form.Item;
 const Search = Input.Search;
 const Option = Select.Option;
-
-const dateFormat = 'YYYY-MM-DD';
-const queryDateFormat = 'YYYYMMDD';
 
 function hasErrors(fieldsError) {
     return Object.keys(fieldsError).some(field => fieldsError[field]);
@@ -29,6 +27,7 @@ class PictureSearch extends Component {
         selectedTownId: '',
         selectedCountryId: '',
         selectedDate: new Date(),
+        isFirst: true,  //未点击搜索按钮
     }
 
     componentDidMount() {
@@ -43,18 +42,28 @@ class PictureSearch extends Component {
         
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                const { fetchData } = this.props
-                searchPicture({date: values.selectedDate.format(queryDateFormat)});
-                fetchData({funcName: 'fetchPicturesWithPlace', params: { 
-                    day: values.selectedDate.format(queryDateFormat),
-                    companyId: values.company}, 
-                    stateName: 'picturesData'})
+                let date = values.selectedDate.format(CONSTANTS.DATE_QUERY_FORMAT);
+                let companyId = values.company
+                if(companyId === undefined) {
+                    message.error('请选择公司')
+                    return
+                }
+                this.searchPicture(date, companyId)
             }
         });
     };
 
+    searchPicture = (date, companyId) => {
+        const { fetchData } = this.props
+        fetchData({funcName: 'fetchPicturesWithPlace', params: {date, companyId}, 
+            stateName: 'picturesData'})
+    }
+
     onDateChange = (date, dateString) => {
         const { searchPicture } = this.props
+        this.setState({
+            isFirst: false,
+        })
         if (date === undefined || date === null) return
         
     }
@@ -63,6 +72,7 @@ class PictureSearch extends Component {
         const { form } = this.props
         this.setState({
             selectedTownId: value,
+            isFirst: false,
         },() => this.fetchCountryList(value))
         form.setFieldsValue({
             country: undefined,
@@ -75,6 +85,7 @@ class PictureSearch extends Component {
         const { form } = this.props
         this.setState({
             selectedCountryId: value,
+            isFirst: false,
         },() => this.fetchCompanyList(value))
         form.setFieldsValue({
             company: undefined,
@@ -82,7 +93,9 @@ class PictureSearch extends Component {
     }
 
     onCompanyChange = (value) => {
-        
+        this.setState({
+            isFirst: false,
+        })
     }
 
 
@@ -96,6 +109,8 @@ class PictureSearch extends Component {
                     return val;
                 })],
                 loading: false,
+            }, () => {
+                this.fetchCountryList(res.data.towns[0].id)
             });
         });
     }
@@ -113,12 +128,15 @@ class PictureSearch extends Component {
                     return val;
                 })],
                 loading: false,
+            }, () => {
+                this.fetchCompanyList(res.data.countries[0].id)
             });
         });
     }
 
     fetchCompanyList = (selectedCountryId) => {
         const { fetchData } = this.props
+        const { isFirst } = this.state
         if(selectedCountryId === undefined){
             return
         }
@@ -130,6 +148,11 @@ class PictureSearch extends Component {
                     return val;
                 })],
                 loading: false,
+            }, () => {
+                if( isFirst ){
+                    let date = moment(this.state.selectedDate).format(CONSTANTS.DATE_QUERY_FORMAT)
+                    this.searchPicture(date, res.data.companies[0].id)
+                }
             });
         });
     }
@@ -158,7 +181,7 @@ class PictureSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('town', {
-                        //initialValue: townsData[0]? townsData[0].name:'',
+                        initialValue: townsData[0]? townsData[0].name:'',
                     })(
                         <Select
                         showSearch
@@ -178,6 +201,7 @@ class PictureSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('country', {
+                        initialValue: countriesData[0]? countriesData[0].name:'',
                     })(
                         <Select
                         showSearch
@@ -197,6 +221,7 @@ class PictureSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('company', {
+                        initialValue: companiesData[0]? companiesData[0].name:'',
                     })(
                         <Select
                         showSearch
@@ -216,7 +241,7 @@ class PictureSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('selectedDate', {
-                        initialValue: moment(selectedDate, dateFormat)
+                        initialValue: moment(selectedDate, CONSTANTS.DATE_DISPLAY_FORMAT)
                     })(
                         <DatePicker onChange={this.onDateChange}/>
                     )}
@@ -243,7 +268,6 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
-    searchPicture: bindActionCreators(searchPicture, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PictureSearch))

@@ -6,15 +6,13 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
-import { Form, Icon, Input, Button, Select, DatePicker } from 'antd';
-import { fetchData, receiveData, searchPicture } from '../../action';
+import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
+import * as CONSTANTS from '../../constants';
+import { fetchData, receiveData } from '../../action';
 
 const FormItem = Form.Item;
 const Search = Input.Search;
 const Option = Select.Option;
-
-const dateFormat = 'YYYY-MM-DD';
-const queryDateFormat = 'YYYYMMDD';
 
 function hasErrors(fieldsError) {
     return Object.keys(fieldsError).some(field => fieldsError[field]);
@@ -28,7 +26,7 @@ class PlaceSearch extends Component {
         companiesData: [],
         selectedTownId: '',
         selectedCountryId: '',
-        selectedDate: new Date(),
+        isFirst: true,  //未点击搜索按钮
     }
 
     componentDidMount() {
@@ -43,26 +41,28 @@ class PlaceSearch extends Component {
         
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                const { fetchData } = this.props
-                searchPicture({date: values.selectedDate.format(queryDateFormat)});
-                fetchData({funcName: 'fetchPicturesWithPlace', params: { 
-                    day: values.selectedDate.format(queryDateFormat),
-                    companyId: values.company}, 
-                    stateName: 'picturesData'})
+                let companyId = values.company
+                if(companyId === undefined) {
+                    message.error('请选择公司')
+                    return
+                }
+                this.searchPlace(companyId)
             }
         });
     };
 
-    onDateChange = (date, dateString) => {
-        const { searchPicture } = this.props
-        if (date === undefined || date === null) return
-        
+    searchPlace = (companyId) => {
+        const { fetchData } = this.props
+        fetchData({funcName: 'searchPlaces', params: {companyId}, 
+            stateName: 'placesData'})
     }
+
 
     onTownChange = (value) => {
         const { form } = this.props
         this.setState({
             selectedTownId: value,
+            isFirst: false,
         },() => this.fetchCountryList(value))
         form.setFieldsValue({
             country: undefined,
@@ -75,6 +75,7 @@ class PlaceSearch extends Component {
         const { form } = this.props
         this.setState({
             selectedCountryId: value,
+            isFirst: false,
         },() => this.fetchCompanyList(value))
         form.setFieldsValue({
             company: undefined,
@@ -82,7 +83,9 @@ class PlaceSearch extends Component {
     }
 
     onCompanyChange = (value) => {
-        
+        this.setState({
+            isFirst: false,
+        })
     }
 
 
@@ -96,6 +99,8 @@ class PlaceSearch extends Component {
                     return val;
                 })],
                 loading: false,
+            }, () => {
+                this.fetchCountryList(res.data.towns[0].id)
             });
         });
     }
@@ -113,12 +118,15 @@ class PlaceSearch extends Component {
                     return val;
                 })],
                 loading: false,
+            }, () => {
+                this.fetchCompanyList(res.data.countries[0].id)
             });
         });
     }
 
     fetchCompanyList = (selectedCountryId) => {
         const { fetchData } = this.props
+        const { isFirst } = this.state
         if(selectedCountryId === undefined){
             return
         }
@@ -130,6 +138,10 @@ class PlaceSearch extends Component {
                     return val;
                 })],
                 loading: false,
+            }, () => {
+                if(isFirst){
+                    this.searchPlace(res.data.companies[0].id)
+                }
             });
         });
     }
@@ -148,7 +160,6 @@ class PlaceSearch extends Component {
         const { style, filter } = this.props
         const { townsData, countriesData, companiesData, selectedDate } = this.state
 
-
         // Only show error after a field is touched.
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
@@ -159,7 +170,7 @@ class PlaceSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('town', {
-                        //initialValue: townsData[0]? townsData[0].name:'',
+                        initialValue: townsData[0]? townsData[0].name:'',
                     })(
                         <Select
                         showSearch
@@ -179,6 +190,7 @@ class PlaceSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('country', {
+                        initialValue: countriesData[0]? countriesData[0].name:'',
                     })(
                         <Select
                         showSearch
@@ -198,6 +210,10 @@ class PlaceSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('company', {
+                        initialValue: companiesData[0]? companiesData[0].name:'',
+                        rule: [
+                            {require: true},
+                        ]
                     })(
                         <Select
                         showSearch
@@ -233,7 +249,6 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
-    searchPicture: bindActionCreators(searchPicture, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PlaceSearch))

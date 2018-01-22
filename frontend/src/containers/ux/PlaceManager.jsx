@@ -32,6 +32,7 @@ class PlaceManager extends React.Component {
         hasNew: false,
         deleteModal: false,
         deleteRecord: {},
+        selectedCompanyId: '',
     };
 
     componentDidMount = () => {
@@ -55,7 +56,7 @@ class PlaceManager extends React.Component {
                 })],
                 placeTypeLoading: false,
             }, () => {
-                this.fetchPlaceData();
+                //this.fetchPlaceData();
             });
         });
     }
@@ -188,7 +189,8 @@ class PlaceManager extends React.Component {
                 {v2.id === -1 ?
                     this.state.hasNew?
                     <Card bordered={false} style={{ }} 
-                    bodyStyle={isMobile? {}: {cursor: 'pointer', verticalAlign: 'middle', height: this.state.standardHeight * this.state.rate + 60 + 45}}>
+                    bodyStyle={isMobile? {}: {cursor: 'pointer', verticalAlign: 'middle', height: this.state.standardHeight * this.state.rate + 60 }}
+                    actions={[<a>保存</a>, <a>取消</a>]}>{v2.company_id = this.state.selectedCompanyId}
                         <PlaceForm onCancel={this.handleCancelEdit} onSave={this.handleSave} value={v2}/>
                     </Card>
                     :
@@ -198,7 +200,7 @@ class PlaceManager extends React.Component {
                     </Card>
                 :
                 <Card bordered={false} bodyStyle={isMobile? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}
-                actions={[<Icon type="edit" />, <Icon type="delete" onClick={this.handleDelete.bind(this, v2)} />]}>                    
+                actions={[<Icon type="edit" />, <Icon type="delete" onClick={this.handleDelete.bind(this, v2)} />]}>
                     <div>
                         <img style={isMobile? {}: {height: this.state.standardHeight * this.state.rate}} onClick={() => {}} 
                             alt="example" width="100%" src={config.SERVER_ROOT + v2.qrcode_uri} />
@@ -275,10 +277,7 @@ class PlaceManager extends React.Component {
     render() {
         const { rate, placeTypes } = this.state
         const { placesData, responsive } = this.props
-        let isMobile = false 
-        if(responsive){
-            isMobile = responsive.data.isMobile
-        }
+        let isMobile = responsive.data.isMobile
         
         let placesDataWithType = this.transform(placesData, placeTypes)
         let placeGrids = this.generateGrid(placesDataWithType, isMobile)
@@ -287,7 +286,7 @@ class PlaceManager extends React.Component {
         return (
             <div id="placeQRs" className="gutter-example button-demo">
                 <BreadcrumbCustom first="地点管理" second="" />
-                <PlaceSearch style={{paddingBottom: 13}} fetchData={fetchData}/>
+                <PlaceSearch  fetchData={fetchData}/>
                 <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
                 {placeGrids}
                 </Tabs>

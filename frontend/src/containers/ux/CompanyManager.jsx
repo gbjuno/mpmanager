@@ -280,7 +280,6 @@ class CompanyManager extends React.Component {
                     console.log(info.file, info.fileList);
                 }
                 if (info.file.status === 'done') {
-                    console.log('sha hao ke ai ya...', info)
                     message.success(`${info.file.name}上传成功`);
                 } else if (info.file.status === 'error') {
                     message.error(`${info.file.name}上传失败`);
@@ -864,7 +863,6 @@ class CompanyManager extends React.Component {
                             <Card title="公司列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
                                     <Button type="primary" onClick={this.handleAdd}
-                                        disabled={loading}
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleModify}
                                         disabled={!hasSelected}

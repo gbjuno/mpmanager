@@ -33,7 +33,6 @@ class PictureSearch extends Component {
     componentDidMount() {
         // To disabled submit button at the beginning.
         this.props.form.validateFields();
-        this.fetchTownList();
     }
 
 
@@ -42,72 +41,15 @@ class PictureSearch extends Component {
         
         this.props.form.validateFields((err, values) => {
             if (!err) {
+                let user = {}
+                user.name = values.name !== undefined? values.name : ''
+                user.phone = values.phone !== undefined? values.phone : ''
                 const { fetchData } = this.props
-                fetchData({funcName: 'fetchCompaniesByCountryId', params: { 
-                    countryId: values.country}, 
-                    stateName: 'companiesData'})
+                fetchData({funcName: 'searchUsers', params: user, 
+                    stateName: 'usersData'})
             }
         });
     };
-
-    onDateChange = (date, dateString) => {
-        const { searchPicture } = this.props
-        if (date === undefined || date === null) return
-        
-    }
-
-    onTownChange = (value) => {
-        const { form } = this.props
-        this.setState({
-            selectedTownId: value,
-        },() => this.fetchCountryList(value))
-        form.setFieldsValue({
-            country: undefined,
-            company: undefined,
-        })
-    }
-
-
-    onCountryChange = (value) => {
-        const { form } = this.props
-        this.setState({
-            selectedCountryId: value,
-        })
-    }
-
-
-
-    fetchTownList = () => {
-        const { fetchData } = this.props
-        fetchData({funcName: 'fetchTowns', stateName: 'townsData'}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.towns === undefined) return
-            this.setState({
-                townsData: [...res.data.towns.map(val => {
-                    val.key = val.id;
-                    return val;
-                })],
-                loading: false,
-            });
-        });
-    }
-
-    fetchCountryList = (selectedTownId) => {
-        const { fetchData } = this.props
-        if(selectedTownId === undefined){
-            return
-        }
-        fetchData({funcName: 'fetchCountries', stateName: 'countriesData', params: {townId: selectedTownId}}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.countries === undefined) return
-            this.setState({
-                countriesData: [...res.data.countries.map(val => {
-                    val.key = val.id;
-                    return val;
-                })],
-                loading: false,
-            });
-        });
-    }
-
 
 
     getOptions = ( data=[] ) => {
@@ -133,19 +75,14 @@ class PictureSearch extends Component {
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
-                    {getFieldDecorator('town', {
-                        //initialValue: townsData[0]? townsData[0].id:'',
+                    {getFieldDecorator('name', {
+                        //initialValue: townsData[0]? townsData[0].name:'',
                     })(
-                        <Select
-                        showSearch
+                        <Input
                         style={{ width: 200 }}
-                        placeholder="请选择镇"
-                        optionFilterProp="children"
-                        onChange={this.onTownChange}
-                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                        placeholder="请输入用户名"
                         >
-                            {this.getOptions(townsData)}
-                        </Select>
+                        </Input>
                     )}
                 </FormItem>
                 <FormItem
@@ -153,18 +90,13 @@ class PictureSearch extends Component {
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
-                    {getFieldDecorator('country', {
+                    {getFieldDecorator('phone', {
                     })(
-                        <Select
-                        showSearch
+                        <Input
                         style={{ width: 200 }}
-                        placeholder="请选择村"
-                        optionFilterProp="children"
-                        onChange={this.onCountryChange}
-                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                        placeholder="请输入手机号"
                         >
-                            {this.getOptions(countriesData)}
-                        </Select>
+                        </Input>
                     )}
                 </FormItem>
                 <FormItem 

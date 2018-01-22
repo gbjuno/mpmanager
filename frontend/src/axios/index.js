@@ -124,6 +124,11 @@ export const fetchUsers = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+export const searchUsers = (user) => {
+    let url = config.SEARCH_URL(user)
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
 export const newUser = (user) => {
     return axios.post(config.USER_URL, {...user}, {headers: {Accept: 'application/json'}})
         .then(res => res.data);
@@ -139,6 +144,7 @@ export const deleteUser = (user) => {
     return axios.delete(config.USER_URL + "/" + user.id)
         .then(res => res.data);
 }
+
 
 
 // 地点管理API
@@ -162,6 +168,12 @@ export const deletePlace = (place) => {
     if(place === undefined || place.id === -1) return
     return axios.delete(config.PLACE_URL + "/" + place.id)
         .then(res => res.data);
+}
+
+export const searchPlaces = (filter={}) => {
+    let companyId = filter.companyId
+    let url = config.SEARCH_PLACE_URL({companyId})
+    return axios.get(url ,{}).then(res => res.data);
 }
 
 // 地点类型管理API
@@ -194,8 +206,7 @@ export const fetchPictures = (filter={}) => {
 // }
 
 export const fetchPicturesWithPlace = (filter={}) => {
-    let placeId = filter.placeId
-    let day = filter.day
+    let day = filter.date
     let companyId = filter.companyId
     let url = config.PICTURE_URL({day, companyId})
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
