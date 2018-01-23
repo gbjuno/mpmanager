@@ -18,7 +18,7 @@ function hasErrors(fieldsError) {
     return Object.keys(fieldsError).some(field => fieldsError[field]);
 }
 
-class PictureSearch extends Component {
+class SummarySearch extends Component {
 
     state = {
         townsData: [],
@@ -43,21 +43,21 @@ class PictureSearch extends Component {
         const { isFirst, defaultCompanyId } = this.state
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                let date = values.selectedDate.format(CONSTANTS.DATE_QUERY_FORMAT);
-                let companyId = values.company
-                if(companyId === undefined) {
-                    message.error('请选择公司')
+                if(values.selectedDate === undefined || values.selectedDate == null) {
+                    message.error('请选择日期')
                     return
                 }
-                this.searchPicture(date, companyId)
+                let date = values.selectedDate.format(CONSTANTS.DATE_QUERY_FORMAT);
+                let companyId = values.company
+                this.searchSummary(date)
             }
         });
     };
 
-    searchPicture = (date, companyId) => {
+    searchSummary = (date) => {
         const { fetchData } = this.props
-        fetchData({funcName: 'fetchPicturesWithPlace', params: {date, companyId}, 
-            stateName: 'picturesData'})
+        fetchData({funcName: 'searchSummaries', params: {day:date}, 
+            stateName: 'summariesData'})
     }
 
     onDateChange = (date, dateString) => {
@@ -152,7 +152,6 @@ class PictureSearch extends Component {
             }, () => {
                 if( isFirst ){
                     let date = moment(this.state.selectedDate).format(CONSTANTS.DATE_QUERY_FORMAT)
-                    this.searchPicture(date, res.data.companies[0].id)
                 }
             });
         });
@@ -176,66 +175,6 @@ class PictureSearch extends Component {
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
             <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
-                <FormItem 
-                    style={{paddingBottom: 13}}
-                    validateStatus={fileNameError ? 'error' : ''}
-                    help={fileNameError || ''}
-                >
-                    {getFieldDecorator('town', {
-                        initialValue: townsData[0]? townsData[0].name:'',
-                    })(
-                        <Select
-                        showSearch
-                        style={{ width: 200 }}
-                        placeholder="请选择镇"
-                        optionFilterProp="children"
-                        onChange={this.onTownChange}
-                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                        >
-                            {this.getOptions(townsData)}
-                        </Select>
-                    )}
-                </FormItem>
-                <FormItem
-                    style={{paddingBottom: 13}}
-                    validateStatus={fileNameError ? 'error' : ''}
-                    help={fileNameError || ''}
-                >
-                    {getFieldDecorator('country', {
-                        initialValue: countriesData[0]? countriesData[0].name:'',
-                    })(
-                        <Select
-                        showSearch
-                        style={{ width: 200 }}
-                        placeholder="请选择村"
-                        optionFilterProp="children"
-                        onChange={this.onCountryChange}
-                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                        >
-                            {this.getOptions(countriesData)}
-                        </Select>
-                    )}
-                </FormItem>
-                <FormItem
-                    style={{paddingBottom: 13}}
-                    validateStatus={fileNameError ? 'error' : ''}
-                    help={fileNameError || ''}
-                >
-                    {getFieldDecorator('company', {
-                        initialValue: [ companiesData[0]? companiesData[0].id:'' ]
-                    })(
-                        <Select
-                        showSearchs
-                        style={{ width: 200 }}
-                        placeholder="请选择公司"
-                        optionFilterProp="children"
-                        onChange={this.onCompanyChange}
-                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                        >
-                            {this.getOptions(companiesData)}
-                        </Select>
-                    )}
-                </FormItem>
                 <FormItem
                     style={{paddingBottom: 13}}
                     validateStatus={fileNameError ? 'error' : ''}
@@ -271,4 +210,4 @@ const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PictureSearch))
+export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(SummarySearch))

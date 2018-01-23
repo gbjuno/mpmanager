@@ -162,7 +162,7 @@ class PlaceSearch extends Component {
     getOptions = ( data=[] ) => {
         
         return data.map(item => {
-            return <Option key={item.key} value={`${item.id}`}>{item.name}</Option>
+            return <Option key={item.key} value={item.id}>{item.name}</Option>
         })
     }
 
@@ -182,7 +182,7 @@ class PlaceSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('town', {
-                        initialValue: townsData[0]? townsData[0].name:'',
+                        initialValue: townsData[0]? townsData[0].id:'',
                     })(
                         <Select
                         showSearch
@@ -202,7 +202,7 @@ class PlaceSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('country', {
-                        initialValue: countriesData[0]? countriesData[0].name:'',
+                        initialValue: countriesData[0]? countriesData[0].id:'',
                     })(
                         <Select
                         showSearch
@@ -222,7 +222,7 @@ class PlaceSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('company', {
-                        initialValue: companiesData[0]? companiesData[0].name:'',
+                        initialValue: companiesData[0]? companiesData[0].id:'',
                         rule: [
                             {require: true},
                         ]

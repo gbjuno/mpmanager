@@ -190,6 +190,11 @@ export const fetchSummaries = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+export const searchSummaries = (filter={}) => {
+    let url = config.SEARCH_SUMMARY_URL(filter)
+    return axios.get(url ,{}).then(res => res.data);
+}
+
 // 图片管理API
 
 export const fetchPictures = (filter={}) => {
