@@ -138,7 +138,7 @@ class PlaceManager extends React.Component {
         let saveObj = {
             name: newPlaceName,
             company_id: parseInt(selectedCompanyId),
-            monitor_type_id: selectedPlaceTypeId,
+            monitor_type_id: parseInt(selectedPlaceTypeId),
         }
         fetchData({funcName: 'newPlace', params: saveObj, 
             stateName: 'newPlaceStatus'}).then(res => {

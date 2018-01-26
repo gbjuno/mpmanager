@@ -10,6 +10,7 @@ import * as CONSTANTS from '../../constants';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
+import PieChart from '../../components/echarts/PieChart';
 import SummarySearch from '../search/SummarySearch';
 
 
@@ -121,23 +122,46 @@ class SummaryManager extends React.Component {
         };
 
         let summariesWrappedData = []
+        let key=0
+        let chartOptions = [
+           
+        ]
         if(summariesData.data && summariesData.data.summaries){
-            summariesWrappedData = [...summariesData.data.summaries.map(item => {item.key = item.id; return item})]
+            summariesWrappedData = [...summariesData.data.summaries.map(item => {item.key = key++; return item})]
+
+            chartOptions.push({
+                name: '未完成',
+                value: summariesData.data.not_finish_num,
+            })
+
+            chartOptions.push({
+                name: '已完成',
+                value: summariesData.data.finish_num,
+            })
         }
+
 
         return (
             <div className="gutter-example">
                 <BreadcrumbCustom first="统计报表" second="" />
                 <SummarySearch  fetchData={fetchData}/>
                 <Row gutter={16}>
-                    <Col className="gutter-row" md={24}>
+                    <Col className="gutter-row" md={16}>
                         <div className="gutter-box">
                             <Card title="统计报告" bordered={false}>
                                 <Table columns={summaryColumns} dataSource={summariesWrappedData}
-                                    size="small" onRowClick={this.onRowClick}
+                                    size="small" 
                                 />
                             </Card>
                         </div>
+                    </Col>
+                    <Col className="gutter-row" md={8}>
+                        <div className="gutter-box">
+                            <Card title="完成情况" bordered={false}>
+                                <PieChart chartOptions={chartOptions}/>
+                            </Card>
+                        </div>
+                        
                     </Col>
                 </Row>
             </div>

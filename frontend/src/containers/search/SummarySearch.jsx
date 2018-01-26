@@ -35,6 +35,9 @@ class SummarySearch extends Component {
         // To disabled submit button at the beginning.
         this.props.form.validateFields();
         this.fetchTownList();
+        let from = moment(this.state.selectedDate).format(CONSTANTS.DATE_QUERY_FORMAT)
+        let to = from
+        this.searchSummary('', from, to)
     }
 
 
@@ -43,24 +46,35 @@ class SummarySearch extends Component {
         const { isFirst, defaultCompanyId } = this.state
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                if(values.selectedDate === undefined || values.selectedDate == null) {
-                    message.error('请选择日期')
+                if(values.fromDate === null && values.toDate == null) {
+                    message.error('请选择开始日期或结束日期')
                     return
                 }
-                let date = values.selectedDate.format(CONSTANTS.DATE_QUERY_FORMAT);
+                let fromDate = values.fromDate.format(CONSTANTS.DATE_QUERY_FORMAT);
+                let toDate = values.toDate.format(CONSTANTS.DATE_QUERY_FORMAT);
                 let companyId = values.company
-                this.searchSummary(date)
+                if(companyId === undefined)companyId=''
+                this.searchSummary(companyId, fromDate, toDate)
             }
         });
     };
 
-    searchSummary = (date) => {
+    searchSummary = (companyId, fromDate, toDate) => {
         const { fetchData } = this.props
-        fetchData({funcName: 'searchSummaries', params: {day:date}, 
+        fetchData({funcName: 'searchSummaries', params: {companyId, from: fromDate, to: toDate}, 
             stateName: 'summariesData'})
     }
 
-    onDateChange = (date, dateString) => {
+    onFromDateChange = (date, dateString) => {
+        const { searchPicture } = this.props
+        this.setState({
+            isFirst: false,
+        })
+        if (date === undefined || date === null) return
+        
+    }
+
+    onToDateChange = (date, dateString) => {
         const { searchPicture } = this.props
         this.setState({
             isFirst: false,
@@ -111,7 +125,7 @@ class SummarySearch extends Component {
                 })],
                 loading: false,
             }, () => {
-                this.fetchCountryList(res.data.towns[0].id)
+                // this.fetchCountryList(res.data.towns[0].id)
             });
         });
     }
@@ -130,7 +144,7 @@ class SummarySearch extends Component {
                 })],
                 loading: false,
             }, () => {
-                this.fetchCompanyList(res.data.countries[0].id)
+                // this.fetchCompanyList(res.data.countries[0].id)
             });
         });
     }
@@ -151,7 +165,7 @@ class SummarySearch extends Component {
                 loading: false,
             }, () => {
                 if( isFirst ){
-                    let date = moment(this.state.selectedDate).format(CONSTANTS.DATE_QUERY_FORMAT)
+                    
                 }
             });
         });
@@ -170,20 +184,97 @@ class SummarySearch extends Component {
         const { getFieldDecorator, getFieldsError, getFieldError, isFieldTouched } = this.props.form;
         const { style, filter } = this.props
         const { townsData, countriesData, companiesData, selectedDate } = this.state
+        let fromDate = selectedDate, toDate = selectedDate;
 
         // Only show error after a field is touched.
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
             <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
+                <FormItem 
+                    style={{paddingBottom: 13}}
+                    validateStatus={fileNameError ? 'error' : ''}
+                    help={fileNameError || ''}
+                >
+                    {getFieldDecorator('town', {
+                        // initialValue: townsData[0]? townsData[0].id:'',
+                    })(
+                        <Select
+                        showSearch
+                        style={{ width: 200 }}
+                        placeholder="请选择镇"
+                        optionFilterProp="children"
+                        onChange={this.onTownChange}
+                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                        >
+                            {this.getOptions(townsData)}
+                        </Select>
+                    )}
+                </FormItem>
                 <FormItem
                     style={{paddingBottom: 13}}
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
-                    {getFieldDecorator('selectedDate', {
-                        initialValue: moment(selectedDate, CONSTANTS.DATE_DISPLAY_FORMAT)
+                    {getFieldDecorator('country', {
+                        // initialValue: countriesData[0]? countriesData[0].id:'',
+                    })(
+                        <Select
+                        showSearch
+                        style={{ width: 200 }}
+                        placeholder="请选择村"
+                        optionFilterProp="children"
+                        onChange={this.onCountryChange}
+                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                        >
+                            {this.getOptions(countriesData)}
+                        </Select>
+                    )}
+                </FormItem>
+                <FormItem
+                    style={{paddingBottom: 13}}
+                    validateStatus={fileNameError ? 'error' : ''}
+                    help={fileNameError || ''}
+                >
+                    {getFieldDecorator('company', {
+                        // initialValue: companiesData[0]? companiesData[0].id:'',
+                        rule: [
+                            {require: true},
+                        ]
+                    })(
+                        <Select
+                        showSearch
+                        style={{ width: 200 }}
+                        placeholder="请选择公司"
+                        optionFilterProp="children"
+                        onSelect={this.onCompanySelect}
+                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                        >
+                            {this.getOptions(companiesData)}
+                        </Select>
+                    )}
+                </FormItem>
+                <FormItem
+                    label="从"
+                    style={{paddingBottom: 13}}
+                    validateStatus={fileNameError ? 'error' : ''}
+                    help={fileNameError || ''}
+                >
+                    {getFieldDecorator('fromDate', {
+                        initialValue: moment(fromDate, CONSTANTS.DATE_DISPLAY_FORMAT)
                     })(
                         <DatePicker onChange={this.onDateChange}/>
+                    )}
+                </FormItem>
+                <FormItem
+                    label="到"
+                    style={{paddingBottom: 13}}
+                    validateStatus={fileNameError ? 'error' : ''}
+                    help={fileNameError || ''}
+                >
+                    {getFieldDecorator('toDate', {
+                        initialValue: moment(toDate, CONSTANTS.DATE_DISPLAY_FORMAT)
+                    })(
+                        <DatePicker onChange={this.onToDateChange}/>
                     )}
                 </FormItem>
                 <FormItem 
