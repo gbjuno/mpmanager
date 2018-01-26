@@ -116,7 +116,7 @@ type Picture struct {
 	FullPath       string    `gorm:"column:full_path" json:"full_path"`
 	ThumbURI       string    `gorm:"column:thumb_uri" json:"thumb_uri"`
 	FullURI        string    `gorm:"column:full_uri" json:"full_uri"`
-	Corrective     string    `gorm:"column:corrective;size:1;not null" json:"corrective"`
+	Judgement      string    `gorm:"column:judgement;size:1;not null;default:'T'" json:"judgement"`
 	UserId         int       `gorm:"column:user_id;index" json:"user_id"`
 }
 
@@ -144,9 +144,9 @@ type TodaySummary struct {
 	CompanyName      string    `gorm:"column:company_name;not null" json:"company_name"`
 	MonitorPlaceId   int       `gorm:"column:monitor_place_id;not null;unique_index:day_company_place" json:"monitor_place_id"`
 	MonitorPlaceName string    `gorm:"column:monitor_place_name;not null;" json:"monitor_place_name"`
-	IsUpload         string    `gorm:"column:is_upload;string;size:1;not null" json:"is_upload"`
-	Corrective       string    `gorm:"column:corrective;string;size:1;not null" json:"corrective"`
-	EverCorrective   string    `gorm:"column:ever_corrective;string;size:1;not null" json:"ever_corrective"`
+	IsUpload         string    `gorm:"column:is_upload;string;size:1;not null;default:'F'" json:"is_upload"`
+	Judgement        string    `gorm:"column:judgement;size:1;not null;default:'T'" json:"judgement"`
+	EverJudge        string    `gorm:"column:ever_judge;string;size:1;not null;default:'F'" json:"ever_judge"`
 }
 
 func (TodaySummary) TableName() string {

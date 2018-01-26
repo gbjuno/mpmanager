@@ -756,7 +756,6 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
-	corrective := r.Form.Get("corrective")
 	userId := r.Form.Get("userId")
 	placeId := r.Form.Get("placeId")
 	serverId := r.Form.Get("serverId")
@@ -819,11 +818,11 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	timeToday := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 
 	picture := Picture{CreateAt: timeNow, UpdateAt: timeNow, MonitorPlaceId: monitor_place.ID, UserId: user.ID}
-	if corrective == "false" || corrective == "False" {
-		picture.Corrective = "F"
+	/*if judgement == "false" || judgement == "False" {
+		picture.Judgement = "F"
 	} else {
-		picture.Corrective = "T"
-	}
+		picture.Judgement = "T"
+	}*/
 
 	hashCode := md5.New()
 	io.WriteString(hashCode, serverId)
@@ -834,6 +833,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	picture.ThumbURI = fmt.Sprintf("/static/picture/%s/%d/%d/thumb_%x.png", timeToday, monitor_place.CompanyId, monitor_place.ID, name)
 	picture.FullPath = fmt.Sprintf("/picture/%s/%d/%d/full_%x.png", timeToday, monitor_place.CompanyId, monitor_place.ID, name)
 	picture.FullURI = fmt.Sprintf("/static/picture/%s/%d/%d/full_%x.png", timeToday, monitor_place.CompanyId, monitor_place.ID, name)
+	picture.Judgement = "T"
 	picturePath := imgRepo + picture.FullPath
 	dir := path.Dir(picturePath)
 	glog.Infof("%s preparing directory %s", prefix, dir)
@@ -880,7 +880,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	ts := TodaySummary{}
 	condition := fmt.Sprintf("day = str_to_date(%s, '%%Y%%m%%d')", timeToday)
 	db.Debug().Where(condition).Where("monitor_place_id = ?", monitor_place.ID).First(&ts)
-	db.Debug().Model(&ts).Update(TodaySummary{IsUpload: "T"})
+	db.Debug().Model(&ts).Update(TodaySummary{IsUpload: "T", Judgement: "T"})
 	glog.Infof("%s update today summary of monitor_place %d is_upload", prefix, monitor_place.ID)
 	return
 }

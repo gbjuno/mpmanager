@@ -37,7 +37,7 @@ func refreshTodaySummary() {
 			db.Debug().Where(condition).Where("company_id = ?", company.ID).Where("monitor_place_id = ?", monitor_place.ID).First(&t)
 			//create (day,companyid,monitor_place_id) new TodaySummary row
 			if t.ID == 0 {
-				todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
+				todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Judgement: "T", EverJudge: "F"}
 				glog.Infof("%s try to insert todaySummary for company %d, monitor_place %d, should ignore conflict", prefix, company.ID, monitor_place.ID)
 				db.Debug().Create(&todaySummary)
 			}
@@ -165,13 +165,15 @@ func sendTemplateMsg() {
 			msg := TMsgData{First: first, Keyword1: k1, Keyword2: k2, Keyword3: k3, Remark: remark}
 			t := template.TemplateMessage2{TemplateId: wxTemplateId, Data: msg}
 			for _, u := range users {
-				t.ToUser = *u.WxOpenId
-				tStr, _ := json.Marshal(t)
-				msgId, err := template.Send(wechatClient, json.RawMessage(tStr))
-				if err != nil {
-					glog.Errorf("%s failed to send message to user %s openid %s, message %s,  err %s", prefix, u.Name, t.ToUser, string(tStr), err)
-				} else {
-					glog.Infof("%s ok to send message to user %s openid %s, msgid %d", prefix, u.Name, t.ToUser, msgId)
+				if u.WxOpenId != nil {
+					t.ToUser = *u.WxOpenId
+					tStr, _ := json.Marshal(t)
+					msgId, err := template.Send(wechatClient, json.RawMessage(tStr))
+					if err != nil {
+						glog.Errorf("%s failed to send message to user %s openid %s, message %s,  err %s", prefix, u.Name, t.ToUser, string(tStr), err)
+					} else {
+						glog.Infof("%s ok to send message to user %s openid %s, msgid %d", prefix, u.Name, t.ToUser, msgId)
+					}
 				}
 			}
 		}
@@ -183,7 +185,7 @@ func jobWorker() {
 	c := cron.New()
 	c.AddFunc("0 0 0 * * *", refreshTodaySummary)
 	c.AddFunc("0 2 * * * *", refreshSummary)
-	c.AddFunc("0 */30 * * * *", refreshSummaryStat)
+	c.AddFunc("0 */2 * * * *", refreshSummaryStat)
 	c.AddFunc("0 0 12 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 16 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 18 * * *", sendTemplateMsg)

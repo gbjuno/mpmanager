@@ -2,12 +2,16 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/emicklei/go-restful"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/emicklei/go-restful"
+	"github.com/golang/glog"
+	"gopkg.in/chanxuehong/wechat.v2/mp/message/template"
 )
 
 type PictureList struct {
@@ -20,10 +24,122 @@ func (p Picture) Register(container *restful.Container) {
 	ws.Path(RESTAPIVERSION + "/picture").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(p.findPicture))
 	ws.Route(ws.GET("/{picture_id}").To(p.findPicture))
-	ws.Route(ws.POST("").To(p.createPicture))
+	//ws.Route(ws.POST("").To(p.createPicture))
+	ws.Route(ws.POST("/{picture_id}").To(p.judgePicture))
 	ws.Route(ws.PUT("/{picture_id}").To(p.updatePicture))
 	ws.Route(ws.DELETE("/{picture_id}").To(p.deletePicture))
 	container.Add(ws)
+}
+
+func sendPictureJudgementMsg(monitor_place_id int) {
+	prefix := fmt.Sprintf("[%s]", "sendPictureJudgementMsg")
+	loc, _ := time.LoadLocation("Local")
+	timeNow := time.Now()
+	todayStr := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
+	todayStrCN := fmt.Sprintf("%d年%d月%d日", timeNow.Year(), timeNow.Month(), timeNow.Day())
+	shortForm := "20060102"
+	todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
+	glog.Infof("%s start at time %s %d:%d, %s", prefix, todayStr, timeNow.Hour(), timeNow.Minute(), todayTime)
+
+	monitorPlace := MonitorPlace{}
+	db.Debug().Where("id = ?", monitor_place_id).First(&monitorPlace)
+	if monitorPlace.ID == 0 {
+		errmsg := fmt.Sprintf("no related monitor_place, monitor_place is not found")
+		glog.Errorf("%s %s", prefix, errmsg)
+		return
+	}
+
+	company := Company{}
+	db.Debug().Where("id = ?", monitorPlace.CompanyId).First(&company)
+	if company.ID == 0 {
+		errmsg := fmt.Sprintf("no related company, company is not found")
+		glog.Errorf("%s %s", prefix, errmsg)
+		return
+	}
+
+	first := Keyword{Value: "您好，本日贵企业上传的拍照图片不及格"}
+	remark := Keyword{Value: "需要重新整改再进行拍照，请您尽快处理"}
+
+	userList := make([]User, 0)
+	db.Debug().Where("company_id = ?", company.ID).Find(&userList)
+
+	k1 := Keyword{Value: company.Name}
+	k2 := Keyword{Value: todayStrCN}
+	k3 := Keyword{Value: monitorPlace.Name}
+	msg := TMsgData{First: first, Keyword1: k1, Keyword2: k2, Keyword3: k3, Remark: remark}
+	t := template.TemplateMessage2{TemplateId: wxTemplateId, Data: msg}
+	for _, u := range userList {
+		if u.WxOpenId != nil {
+			t.ToUser = *u.WxOpenId
+			tStr, _ := json.Marshal(t)
+			msgId, err := template.Send(wechatClient, json.RawMessage(tStr))
+			if err != nil {
+				glog.Errorf("%s failed to send message to user %s openid %s, message %s,  err %s", prefix, u.Name, t.ToUser, string(tStr), err)
+			} else {
+				glog.Infof("%s ok to send message to user %s openid %s, msgid %d", prefix, u.Name, t.ToUser, msgId)
+			}
+		}
+	}
+
+	glog.Infof("%s end send message job", prefix)
+}
+
+func (p Picture) judgePicture(request *restful.Request, response *restful.Response) {
+	prefix := fmt.Sprintf("[%s] [judgePicture]", request.Request.RemoteAddr)
+	glog.Infof("%s POST %s", prefix, request.Request.URL)
+	picture_id := request.PathParameter("picture_id")
+
+	if picture_id == "" {
+		errmsg := fmt.Sprintf("cannot get picture, picture_id is empty")
+		glog.Errorf("%s %s", prefix, errmsg)
+		returnEntity := &Response{Status: "500", Error: "please provide picture_id"}
+		response.WriteHeaderAndEntity(http.StatusForbidden, returnEntity)
+		return
+	} else {
+		//get picture id
+		id, err := strconv.Atoi(picture_id)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot get picture, picture_id is not integer, err %s", err)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusForbidden, Response{Status: "error", Error: "picture_id is not integer"})
+			return
+		}
+
+		picture := Picture{}
+		db.Debug().Where("id = ?", id).First(&picture)
+		if picture.ID == 0 {
+			errmsg := fmt.Sprintf("cannot find picture with id %s", picture_id)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusForbidden, Response{Status: "error", Error: errmsg})
+			return
+		}
+
+		tx := db.Begin()
+		picture.Judgement = "F"
+		tx.Debug().Save(&picture)
+		glog.Infof("%s update picture %d to F", prefix, picture.ID)
+
+		day := fmt.Sprintf("%d%02d%02d", picture.CreateAt.Year(), picture.CreateAt.Month(), picture.CreateAt.Day())
+		dayCondition := fmt.Sprintf("to_days(day) = to_days(str_to_date(%s, '%%Y%%m%%d'))", day)
+		todaySummary := TodaySummary{}
+		tx.Debug().Where(dayCondition).Where("monitor_place_id = ?", picture.MonitorPlaceId).First(&todaySummary)
+		if todaySummary.ID == 0 {
+			errmsg := fmt.Sprintf("todaysummary not found, please contact adiministrator")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusForbidden, Response{Status: "error", Error: errmsg})
+			return
+		}
+
+		todaySummary.EverJudge = "T"
+		todaySummary.Judgement = "F"
+		todaySummary.IsUpload = "F"
+		tx.Debug().Save(&todaySummary)
+		glog.Infof("%s update todaySummary %d", prefix, todaySummary)
+		tx.Commit()
+		response.WriteHeader(http.StatusOK)
+		go sendPictureJudgementMsg(picture.MonitorPlaceId)
+		return
+	}
 }
 
 func (p Picture) findPicture(request *restful.Request, response *restful.Response) {
@@ -73,6 +189,7 @@ func (p Picture) findPicture(request *restful.Request, response *restful.Respons
 	return
 }
 
+/*
 func (p Picture) createPicture(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [createPicture]", request.Request.RemoteAddr)
 	content, _ := ioutil.ReadAll(request.Request.Body)
@@ -103,6 +220,7 @@ func (p Picture) createPicture(request *restful.Request, response *restful.Respo
 		return
 	}
 }
+*/
 
 func (p Picture) updatePicture(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [updatePicture]", request.Request.RemoteAddr)

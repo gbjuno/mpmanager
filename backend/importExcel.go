@@ -364,7 +364,7 @@ OUT:
 			user.Phone = row[column+1]
 			if len(user.Phone) != 11 {
 				//errmsg := fmt.Sprintf("第%d行: user %s cannot created, phone %s len %d", index+1, user.Name, user.Phone, len(user.Phone))
-				errmsg := fmt.Sprintf("第%d行: 用户%s无法创建成功，电话号码长度为%d", index+1, user.Name, user.Phone, len(user.Phone))
+				errmsg := fmt.Sprintf("第%d行: 用户%s无法创建成功，电话号码%s, 长度为%d", index+1, user.Name, user.Phone, len(user.Phone))
 				if errorLines == "" {
 					errorLines = fmt.Sprintf("%d", index+1)
 					errorStr = errmsg
@@ -406,7 +406,7 @@ OUT:
 				user.Password = fmt.Sprintf("%x", hashCode.Sum(nil))
 				tx.Debug().Create(&user)
 				if user.ID == 0 {
-					errmsg := fmt.Sprintf("第%d行: 用户创建失败，联系管理员", index+1, user.Name)
+					errmsg := fmt.Sprintf("第%d行: 用户%s创建失败，联系管理员", index+1, user.Name)
 					if errorLines == "" {
 						errorLines = fmt.Sprintf("%d", index+1)
 						errorStr = errmsg

@@ -16,8 +16,8 @@ type MonitorPlaceSummary struct {
 	MonitorPlaceID   int    `json:"monitor_place_id"`
 	MonitorPlaceName string `json:"monitor_place_name"`
 	IsUpload         string `json:"is_upload"`
-	Corrective       string `json:"corrective"`
-	EverCorrective   string `json:"ever_corrective"`
+	Judgement        string `json:"judgement"`
+	EverJudge        string `json:"ever_judge"`
 }
 
 type CompanySummary struct {
@@ -61,7 +61,7 @@ func getTodaySummaryWithCompanyId(company_id int) (*CompanySummary, error) {
 	companySummary.CompanyName = company.Name
 	monitorPlaceSummaryList := make([]*MonitorPlaceSummary, 0)
 	for _, t := range todaySummaryList {
-		m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Corrective: t.Corrective, EverCorrective: t.EverCorrective}
+		m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Judgement: t.Judgement, EverJudge: t.EverJudge}
 		monitorPlaceSummaryList = append(monitorPlaceSummaryList, &m)
 	}
 	companySummary.MonitorPlaceSummaryList = monitorPlaceSummaryList
@@ -131,7 +131,7 @@ func (s TodaySummary) findTodaySummary(request *restful.Request, response *restf
 		companySummary.CompanyName = company.Name
 		monitorPlaceSummaryList := make([]*MonitorPlaceSummary, 0)
 		for _, t := range todaySummaryList {
-			m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Corrective: t.Corrective, EverCorrective: t.EverCorrective}
+			m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Judgement: t.Judgement, EverJudge: t.EverJudge}
 			monitorPlaceSummaryList = append(monitorPlaceSummaryList, &m)
 		}
 		companySummary.MonitorPlaceSummaryList = monitorPlaceSummaryList
@@ -204,7 +204,7 @@ func (s TodaySummary) findTodaySummary(request *restful.Request, response *restf
 	searchTodaySummary.Find(&todaySummaryList)
 	for _, t := range todaySummaryList {
 		cs := company_CompanySummaryMap[t.CompanyId]
-		m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Corrective: t.Corrective, EverCorrective: t.EverCorrective}
+		m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Judgement: t.Judgement, EverJudge: t.EverJudge}
 		cs.MonitorPlaceSummaryList = append(cs.MonitorPlaceSummaryList, &m)
 	}
 

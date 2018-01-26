@@ -3,15 +3,16 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/emicklei/go-restful"
-	"github.com/gbjuno/mpmanager/backend/utils"
-	"github.com/golang/glog"
-	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/emicklei/go-restful"
+	"github.com/gbjuno/mpmanager/backend/utils"
+	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 )
 
 type MonitorPlaceWithPicture struct {
@@ -331,7 +332,7 @@ func (m MonitorPlace) createMonitorPlace(request *restful.Request, response *res
 			todayStr := fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
 			shortForm := "20060102"
 			todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
-			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Corrective: "F", EverCorrective: "F"}
+			todaySummary := TodaySummary{Day: todayTime, CompanyId: company.ID, CompanyName: company.Name, MonitorPlaceId: monitor_place.ID, MonitorPlaceName: monitor_place.Name, IsUpload: "F", Judgement: "T", EverJudge: "F"}
 			glog.Infof("%s try to create todaySummary for company with id %d succesfully", prefix, company.ID)
 			db.Debug().Create(&todaySummary)
 
