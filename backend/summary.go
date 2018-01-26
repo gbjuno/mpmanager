@@ -25,7 +25,7 @@ func (s Summary) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
 	ws.Route(ws.GET("").To(s.findSummary))
-	ws.Route(ws.GET("?from={from}&company_id={company_id}&day={day}&finish={finish}&pageSize={pageSize}&pageNo={pageNo}&order={order}&format={format}").To(s.findSummary))
+	ws.Route(ws.GET("?from={from}&to={to}&company_id={company_id}&finish={finish}&pageSize={pageSize}&pageNo={pageNo}&order={order}&format={format}").To(s.findSummary))
 	container.Add(ws)
 }
 
@@ -33,8 +33,8 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 	prefix := fmt.Sprintf("[%s] [findSummary]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	company_id := request.QueryParameter("company_id")
-	day := request.QueryParameter("day")
 	from := request.QueryParameter("from")
+	to := request.QueryParameter("to")
 	pageSize := request.QueryParameter("pageSize")
 	pageNo := request.QueryParameter("pageNo")
 	order := request.QueryParameter("order")
@@ -61,22 +61,38 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 		noPageSearchDB = noPageSearchDB.Where("id = ?", company.ID)
 	}
 
-	if day != "" {
+	if from != "" {
+		if to == "" {
+			timeNow := time.Now()
+			to = fmt.Sprintf("%d%02d%02d", timeNow.Year(), timeNow.Month(), timeNow.Day())
+		}
+
+		var isFromOk, isToOk bool
 		loc, _ := time.LoadLocation("Asia/Shanghai")
 		const shortFormat = "20060102"
-		_, err = time.ParseInLocation(shortFormat, day, loc)
+		_, err = time.ParseInLocation(shortFormat, from, loc)
+
 		if err != nil {
-			errmsg := fmt.Sprintf("cannot find object with after %s, err %s, ignore", day, err)
+			errmsg := fmt.Sprintf("cannot find object with from %s, err %s, ignore", from, err)
 			glog.Errorf("%s %s", prefix, errmsg)
+		} else {
+			isFromOk = true
+		}
+
+		_, err = time.ParseInLocation(shortFormat, to, loc)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot find object with to %s, err %s, ignore", to, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+		} else {
+			isToOk = true
 		}
 
 		var condition string
-		if from == "true" {
-			condition = fmt.Sprintf("day >= str_to_date(%s, '%%Y%%m%%d')", day)
-		} else {
-			condition = fmt.Sprintf("day = str_to_date(%s, '%%Y%%m%%d')", day)
+		if isFromOk && isToOk {
+			condition = fmt.Sprintf("day >= str_to_date(%s, '%%Y%%m%%d') && day <= str_to_date(%s, '%%Y%%m%%d')", from, to)
 		}
-		glog.Infof("%s find summary with day %s", prefix, day)
+
+		glog.Infof("%s find summary from %s to %s", prefix, from, to)
 		searchDB = searchDB.Where(condition)
 		noPageSearchDB = noPageSearchDB.Where(condition)
 	}
