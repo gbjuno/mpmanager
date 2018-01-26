@@ -61,7 +61,6 @@ class PlaceForm extends Component {
     };
 
     handleChange = (e) => {
-        console.log('shahaopiaoliang', e.target.value)
         if(this.props.onChange){
             this.props.onChange(e.target.value)
         }

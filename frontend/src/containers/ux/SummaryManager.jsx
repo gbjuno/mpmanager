@@ -32,7 +32,6 @@ class SummaryManager extends React.Component {
     start = () => {
         this.setState({ loading: true });
         //this.fetchData();
-        this.searchSummary(moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT))
     };
 
     fetchData = () => {
@@ -51,11 +50,6 @@ class SummaryManager extends React.Component {
         });
     }
 
-    searchSummary = (date) => {
-        const { fetchData } = this.props
-        fetchData({funcName: 'searchSummaries', params: {day:date}, 
-            stateName: 'summariesData'})
-    }
 
     onSelectChange = (selectedRowKeys) => {
         if(selectedRowKeys.length > 0){

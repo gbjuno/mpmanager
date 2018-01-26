@@ -8,7 +8,6 @@ import ReactEcharts from 'echarts-for-react';
 class PieChart extends Component {
 
     genOption = chartOptions => {
-        console.log('sha wo zheci wo hui renzhenfuze...chartOptions', chartOptions)
         if(chartOptions === undefined)return
         let legendData = []
         for(let option of chartOptions){
@@ -51,7 +50,6 @@ class PieChart extends Component {
 
     render(){
         const { chartOptions } = this.props
-        console.log('in render-->', chartOptions)
         return (
             <ReactEcharts
                 theme="light"

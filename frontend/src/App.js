@@ -21,7 +21,6 @@ class App extends Component {
         // fetchData({funcName: 'admin', stateName: 'auth'});
         this.getClientWidth();
         window.onresize = () => {
-            console.log('屏幕变化了');
             this.getClientWidth();
             // console.log(document.body.clientWidth);
         }
