@@ -280,7 +280,6 @@ class CompanyManager extends React.Component {
                     console.log(info.file, info.fileList);
                 }
                 if (info.file.status === 'done') {
-                    console.log('sha hao ke ai ya...', info)
                     message.success(`${info.file.name}上传成功`);
                 } else if (info.file.status === 'error') {
                     message.error(`${info.file.name}上传失败`);
@@ -551,7 +550,7 @@ class CompanyManager extends React.Component {
 
 
     additionalTable = () => {
-        const { selectedUserKeys, userEditable, hasNewUser,
+        const { selectedUserKeys, userEditable, hasNewUser, selectedCompanyId,
             selectedPlaceKeys, placeEditable, hasNewPlace, placeTypes } = this.state
         const { usersInCompany, placesInCompany } = this.props
         const userRowSelection = {
@@ -695,11 +694,14 @@ class CompanyManager extends React.Component {
         }
         const hasSelectedPlace = selectedPlaceKeys.length > 0 && selectedPlaceKeys[0] !== -1
 
+        const hasSelectedCompany = selectedCompanyId !== undefined && selectedCompanyId !== ''
+
         return (
             <Tabs defaultActiveKey="1">
                 <TabPane tab="用户" key="1">
                     <div style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={this.handleAddUser}
+                            disabled={!hasSelectedCompany}
                         >新增</Button>
                         <Button type="primary" onClick={this.handleModifyUser}
                             disabled={!hasSelectedUser}
@@ -728,6 +730,7 @@ class CompanyManager extends React.Component {
                 <TabPane tab="地点" key="2">
                     <div style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={this.handleAddPlace}
+                            disabled={!hasSelectedCompany}
                         >新增</Button>
                         <Button type="primary" onClick={this.handleModifyPlace}
                             disabled={!hasSelectedPlace}
@@ -864,7 +867,6 @@ class CompanyManager extends React.Component {
                             <Card title="公司列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
                                     <Button type="primary" onClick={this.handleAdd}
-                                        disabled={loading}
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleModify}
                                         disabled={!hasSelected}
@@ -898,6 +900,7 @@ class CompanyManager extends React.Component {
                                         onClick: () => this.onRowClick(record),
                                     })}
                                     pagination={{
+                                        hideOnSinglePage: true,
                                         onChange: this.handlePageChange,
                                         current: currentPage,
                                         defaultCurrent: 1,

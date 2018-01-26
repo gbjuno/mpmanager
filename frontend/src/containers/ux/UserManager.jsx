@@ -10,6 +10,7 @@ import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import EditableCell from '../../components/cells/EditableCell';
+import UserSearch from '../search/UserSearch';
 
 
 
@@ -209,7 +210,8 @@ class UserManager extends React.Component {
     render() {
 
         const { loading, selectedRowKeys, companiesData,
-            usersData, editable } = this.state;
+             editable } = this.state;
+        const { usersData } = this.props;
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
@@ -219,6 +221,11 @@ class UserManager extends React.Component {
         let options = [];
         if(companiesData){
             options = [...companiesData.map(item => {item.key = item.id; return item})]
+        }
+
+        let usersWrappedData = []
+        if(usersData.data && usersData.data.users){
+            usersWrappedData = [...usersData.data.users.map(item => {item.key = item.id; return item})]
         }
 
         const hasSelected = selectedRowKeys.length > 0 && selectedRowKeys[0] !== -1
@@ -279,14 +286,14 @@ class UserManager extends React.Component {
         
         return (
             <div className="gutter-example">
-                <BreadcrumbCustom first="安监管理" second="用户管理" />
+                <BreadcrumbCustom first="用户管理" second="" />
+                <UserSearch  fetchData={fetchData}/>
                 <Row gutter={16}>
                     <Col className="gutter-row" md={24}>
                         <div className="gutter-box">
                             <Card title="用户列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
                                     <Button type="primary" onClick={this.handleAdd}
-                                            disabled={loading} 
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleModify}
                                         disabled={!hasSelected}
@@ -295,7 +302,7 @@ class UserManager extends React.Component {
                                         disabled={!hasSelected}
                                     >删除</Button>
                                 </div>
-                                <Table rowSelection={rowSelection} columns={userColumns} dataSource={usersData}
+                                <Table rowSelection={rowSelection} columns={userColumns} dataSource={usersWrappedData}
                                     size="small"
                                     onRow={(record) => ({
                                         onClick: () => this.onRowClick(record),
@@ -312,11 +319,12 @@ class UserManager extends React.Component {
 
 const mapStateToProps = state => {
     const { 
+        usersData = {data: {count:0, companies:[]}}, 
         companiesData = {data: {count:0, companies:[]}}, 
         townsData = {data: {count:0, towns:[]}}, 
         countries = {data: {count:0, countries:[]}} 
     } = state.httpData;
-    return { companiesData, townsData };
+    return { companiesData, townsData, usersData };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),

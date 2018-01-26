@@ -323,7 +323,6 @@ class CountryManager extends React.Component {
                             <Card title="镇列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
                                     <Button type="primary" onClick={this.handleAddTown}
-                                            disabled={loading} 
                                     >新增</Button>
                                     <Button type="primary" onClick={this.handleDeleteTown}
                                             disabled={!hasSelectedTown} 

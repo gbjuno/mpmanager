@@ -23,13 +23,3 @@ export const fetchData = ({funcName, params, stateName}) => dispatch => {
     dispatch(requestData(stateName));
     return http[funcName](params).then(res => dispatch(receiveData(res, stateName)));
 };
-
-/**
- * 设置图片查询条件
- * @param {*} filter 
- */
-export const searchPicture = filter => ({
-    type: type.SEARCH_PICTURE,
-    collection: "picture",
-    condition: {...filter},
-})

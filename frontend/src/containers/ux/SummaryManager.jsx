@@ -5,9 +5,12 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Table, Button, Row, Col, Card, Input, Icon } from 'antd';
+import moment from 'moment';
+import * as CONSTANTS from '../../constants';
 import { fetchData, receiveData } from '../../action';
 import { getPros } from '../../axios';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
+import SummarySearch from '../search/SummarySearch';
 
 
 
@@ -27,7 +30,8 @@ class SummaryManager extends React.Component {
 
     start = () => {
         this.setState({ loading: true });
-        this.fetchData();
+        //this.fetchData();
+        this.searchSummary(moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT))
     };
 
     fetchData = () => {
@@ -38,12 +42,18 @@ class SummaryManager extends React.Component {
             if(res === undefined || res.data === undefined || res.data.summaries === undefined) return
             this.setState({
                 summariesData: [...res.data.summaries.map(val => {
-                    val.key = val.company_id;
+                    val.key = val.id;
                     return val;
                 })],
                 loading: false,
             });
         });
+    }
+
+    searchSummary = (date) => {
+        const { fetchData } = this.props
+        fetchData({funcName: 'searchSummaries', params: {day:date}, 
+            stateName: 'summariesData'})
     }
 
     onSelectChange = (selectedRowKeys) => {
@@ -62,7 +72,8 @@ class SummaryManager extends React.Component {
     }
 
     render() {
-        const summaryColumns = [{
+        const summaryColumns = [
+            {
                 title: '统计日期',
                 dataIndex: 'day',
                 width: 20,
@@ -70,98 +81,59 @@ class SummaryManager extends React.Component {
                     if (record.id === -1){
                         return ''
                     }
-                    var createAt = new Date(text).toLocaleString('chinese',{hour12:false});
-                    return createAt.substring(0, createAt.indexOf(' '))
+                    return moment(new Date(text)).format(CONSTANTS.DATE_DISPLAY_FORMAT)
                 }
             },{
-            title: '公司',
-            dataIndex: 'company_name',
-            width: 20,
-            render: (text, record) => {
-                return <a href={record.url} target="_blank">{text}</a>                
-            }
-        }, {
-            title: '是否完成',
-            dataIndex: 'finish',
-            width: 20,
-            render: (text, record) => {
-                var value 
-                if(text == "T") {
-                    value = "是"
-                } else {
-                    value = "否"
+                title: '公司',
+                dataIndex: 'company_name',
+                width: 20,
+                render: (text, record) => {
+                    return <a href={record.url} target="_blank">{text}</a>
                 }
-                return <a href={record.url} target="_blank">{value}</a>                
+            },{
+                title: '是否完成',
+                dataIndex: 'finish',
+                width: 20,
+                render: (text, record) => {
+                    var value 
+                    if(text == "T") {
+                        value = "是"
+                    } else {
+                        value = "否"
+                    }
+                    return <a href={record.url} target="_blank">{value}</a>
+                }
+            },{
+                title: '未完成的拍照地点',
+                dataIndex: 'unfinish_ids',
+                width: 40,
+                render: (text, record) => {
+                    return <a href={record.url} target="_blank">{text}</a>
+                }
             }
-        }, {
-            title: '未完成的拍照地点',
-            dataIndex: 'unfinish_ids',
-            width: 40,
-            render: (text, record) => {
-                return <a href={record.url} target="_blank">{text}</a>
-            }
-        }];
+        ];
 
-        const { loading, selectedRowKeys, selectedTown, summariesData } = this.state;
+        const { loading, selectedRowKeys, selectedTown } = this.state;
+        const { summariesData } = this.props
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
         };
 
+        let summariesWrappedData = []
+        if(summariesData.data && summariesData.data.summaries){
+            summariesWrappedData = [...summariesData.data.summaries.map(item => {item.key = item.id; return item})]
+        }
+
         return (
             <div className="gutter-example">
-                <style>
-                {`
-                    .editable-cell {
-                        position: relative;
-                      }
-                      
-                      .editable-cell-input-wrapper,
-                      .editable-cell-text-wrapper {
-                        padding-right: 24px;
-                      }
-                      
-                      .editable-cell-text-wrapper {
-                        padding: 5px 24px 5px 5px;
-                      }
-                      
-                      .editable-cell-icon,
-                      .editable-cell-icon-check {
-                        position: absolute;
-                        right: 0;
-                        width: 20px;
-                        cursor: pointer;
-                      }
-                      
-                      .editable-cell-icon {
-                        line-height: 18px;
-                        display: none;
-                      }
-                      
-                      .editable-cell-icon-check {
-                        line-height: 28px;
-                      }
-                      
-                      .editable-cell:hover .editable-cell-icon {
-                        display: inline-block;
-                      }
-                      
-                      .editable-cell-icon:hover,
-                      .editable-cell-icon-check:hover {
-                        color: #108ee9;
-                      }
-                      
-                      .editable-add-btn {
-                        margin-bottom: 8px;
-                      }
-                `}
-                </style>
                 <BreadcrumbCustom first="统计报表" second="" />
+                <SummarySearch  fetchData={fetchData}/>
                 <Row gutter={16}>
                     <Col className="gutter-row" md={24}>
                         <div className="gutter-box">
                             <Card title="统计报告" bordered={false}>
-                                <Table columns={summaryColumns} dataSource={summariesData}
+                                <Table columns={summaryColumns} dataSource={summariesWrappedData}
                                     size="small" onRowClick={this.onRowClick}
                                 />
                             </Card>
@@ -175,10 +147,9 @@ class SummaryManager extends React.Component {
 
 const mapStateToProps = state => {
     const { 
-        townsData = {data: {count:0, towns:[]}}, 
-        fetchCountries = {data: {count:0, countries:[]}} 
+        summariesData = {data: {count:0, towns:[]}}, 
     } = state.httpData;
-    return { townsData };
+    return { summariesData };
 };
 
 const mapDispatchToProps = dispatch => ({
