@@ -4,7 +4,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Row, Col, Card, Tabs, Pagination } from 'antd';
+import { Row, Col, Card, Tabs, Pagination, Icon, Tooltip } from 'antd';
 import * as _ from 'lodash'
 import moment from 'moment';
 import { fetchData, receiveData } from '../../action';
@@ -221,7 +221,11 @@ class PictureManager extends React.Component {
                             alt="example" width="100%" src={config.SERVER_ROOT +  this.getPicThumb(v2.pictures)}/>
                     </div>
                     <div className="pa-s">
-                        <h4 style={{marginBottom: '0em'}}>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span></h4>
+                        <h4 style={{marginBottom: '0em'}}>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span>
+                        <Tooltip placement="bottom" title={"更多"}>
+                            <Icon className="anj-pic-icon" type="ellipsis"/>
+                        </Tooltip>
+                        </h4>
                         <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.company_name}</span></a></small>
                     </div>
                 </Card>
@@ -298,9 +302,16 @@ class PictureManager extends React.Component {
             <div id="scPic" className="gutter-example button-demo">
                 <BreadcrumbCustom first="图片管理" second="" />
                 <PictureSearch  fetchData={fetchData}/>
-                <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
-                {pictureGrids}
-                </Tabs>
+                <Row gutter={20}>
+                    <Col className="gutter-row" md={24}>
+                        <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
+                        {pictureGrids}
+                        </Tabs>
+                    </Col>
+                    <Col className="gutter-row" md={0}>
+                        
+                    </Col>
+                </Row>
                 <div className="pswp" tabIndex="-1" role="dialog" aria-hidden="true" ref={(div) => {this.pswpElement = div;} }>
 
                     <div className="pswp__bg" />

@@ -4,6 +4,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import * as download from 'downloadjs'
 import { Table, Button, Row, Col, Card, Input, Icon } from 'antd';
 import moment from 'moment';
 import * as CONSTANTS from '../../constants';
@@ -12,7 +13,6 @@ import { getPros } from '../../axios';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import PieChart from '../../components/echarts/PieChart';
 import SummarySearch from '../search/SummarySearch';
-
 
 
 class SummaryManager extends React.Component {
@@ -65,6 +65,7 @@ class SummaryManager extends React.Component {
             selectedRowKeys: selectedRowKeys.length > 0 && selectedRowKeys[0] === record.id ? [] : [record.id],
         });
     }
+
 
     render() {
         const summaryColumns = [

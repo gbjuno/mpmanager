@@ -295,11 +295,9 @@ class CompanyManager extends React.Component {
         x.open("GET", url, true);
         x.responseType = "blob";
         x.onload = function (e) {
-            download(x.response, "基础数据.xlsx", "application/octet-stream")
+            download(x.response, "报表基础数据.xlsx", "application/octet-stream")
         }
         x.send();
-        //application/octet-stream
-        //download(`${url}`, '基础数据.xlsx')
     }
 
     

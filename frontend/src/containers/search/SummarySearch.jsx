@@ -4,11 +4,13 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import * as download from 'downloadjs';
 import * as _ from 'lodash'
 import moment from 'moment';
-import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
+import { Form, Icon, Input, Button, Select, DatePicker, Row, message } from 'antd';
 import * as CONSTANTS from '../../constants';
 import { fetchData, receiveData } from '../../action';
+import * as config from '../../axios/config';
 
 const FormItem = Form.Item;
 const Search = Input.Search;
@@ -26,7 +28,10 @@ class SummarySearch extends Component {
         companiesData: [],
         selectedTownId: '',
         selectedCountryId: '',
-        selectedDate: new Date(),
+        selectedCompanyId: '',
+        currentDate: new Date(),
+        fromDate: null,
+        toDate: null,
         isFirst: true,  //未点击搜索按钮
         defaultCompanyId: '',
     }
@@ -35,7 +40,7 @@ class SummarySearch extends Component {
         // To disabled submit button at the beginning.
         this.props.form.validateFields();
         this.fetchTownList();
-        let from = moment(this.state.selectedDate).format(CONSTANTS.DATE_QUERY_FORMAT)
+        let from = moment(this.state.currentDate).format(CONSTANTS.DATE_QUERY_FORMAT)
         let to = from
         this.searchSummary('', from, to)
     }
@@ -46,12 +51,18 @@ class SummarySearch extends Component {
         const { isFirst, defaultCompanyId } = this.state
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                if(values.fromDate === null && values.toDate == null) {
+                if(values.fromDate === null && values.toDate === null) {
                     message.error('请选择开始日期或结束日期')
                     return
                 }
                 let fromDate = values.fromDate.format(CONSTANTS.DATE_QUERY_FORMAT);
                 let toDate = values.toDate.format(CONSTANTS.DATE_QUERY_FORMAT);
+
+                if(fromDate > toDate){
+                    message.error('开始日期不能大于结束日期')
+                    return
+                }
+
                 let companyId = values.company
                 if(companyId === undefined)companyId=''
                 this.searchSummary(companyId, fromDate, toDate)
@@ -69,6 +80,7 @@ class SummarySearch extends Component {
         const { searchPicture } = this.props
         this.setState({
             isFirst: false,
+            fromDate: date,
         })
         if (date === undefined || date === null) return
         
@@ -78,6 +90,7 @@ class SummarySearch extends Component {
         const { searchPicture } = this.props
         this.setState({
             isFirst: false,
+            toDate: date,
         })
         if (date === undefined || date === null) return
         
@@ -110,6 +123,7 @@ class SummarySearch extends Component {
     onCompanyChange = (value) => {
         this.setState({
             isFirst: false,
+            selectedCompanyId: value,
         })
     }
 
@@ -179,17 +193,53 @@ class SummarySearch extends Component {
         })
     }
 
+    genDay = (date) =>{
+        let defaultDay = moment(this.state.currentDate).format(CONSTANTS.DATE_QUERY_FORMAT)
+        if(date === null){
+            return defaultDay
+        }else{
+            return date.format(CONSTANTS.DATE_QUERY_FORMAT)
+        }
+    }
+
+    downloadReport = () => {
+        const { selectedCompanyId, fromDate, toDate } = this.state
+        let from, to;
+        from = this.genDay(fromDate)
+        to = this.genDay(toDate)
+
+        if(from > to){
+            message.error('开始日期不能大于结束日期')
+            return
+        }
+
+        const filter = {
+            companyId: selectedCompanyId,
+            from,
+            to,
+        }
+        let url = config.EXPORT_SUMMARY_URL(filter); //TODO: 换成下载公司数据url,及相应的文件格式
+        const x = new XMLHttpRequest;
+        x.open("GET", url, true);
+        x.responseType = "blob";
+        x.onload = function (e) {
+            download(x.response, "统计报表.xlsx", "application/octet-stream")
+        }
+        x.send();
+    }
+
 
     render() {
         const { getFieldDecorator, getFieldsError, getFieldError, isFieldTouched } = this.props.form;
         const { style, filter } = this.props
-        const { townsData, countriesData, companiesData, selectedDate } = this.state
-        let fromDate = selectedDate, toDate = selectedDate;
+        const { townsData, countriesData, companiesData, currentDate } = this.state
+        let fromDate = currentDate, toDate = currentDate;
 
         // Only show error after a field is touched.
         const fileNameError = isFieldTouched('fileName') && getFieldError('fileName');
         return (
             <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
+                <Row gutter={24}>
                 <FormItem 
                     style={{paddingBottom: 13}}
                     validateStatus={fileNameError ? 'error' : ''}
@@ -246,6 +296,7 @@ class SummarySearch extends Component {
                         style={{ width: 200 }}
                         placeholder="请选择公司"
                         optionFilterProp="children"
+                        onChange={this.onCompanyChange}
                         onSelect={this.onCompanySelect}
                         filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                         >
@@ -253,6 +304,8 @@ class SummarySearch extends Component {
                         </Select>
                     )}
                 </FormItem>
+                </Row>
+                <Row gutter={24}>
                 <FormItem
                     label="从"
                     style={{paddingBottom: 13}}
@@ -262,7 +315,7 @@ class SummarySearch extends Component {
                     {getFieldDecorator('fromDate', {
                         initialValue: moment(fromDate, CONSTANTS.DATE_DISPLAY_FORMAT)
                     })(
-                        <DatePicker onChange={this.onDateChange}/>
+                        <DatePicker onChange={this.onFromDateChange}/>
                     )}
                 </FormItem>
                 <FormItem
@@ -286,7 +339,13 @@ class SummarySearch extends Component {
                     >
                        搜索
                     </Button>
+                    <Button onClick={this.downloadReport}
+                        type="primary"
+                    >
+                        导出
+                    </Button>
                 </FormItem>
+                </Row>
             </Form>
         );
     }
