@@ -58,7 +58,7 @@ func (s Summary) findSummary(request *restful.Request, response *restful.Respons
 		}
 		glog.Infof("%s find summary with company id %s", prefix, company_id)
 		searchDB = searchDB.Where("company_id = ?", company.ID)
-		noPageSearchDB = noPageSearchDB.Where("id = ?", company.ID)
+		noPageSearchDB = noPageSearchDB.Where("company_id = ?", company.ID)
 	}
 
 	if from != "" {

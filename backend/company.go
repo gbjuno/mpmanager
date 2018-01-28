@@ -190,10 +190,10 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 	company := Company{}
 	err := request.ReadEntity(&company)
 	if err == nil {
-		if company.Enable != "" && company.Enable != "F" {
-			company.Enable = "T"
-		} else {
+		if company.Enable == "F" {
 			company.Enable = "F"
+		} else {
+			company.Enable = "T"
 		}
 		searchCompany := Company{}
 		db.Debug().Where("name = ?", company.Name).First(&searchCompany)
@@ -291,10 +291,10 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 		return
 	}
 
-	if company.Enable != "" && company.Enable != "F" {
-		company.Enable = "T"
-	} else {
+	if company.Enable == "F" {
 		company.Enable = "F"
+	} else {
+		company.Enable = "T"
 	}
 
 	//find comopany and update
