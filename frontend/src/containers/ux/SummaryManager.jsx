@@ -4,7 +4,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import * as download from 'downloadjs'
+import * as download from 'downloadjs';
 import { Table, Button, Row, Col, Card, Input, Icon } from 'antd';
 import moment from 'moment';
 import * as CONSTANTS from '../../constants';
@@ -127,11 +127,17 @@ class SummaryManager extends React.Component {
             chartOptions.push({
                 name: '未完成',
                 value: summariesData.data.not_finish_num,
+                itemStyle:{
+                    color: '#FF3366'
+                },
             })
 
             chartOptions.push({
                 name: '已完成',
                 value: summariesData.data.finish_num,
+                itemStyle:{
+                    color: '#33CC66'
+                },
             })
         }
 

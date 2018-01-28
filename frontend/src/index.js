@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import './style/lib/animate.css';
-import registerServiceWorker from './registerServiceWorker';
+//import registerServiceWorker from './registerServiceWorker';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
 import { createStore, applyMiddleware } from 'redux';
@@ -57,4 +57,7 @@ if (module.hot) {
 //  ,
 //   document.getElementById('root')
 // );
-registerServiceWorker();
+
+//TODO: Jingle Chen--> disable cache only in production test phase
+// It will be remove in the future
+//registerServiceWorker();
