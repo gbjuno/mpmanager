@@ -14,6 +14,7 @@ var dbuser string
 var dbpass string
 var dbip string
 var dbport string
+var dbname string
 var debug bool
 var imgRepo string
 var domain string
@@ -25,9 +26,10 @@ func main() {
 	flag.StringVar(&dbpass, "pass", "123456", "database password")
 	flag.StringVar(&dbip, "ip", "127.0.0.1", "database ip address")
 	flag.StringVar(&dbport, "port", "3306", "database port")
+	flag.StringVar(&dbname, "db", "mpmanager", "database name")
 	flag.StringVar(&imgRepo, "imgRepo", "/opt/static", "image save Path")
 	flag.StringVar(&domain, "domain", "www.juntengshoes.cn", "domain name")
-	flag.BoolVar(&debug, "debug", false, "debug mode")
+	flag.BoolVar(&debug, "debug", false, "debug mode, disable weixin init")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 
@@ -83,7 +85,10 @@ func main() {
 		glog.Infof(server.ListenAndServe().Error())
 	}()
 
-	WechatBackendInit()
+	if !debug {
+		WechatBackendInit()
+	}
+
 	glog.Infof("starting wechat backend webserver on localhost:8001")
 	http.HandleFunc("/backend/wx_callback", wxCallbackHandler)
 	http.HandleFunc("/backend/binding", bindingHandler)

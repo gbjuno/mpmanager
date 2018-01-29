@@ -158,9 +158,9 @@ type Response struct {
 	Error  string `json:"error"`
 }
 
-func InitializeDB(dbuser, dbpass, dbip, dbport string) {
+func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
 	var err error
-	db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/mpmanager?charset=utf8&parseTime=True&loc=Local", dbuser, dbpass, dbip, dbport))
+	db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", dbuser, dbpass, dbip, dbport, dbname))
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}
