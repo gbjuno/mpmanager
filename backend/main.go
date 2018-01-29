@@ -33,7 +33,7 @@ func main() {
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 
-	InitializeDB(dbuser, dbpass, dbip, dbport)
+	InitializeDB(dbuser, dbpass, dbip, dbport, dbname)
 
 	if debug {
 		glog.Info("DEBUG MODE")
