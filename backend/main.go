@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
@@ -18,6 +19,8 @@ var dbname string
 var debug bool
 var imgRepo string
 var domain string
+var wxport string
+var restport string
 
 const RESTAPIVERSION = "/api/v1"
 
@@ -30,6 +33,8 @@ func main() {
 	flag.StringVar(&imgRepo, "imgRepo", "/opt/static", "image save Path")
 	flag.StringVar(&domain, "domain", "www.juntengshoes.cn", "domain name")
 	flag.BoolVar(&debug, "debug", false, "debug mode, disable weixin init")
+	flag.StringVar(&wxport, "wxport", "8001", "wx port")
+	flag.StringVar(&restport, "restport", "8000", "rest port")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 
@@ -80,8 +85,8 @@ func main() {
 	refreshSummaryStat()
 
 	go func() {
-		glog.Infof("starting restful webserver on localhost:8000")
-		server := &http.Server{Addr: ":8000", Handler: wsContainer}
+		glog.Infof("starting restful webserver on localhost:%s", restport)
+		server := &http.Server{Addr: fmt.Sprintf(":%s", restport), Handler: wsContainer}
 		glog.Infof(server.ListenAndServe().Error())
 	}()
 
@@ -89,7 +94,7 @@ func main() {
 		WechatBackendInit()
 	}
 
-	glog.Infof("starting wechat backend webserver on localhost:8001")
+	glog.Infof("starting wechat backend webserver on localhost:%s", wxport)
 	http.HandleFunc("/backend/wx_callback", wxCallbackHandler)
 	http.HandleFunc("/backend/binding", bindingHandler)
 	http.HandleFunc("/backend/confirm", confirmHandler)
@@ -98,6 +103,6 @@ func main() {
 	http.HandleFunc("/backend/photo", photoHandler)
 	http.HandleFunc("/backend/download", downloadHandler)
 	http.HandleFunc("/backend/excel", excelHandler)
-	glog.Info(http.ListenAndServe(":8001", nil))
+	glog.Info(http.ListenAndServe(fmt.Sprintf(":%s", wxport), nil))
 
 }
