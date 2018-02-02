@@ -68,6 +68,7 @@ type User struct {
 	CompanyName string    `gorm:"-" json:"company_name"`
 	WxOpenId    *string   `gorm:"column:wx_openid;size:50;unique_index" json:"wx_openid"`
 	Enable      string    `gorm:"column:enable;size:1;default:'T';not null" json:"enable"`
+	Admin       string    `gorm:"column:;size:1;default:'F';not null" json:"admin"`
 	Pictures    []Picture `gorm:"ForeignKey:UserId" json:"-"`
 }
 
