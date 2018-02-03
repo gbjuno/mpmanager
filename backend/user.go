@@ -56,9 +56,82 @@ func (u User) Register(container *restful.Container) {
 	ws.Route(ws.GET("/?name={name}&phone={phone}&pageNo={pageNo}&pageSize={pageSize}&order={order}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.GET("/{user_id}").Doc("get user object").To(u.findUser))
 	ws.Route(ws.POST("").To(u.createUser))
+	ws.Route(ws.POST("/").To(u.createUser))
+	ws.Route(ws.POST("/login").To(u.loginUser))
 	ws.Route(ws.PUT("/{user_id}").To(u.updateUser))
 	ws.Route(ws.DELETE("/{user_id}").To(u.deleteUser))
 	container.Add(ws)
+}
+
+func (u User) loginUser(request *restful.Request, response *restful.Response) {
+	prefix := fmt.Sprintf("[%s] [loginUser]", request.Request.RemoteAddr)
+	glog.Infof("%s GET %s", prefix, request.Request.URL)
+
+	r.ParseForm()
+	phone := r.Form.Get("phone")
+	password := r.Form.Get("password")
+	glog.Infof("%s, postform data phone %s, password %s", prefix, phone, password)
+
+	user = User{}
+	db.Debug().Where("phone = ?", phone).First(&user)
+	if user.ID == 0 {
+		glog.Errorf("%s user with phone %s doesn't exist", prefix, phone)
+		response.Status = false
+		response.Message = "手机号或密码错误，请重试"
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(w, string(returnContent))
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	glog.Infof("%s find user with id %d", prefix, user.ID)
+	/*
+		encryptedPassword, err := utils.DesEncrypt([]byte(password), wxDESkey)
+		if err != nil {
+			glog.Errorf("%s unable to encrypt password %s", password)
+			glog.Infof("%s password not match", prefix)
+			return
+		}*/
+
+	// password match
+
+	hashCode := md5.New()
+	io.WriteString(hashCode, password)
+	md5pass := fmt.Sprintf("%x", hashCode.Sum(nil))
+
+	if md5pass == user.Password {
+		user.WxOpenId = &openId
+		db.Debug().Save(&user)
+		response.Status = true
+		response.Message = fmt.Sprintf("用户%s首次成功绑定企业%s，可以进行拍照", user.Name, company.Name)
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, string(returnContent))
+		return
+	} else {
+		//password not match
+		glog.Infof("%s password not match, input password %s(encrypt %s), actual password %s", prefix, password, md5pass, user.Password)
+		response.Status = false
+		response.Message = "手机号或密码错误，请重试"
+		returnContent, err := json.Marshal(response)
+		if err != nil {
+			glog.Errorf("%s json marshal error %s, response %v", prefix, err, response)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(w, string(returnContent))
+		w.WriteHeader(http.StatusOK)
+		return
+	}v
 }
 
 func (u User) findUser(request *restful.Request, response *restful.Response) {
