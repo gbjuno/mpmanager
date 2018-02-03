@@ -23,7 +23,7 @@ type SummaryList struct {
 
 func (s Summary) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(s.findSummary))
 	ws.Route(ws.GET("?from={from}&to={to}&company_id={company_id}&finish={finish}&pageSize={pageSize}&pageNo={pageNo}&order={order}&format={format}").To(s.findSummary))
 	container.Add(ws)

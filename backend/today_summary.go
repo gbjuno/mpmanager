@@ -70,7 +70,7 @@ func getTodaySummaryWithCompanyId(company_id int) (*CompanySummary, error) {
 
 func (s TodaySummary) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/today_summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/today_summary").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("/{day}/").To(s.findTodaySummary))
 	ws.Route(ws.GET("/{day}/?pageNo={pageNo}&pageSize={pageSize}&order={order}").To(s.findTodaySummary))
 	ws.Route(ws.GET("/{day}/{company_id}").To(s.findTodaySummary))

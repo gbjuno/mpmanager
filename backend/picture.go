@@ -21,7 +21,7 @@ type PictureList struct {
 
 func (p Picture) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/picture").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/picture").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(p.findPicture))
 	ws.Route(ws.GET("/{picture_id}").To(p.findPicture))
 	//ws.Route(ws.POST("").To(p.createPicture))

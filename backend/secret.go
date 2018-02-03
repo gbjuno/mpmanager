@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
+	"strings"
 
 	"github.com/chanxuehong/session"
 	"github.com/chanxuehong/sid"
@@ -31,7 +31,7 @@ func parsePasswordSession(cookieValue string) (string, error) {
 	prefix := fmt.Sprintf("[%s]", "parsePasswordSession")
 	glog.Infof("%s parse cookie, cookie value %s", prefix, cookieValue)
 
-	session, err := sessionStorage.Get(cookieValue)
+	session, err := PasswordSessionStorage.Get(cookieValue)
 	if err != nil {
 		glog.Errorf("%s session is outdate or invalid, err %s", prefix, err)
 		return "", err
@@ -41,21 +41,26 @@ func parsePasswordSession(cookieValue string) (string, error) {
 }
 
 func PasswordAuthenticate(request *restful.Request, response *restful.Response, chain *restful.FilterChain) {
-	sessionid := request.HeaderParameter("sessionid")
+	prefix := fmt.Sprintf("[%s]", "PasswordAuthenticate")
+	cookieStr := request.HeaderParameter("Cookie")
+	var sessionid string
+	for _, cookie := range strings.Split(cookieStr, ";") {
+		temp := strings.Split(cookie, "=")
+		if temp[0] == "sessionid" {
+			sessionid = temp[1]
+		}
+	}
+
 	if sessionid == "" {
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, Response{Status: "error", Error: "401 please logi"})
+		glog.Infof("%s no sessionid", prefix)
+		response.WriteHeaderAndEntity(http.StatusUnauthorized, Response{Status: "error", Error: "请登陆后进行操作"})
 		return
 	}
-	user_id, err := parsePasswordSession(sessionid)
+
+	_, err := parsePasswordSession(sessionid)
 	if err != nil {
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, Response{Status: "error", Error: err.Error()})
-		return
-	}
-	id, _ := strconv.Atoi(user_id)
-	user := User{}
-	db.Debug().Where("id = ?", id).First(&user)
-	if user.ID == 0 {
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, Response{Status: "error", Error: "401 user not found"})
+		glog.Infof("%s sessionid is not valid ,err %s", prefix, err)
+		response.WriteHeaderAndEntity(http.StatusUnauthorized, Response{Status: "error", Error: "请重新登陆"})
 		return
 	}
 

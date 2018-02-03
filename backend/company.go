@@ -32,7 +32,7 @@ type MonitorPlaceWithCompany struct {
 
 func (c Company) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(c.findCompany))
 	ws.Route(ws.GET("/?pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}").To(c.findCompany))

@@ -24,7 +24,7 @@ type MonitorPlaceWithMonitorType struct {
 
 func (m MonitorType) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/monitor_type").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/monitor_type").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(m.findMonitorType))
 	ws.Route(ws.GET("/{monitor_type_id}").To(m.findMonitorType))
 	ws.Route(ws.GET("/{monitor_type_id}/{scope}").To(m.findMonitorType))

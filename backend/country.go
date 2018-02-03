@@ -24,7 +24,7 @@ type CompanyListWithCountryID struct {
 
 func (c Country) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/country").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/country").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(c.findCountry))
 	ws.Route(ws.GET("/{country_id}").To(c.findCountry))
 	ws.Route(ws.GET("/{country_id}/{scope}").To(c.findCountry))

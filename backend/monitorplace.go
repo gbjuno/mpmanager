@@ -36,7 +36,7 @@ type PictureWithMonitorPlace struct {
 
 func (m MonitorPlace) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/monitor_place").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/monitor_place").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(m.findMonitorPlace))
 	ws.Route(ws.GET("?scope={scope}&day={day}&pageSize={pageSize}&pageNo={pageNo}&order={order}&company_id={company_id}").To(m.findMonitorPlace))
 	ws.Route(ws.GET("/{monitor_place_id}").To(m.findMonitorPlace))

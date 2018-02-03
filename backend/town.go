@@ -30,7 +30,7 @@ type CompanyListWithTownID struct {
 
 func (t Town) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/town").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	ws.Path(RESTAPIVERSION + "/town").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(t.findTown))
 	ws.Route(ws.GET("/{town_id}").To(t.findTown))
 	ws.Route(ws.GET("/{town_id}/{scope}").To(t.findTown))
