@@ -393,8 +393,34 @@ func (m MonitorPlace) updateMonitorPlace(request *restful.Request, response *res
 		return
 	}
 
+	nameChange := false
+	oldName := realMonitorPlace.Name
+	if realMonitorPlace.Name != monitor_place.Name {
+		nameChange = true
+	}
 	//find monitor_place
 	db.Debug().Model(&realMonitorPlace).Update(monitor_place)
+	if nameChange {
+		company := Company{}
+		db.Debug().Where("id = ?", realMonitorPlace.CompanyId).First(&company)
+		if company.ID == 0 {
+			errmsg := fmt.Sprintf("cannot update monitor_place, company with id %d not found", realMonitorPlace.CompanyId)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+		qrcodePath := fmt.Sprintf("https://%s/backend/photo?place=%d", domain, realMonitorPlace.ID)
+		//create monitor_place qrcode image
+		if err := utils.GenerateQrcodeImage(qrcodePath, company.Name+realMonitorPlace.Name, imgRepo+realMonitorPlace.QrcodePath); err != nil {
+			errmsg := fmt.Sprintf("cannot update monitor_place %d, generate qrcode failed, err %s", realMonitorPlace.ID, err)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+			return
+		}
+		glog.Infof("%s update monitor_place %d name from %s to %s successfully", prefix, monitor_place.ID, oldName, realMonitorPlace.Name)
+	}
+
+	//find monitor_place
 	glog.Infof("%s update monitor place with id %d succeed", prefix, realMonitorPlace.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, realMonitorPlace)
 	return

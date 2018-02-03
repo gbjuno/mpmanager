@@ -25,13 +25,12 @@ func (p Picture) Register(container *restful.Container) {
 	ws.Route(ws.GET("").To(p.findPicture))
 	ws.Route(ws.GET("/{picture_id}").To(p.findPicture))
 	//ws.Route(ws.POST("").To(p.createPicture))
-	ws.Route(ws.POST("/{picture_id}").To(p.judgePicture))
 	ws.Route(ws.PUT("/{picture_id}").To(p.updatePicture))
 	ws.Route(ws.DELETE("/{picture_id}").To(p.deletePicture))
 	container.Add(ws)
 }
 
-func sendPictureJudgementMsg(monitor_place_id int) {
+func sendPictureJudgementMsg(monitor_place_id int, comment string) {
 	prefix := fmt.Sprintf("[%s]", "sendPictureJudgementMsg")
 	loc, _ := time.LoadLocation("Local")
 	timeNow := time.Now()
@@ -58,7 +57,7 @@ func sendPictureJudgementMsg(monitor_place_id int) {
 	}
 
 	first := Keyword{Value: "您好，本日贵企业上传的拍照图片不及格"}
-	remark := Keyword{Value: "需要重新整改再进行拍照，请您尽快处理"}
+	remark := Keyword{Value: fmt.Sprintf("错误原因: %s\n需要重新整改再进行拍照，请您尽快处理", comment)}
 
 	userList := make([]User, 0)
 	db.Debug().Where("company_id = ?", company.ID).Find(&userList)
@@ -82,64 +81,6 @@ func sendPictureJudgementMsg(monitor_place_id int) {
 	}
 
 	glog.Infof("%s end send message job", prefix)
-}
-
-func (p Picture) judgePicture(request *restful.Request, response *restful.Response) {
-	prefix := fmt.Sprintf("[%s] [judgePicture]", request.Request.RemoteAddr)
-	glog.Infof("%s POST %s", prefix, request.Request.URL)
-	picture_id := request.PathParameter("picture_id")
-
-	if picture_id == "" {
-		errmsg := fmt.Sprintf("cannot get picture, picture_id is empty")
-		glog.Errorf("%s %s", prefix, errmsg)
-		returnEntity := &Response{Status: "500", Error: "please provide picture_id"}
-		response.WriteHeaderAndEntity(http.StatusForbidden, returnEntity)
-		return
-	} else {
-		//get picture id
-		id, err := strconv.Atoi(picture_id)
-		if err != nil {
-			errmsg := fmt.Sprintf("cannot get picture, picture_id is not integer, err %s", err)
-			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusForbidden, Response{Status: "error", Error: "picture_id is not integer"})
-			return
-		}
-
-		picture := Picture{}
-		db.Debug().Where("id = ?", id).First(&picture)
-		if picture.ID == 0 {
-			errmsg := fmt.Sprintf("cannot find picture with id %s", picture_id)
-			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusForbidden, Response{Status: "error", Error: errmsg})
-			return
-		}
-
-		tx := db.Begin()
-		picture.Judgement = "F"
-		tx.Debug().Save(&picture)
-		glog.Infof("%s update picture %d to F", prefix, picture.ID)
-
-		day := fmt.Sprintf("%d%02d%02d", picture.CreateAt.Year(), picture.CreateAt.Month(), picture.CreateAt.Day())
-		dayCondition := fmt.Sprintf("to_days(day) = to_days(str_to_date(%s, '%%Y%%m%%d'))", day)
-		todaySummary := TodaySummary{}
-		tx.Debug().Where(dayCondition).Where("monitor_place_id = ?", picture.MonitorPlaceId).First(&todaySummary)
-		if todaySummary.ID == 0 {
-			errmsg := fmt.Sprintf("todaysummary not found, please contact adiministrator")
-			glog.Errorf("%s %s", prefix, errmsg)
-			response.WriteHeaderAndEntity(http.StatusForbidden, Response{Status: "error", Error: errmsg})
-			return
-		}
-
-		todaySummary.EverJudge = "T"
-		todaySummary.Judgement = "F"
-		todaySummary.IsUpload = "F"
-		tx.Debug().Save(&todaySummary)
-		glog.Infof("%s update todaySummary %d", prefix, todaySummary)
-		tx.Commit()
-		response.WriteHeader(http.StatusOK)
-		go sendPictureJudgementMsg(picture.MonitorPlaceId)
-		return
-	}
 }
 
 func (p Picture) findPicture(request *restful.Request, response *restful.Response) {
@@ -265,8 +206,38 @@ func (p Picture) updatePicture(request *restful.Request, response *restful.Respo
 		return
 	}
 
+	if picture.Judgement == "F" {
+		tx := db.Begin()
+		realPicture.Judgement = "F"
+		realPicture.JudgeComment = picture.JudgeComment
+		tx.Debug().Save(&realPicture)
+		glog.Infof("%s update picture %d to F", prefix, realPicture.ID)
+
+		day := fmt.Sprintf("%d%02d%02d", realPicture.CreateAt.Year(), realPicture.CreateAt.Month(), realPicture.CreateAt.Day())
+		dayCondition := fmt.Sprintf("to_days(day) = to_days(str_to_date(%s, '%%Y%%m%%d'))", day)
+		todaySummary := TodaySummary{}
+		tx.Debug().Where(dayCondition).Where("monitor_place_id = ?", realPicture.MonitorPlaceId).First(&todaySummary)
+		if todaySummary.ID == 0 {
+			errmsg := fmt.Sprintf("todaysummary not found, please contact adiministrator")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusForbidden, Response{Status: "error", Error: errmsg})
+			return
+		}
+
+		todaySummary.EverJudge = "T"
+		todaySummary.Judgement = "F"
+		todaySummary.IsUpload = "F"
+		tx.Debug().Save(&todaySummary)
+		glog.Infof("%s update todaySummary %d", prefix, todaySummary)
+		tx.Commit()
+		response.WriteHeader(http.StatusOK)
+		go sendPictureJudgementMsg(realPicture.MonitorPlaceId, realPicture.JudgeComment)
+		return
+	}
+
 	//find picture and update
-	db.Debug().Model(&realPicture).Update(picture)
+	realPicture.JudgeComment = picture.JudgeComment
+	db.Debug().Save(&realPicture)
 	glog.Infof("%s update picture with id %d on database", prefix, realPicture.ID)
 	response.WriteHeaderAndEntity(http.StatusCreated, realPicture)
 	return

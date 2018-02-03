@@ -184,7 +184,7 @@ func sendTemplateMsg() {
 func jobWorker() {
 	c := cron.New()
 	c.AddFunc("0 0 * * * *", refreshTodaySummary)
-	c.AddFunc("0 1 * * * *", refreshSummary)
+	c.AddFunc("0 */30 * * * *", refreshSummary)
 	c.AddFunc("0 */2 * * * *", refreshSummaryStat)
 	c.AddFunc("0 0 12 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 16 * * *", sendTemplateMsg)
