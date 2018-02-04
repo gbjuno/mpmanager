@@ -71,7 +71,6 @@ class PlaceForm extends Component {
         const { getFieldDecorator } = this.props.form;
         const { style, filter } = this.props
         const { value } = this.state
-        console.log('sshshsah', value)
 
         return (
             <Form style={style} onSubmit={this.handleSubmit}>
