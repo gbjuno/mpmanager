@@ -8,7 +8,7 @@ import * as _ from 'lodash'
 import moment from 'moment';
 import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
 import * as CONSTANTS from '../../constants';
-import { fetchData, receiveData } from '../../action';
+import { fetchData, receiveData, searchFilter } from '../../action';
 
 const FormItem = Form.Item;
 const Search = Input.Search;
@@ -55,9 +55,13 @@ class PictureSearch extends Component {
     };
 
     searchPicture = (date, companyId) => {
-        const { fetchData } = this.props
+        const { fetchData, searchFilter } = this.props
         fetchData({funcName: 'fetchPicturesWithPlace', params: {date, companyId}, 
             stateName: 'picturesData'})
+        searchFilter('picture', {
+            date,
+            companyId,
+        })
     }
 
     onDateChange = (date, dateString) => {
@@ -268,6 +272,7 @@ const mapStateToProps = state => {
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
+    searchFilter: bindActionCreators(searchFilter, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
 });
 

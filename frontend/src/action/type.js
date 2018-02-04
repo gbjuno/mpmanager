@@ -5,4 +5,4 @@ export const REQUEST_DATA = 'REQUEST_DATA';
 
 export const RECEIVE_DATA = 'RECEIVE_DATA';
 
-export const SEARCH_PICTURE = 'SEARCH_PICTURE';
+export const TRIGGER_SEARCH = 'TRIGGER_SEARCH';

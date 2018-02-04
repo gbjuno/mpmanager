@@ -29,10 +29,10 @@ const httpData = (state = {}, action) => {
 
 const searchFilter = (state = {}, action) => {
     switch (action.type){
-        case type.SEARCH_PICTURE:
+        case type.TRIGGER_SEARCH:
             return {
                 ...state,
-                [action.collection]: {...action.condition},
+                [action.scope]: {...action.condition},
             };
         default:
             return {...state};

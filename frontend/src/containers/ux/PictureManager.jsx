@@ -207,7 +207,9 @@ class PictureManager extends React.Component {
         this.setState({
             viewMoreRecord: null,
             viewMore: false,
+        }, () => {
         })
+        
     }
 
     markUnqualified = (record) => {
@@ -235,7 +237,11 @@ class PictureManager extends React.Component {
 
     handleConfirmUnqualified = () =>{
         const { unQualifiedReason, unQualifiedRecord } = this.state
-        const { fetchData } = this.props
+        const { fetchData, searchFilter } = this.props
+        if(unQualifiedReason === undefined || unQualifiedReason === ''){
+            message.error('请填写不合格原因')
+            return
+        }
         let pictureId = unQualifiedRecord.pictures[0].id //TODO: have to confirm data
         let updateObj = {
             id: pictureId,
@@ -250,9 +256,15 @@ class PictureManager extends React.Component {
                 this.setState({
                     unQualifiedRecord: null,
                     visibleMarkModal: false,
-                }, ()=>[
-                    this.setState({unQualifiedReason: ''})
-                ])
+                }, ()=>{
+                    this.setState({
+                        unQualifiedReason: '',
+                    })
+                    const date = searchFilter.picture.date
+                    const companyId = searchFilter.picture.companyId
+                    fetchData({funcName: 'fetchPicturesWithPlace', params: {date, companyId}, 
+                        stateName: 'picturesData'})
+                })
             }).catch(err => {
                 let errRes = err.response
                 if(errRes.data && errRes.data.status === 'error'){
@@ -479,7 +491,7 @@ class PictureManager extends React.Component {
 }
 
 const mapStateToProps = state => {
-    return { ...state.httpData, filter: state.searchFilter };
+    return { ...state.httpData, searchFilter: state.searchFilter };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),

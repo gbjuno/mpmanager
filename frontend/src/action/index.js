@@ -23,3 +23,9 @@ export const fetchData = ({funcName, params, stateName}) => dispatch => {
     dispatch(requestData(stateName));
     return http[funcName](params).then(res => dispatch(receiveData(res, stateName)));
 };
+
+export const searchFilter = (scope, condition) => ({
+    type: type.TRIGGER_SEARCH,
+    scope,
+    condition,
+})
