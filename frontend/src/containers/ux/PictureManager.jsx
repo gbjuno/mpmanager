@@ -4,13 +4,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Row, Col, Card, Tabs, Pagination, Icon, Tooltip } from 'antd';
+import { Row, Col, Card, Tabs, Pagination, Icon, Tooltip, Modal, Input, message } from 'antd';
 import * as _ from 'lodash'
 import moment from 'moment';
 import { fetchData, receiveData } from '../../action';
 import * as CONSTANTS from '../../constants';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import PictureSearch from '../search/PictureSearch'
+import PictureDetail from './PictureDetail'
+import Rune from '../../components/rune';
 import * as config from '../../axios/config'
 import * as utils from '../../utils'
 import PhotoSwipe from 'photoswipe';
@@ -20,6 +22,7 @@ import 'photoswipe/dist/photoswipe.css';
 import 'photoswipe/dist/default-skin/default-skin.css';
 
 const TabPane = Tabs.TabPane;
+const TextArea = Input.TextArea;
 const DEFAULT_PIC_URL = '/html/static/null.png'
 
 class PictureManager extends React.Component {
@@ -31,6 +34,11 @@ class PictureManager extends React.Component {
         placesData: [],
         selectedDay: moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT),
         filter: {},
+        viewMore: false,
+        visibleMarkModal: false,
+        unQualifiedReason: '',
+        unQualifiedRecord: null,
+        viewMoreRecord: null,
     };
 
     componentDidMount = () => {
@@ -164,28 +172,10 @@ class PictureManager extends React.Component {
         });
         this.gallery.init();
     };
+
     closeGallery = () => {
         if (!this.gallery) return;
         this.gallery.close();
-    };
-
-    //转置图片数据
-    transpositionToMatrix = picArray => {
-        if(picArray===undefined || picArray.length === undefined || picArray.length === 0) return [[]];
-        const colLen = 6
-        const rowLen = Math.ceil(picArray.length / colLen)
-        const mod = picArray.length % colLen
-        let matrix = new Array()
-        for(let i=0; i<colLen; i++){
-            let uniArray = new Array()
-            for(let j=0; j<rowLen; j++)
-            {
-                if(j * colLen + i >= picArray.length) break;
-                uniArray.push(picArray[j * colLen + i])
-            }
-            matrix.push(uniArray)
-        }
-        return matrix
     };
 
     hasPicture = pictures => {
@@ -206,11 +196,103 @@ class PictureManager extends React.Component {
         return picFull
     }
 
+    viewMore = (record) => {
+        this.setState({
+            viewMoreRecord: record,
+            viewMore: true,
+        })
+    }
+
+    backToMain = () => {
+        this.setState({
+            viewMoreRecord: null,
+            viewMore: false,
+        })
+    }
+
+    markUnqualified = (record) => {
+        this.setState({
+            unQualifiedReason: '',
+            unQualifiedRecord: record,
+            visibleMarkModal: true,
+        })
+    }
+
+    hideMarkModal = () => {
+        this.setState({
+            unQualifiedRecord: null,
+            visibleMarkModal: false,
+        }, ()=>[
+            this.setState({unQualifiedReason: ''})
+        ])
+    }
+
+    onUnqualifiedReason = (e) =>{
+        this.setState({
+            unQualifiedReason: e.target.value,
+        })
+    }
+
+    handleConfirmUnqualified = () =>{
+        const { unQualifiedReason, unQualifiedRecord } = this.state
+        const { fetchData } = this.props
+        let pictureId = unQualifiedRecord.pictures[0].id //TODO: have to confirm data
+        let updateObj = {
+            id: pictureId,
+            judgement: 'F',
+            judgecomment: unQualifiedReason,
+        }
+
+        fetchData({funcName: 'updatePicture', params: updateObj, stateName: 'updatePictureStatus'})
+            .then(res => {
+                message.success('已标记为不合格')
+                //this.fetchRelatedUserAndPlace(selectedCompanyId)
+                this.setState({
+                    unQualifiedRecord: null,
+                    visibleMarkModal: false,
+                }, ()=>[
+                    this.setState({unQualifiedReason: ''})
+                ])
+            }).catch(err => {
+                let errRes = err.response
+                if(errRes.data && errRes.data.status === 'error'){
+                    message.error(errRes.data.error)
+                }
+            });
+    }
+
+    handleSearchChange = (companyId, companyName) => {
+        this.setState({
+            selectedCompanyId: companyId,
+            selectedCompanyName: companyName,
+        })
+    }
+
+    //转置图片数据
+    transpositionToMatrix = picArray => {
+        if(picArray===undefined || picArray.length === undefined || picArray.length === 0) return [[]];
+        const colLen = 6
+        const rowLen = Math.ceil(picArray.length / colLen)
+        const mod = picArray.length % colLen
+        let matrix = new Array()
+        for(let i=0; i<colLen; i++){
+            let uniArray = new Array()
+            for(let j=0; j<rowLen; j++)
+            {
+                if(j * colLen + i >= picArray.length) break;
+                uniArray.push(picArray[j * colLen + i])
+            }
+            matrix.push(uniArray)
+        }
+        return matrix
+    };
 
     generateCard = (imgs, isMobile=false) => imgs.map(v1 => (
         v1.map(v2 => (
             <div key={v2.id} className="gutter-box" style={isMobile? {}: {height: this.state.standardHeight * this.state.rate + 80}}>
+                
                 <Card bordered={false} bodyStyle={isMobile? {padding: 0}: { padding: 0, height: this.state.standardHeight * this.state.rate + 60}}>
+                    <Rune value={v2}/>
                     <div>
                         <img style={isMobile? {}: {height: this.state.standardHeight * this.state.rate}} 
                             onClick={() => {
@@ -222,9 +304,16 @@ class PictureManager extends React.Component {
                     </div>
                     <div className="pa-s">
                         <h4 style={{marginBottom: '0em'}}>{v2.name}<span style={{paddingLeft: 5}}>{v2.monitor_place_id}</span>
+                        {this.hasPicture(v2.pictures) &&
+                        <span>
                         <Tooltip placement="bottom" title={"更多"}>
-                            <Icon className="anj-pic-icon" type="ellipsis"/>
+                            <Icon className="anj-pic-icon" type="ellipsis" onClick={this.viewMore.bind(this, v2)}/>
                         </Tooltip>
+                        <Tooltip placement="bottom" title={"不合格"}>
+                            <Icon className="anj-pic-icon-red" type="dislike-o" onClick={this.markUnqualified.bind(this, v2)}/>
+                        </Tooltip>
+                        </span>
+                        }
                         </h4>
                         <small><a>{v2.placeName}<span style={{paddingLeft: 5}}>{v2.company_name}</span></a></small>
                     </div>
@@ -288,30 +377,44 @@ class PictureManager extends React.Component {
     }
 
     render() {
-        const { rate, placeTypes } = this.state
+        const { rate, placeTypes, viewMore, viewMoreRecord, unQualifiedReason } = this.state
         const { picturesData  } = this.props
 
         const isMobile = this.props.responsive.data.isMobile
 
-
         let chaosDataWithType = this.chaos(picturesData, placeTypes)
         let pictureGrids = this.generateGrid(chaosDataWithType, isMobile)
-
 
         return (
             <div id="scPic" className="gutter-example button-demo">
                 <BreadcrumbCustom first="图片管理" second="" />
-                <PictureSearch  fetchData={fetchData}/>
+                {viewMore?
+                <div><PictureDetail onBack={this.backToMain} detailRecord={viewMoreRecord}/></div>
+                :
+                <div>
+                <PictureSearch onChange={this.handleSearchChange}  fetchData={fetchData}/>
                 <Row gutter={20}>
                     <Col className="gutter-row" md={24}>
                         <Tabs defaultActiveKey={placeTypes[0]?`${placeTypes[0].id}`:'0'}>
                         {pictureGrids}
                         </Tabs>
                     </Col>
-                    <Col className="gutter-row" md={0}>
-                        
-                    </Col>
                 </Row>
+                <Modal
+                    title="标记为不合格"
+                    wrapClassName="vertical-center-modal"
+                    visible={this.state.visibleMarkModal}
+                    onOk={this.handleConfirmUnqualified}
+                    onCancel={this.hideMarkModal}
+                    okText="确认"
+                    cancelText="取消"
+                    >
+                    <TextArea 
+                        placeholder="请输入不合格原因" 
+                        onChange={this.onUnqualifiedReason} 
+                        value={unQualifiedReason}
+                        autosize={{ minRows: 3, maxRows: 3 }} />
+                </Modal>
                 <div className="pswp" tabIndex="-1" role="dialog" aria-hidden="true" ref={(div) => {this.pswpElement = div;} }>
 
                     <div className="pswp__bg" />
@@ -362,8 +465,9 @@ class PictureManager extends React.Component {
                         </div>
 
                     </div>
-
+                    </div>
                 </div>
+                }
                 <style>{`
                     .ant-card-body img {
                         cursor: pointer;

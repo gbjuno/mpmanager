@@ -43,6 +43,7 @@
     "promise": "7.1.1",
     "prop-types": "^15.5.10",
     "rc-banner-anim": "^0.5.13",
+    "rc-tween-one": "^1.4.5",
     "react": "^15.6.1",
     "react-dev-utils": "^3.0.2",
     "react-dom": "^15.6.1",

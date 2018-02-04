@@ -813,7 +813,7 @@ class CompanyManager extends React.Component {
         const companyColumns = [{
             title: '公司名',
             dataIndex: 'name',
-            width: "20%",
+            width: "25%",
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='company.name' value={record.name} onChange={this.onNewRowChange} />
@@ -823,7 +823,7 @@ class CompanyManager extends React.Component {
         }, {
             title: '所在村',
             dataIndex: 'country_name',
-            width: "20%",
+            width: "15%",
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='company.country_id' value={record.country_id} onChange={this.onNewRowChange}
@@ -834,7 +834,7 @@ class CompanyManager extends React.Component {
         }, {
             title: '详细地址',
             dataIndex: 'address',
-            width: "30%",
+            width: "40%",
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='company.address' value={record.address} onChange={this.onNewRowChange} />
@@ -844,7 +844,7 @@ class CompanyManager extends React.Component {
         }, {
             title: '创建时间',
             dataIndex: 'create_at',
-            width: "30%",
+            width: "20%",
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell type="opt" onSave={this.onRowSave} onCancel={this.handleCancelEditRow}/>
@@ -860,7 +860,7 @@ class CompanyManager extends React.Component {
                 <BreadcrumbCustom first="公司管理" />
                 <CompanySearch  fetchData={fetchData}/>
                 <Row gutter={16}>
-                    <Col className="gutter-row" md={12}>
+                    <Col className="gutter-row" md={14}>
                         <div className="gutter-box">
                             <Card title="公司列表" bordered={false}>
                                 <div style={{ marginBottom: 16 }}>
@@ -909,7 +909,7 @@ class CompanyManager extends React.Component {
                             </Card>
                         </div>
                     </Col>
-                    <Col className="gutter-row" md={12}>
+                    <Col className="gutter-row" md={10}>
                         <div className="gutter-box">
                             <Card title={selectedCompany?selectedCompany:"请选择公司"} bordered={false} 
                                 bodyStyle={{paddingTop: 0}}>

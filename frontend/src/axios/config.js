@@ -33,7 +33,9 @@ export const PLACETYPE_URL = SERVER_URL + "/monitor_type"
 export const SUMMARY_URL = SERVER_URL + "/summary"
 export const SEARCH_SUMMARY_URL = (filter) => SERVER_URL + `/summary?from=${filter.from}&to=${filter.to}&company_id=${filter.companyId}`
 export const EXPORT_SUMMARY_URL = (filter) => SERVER_URL + `/summary?from=${filter.from}&to=${filter.to}&company_id=${filter.companyId}&format=xlsx`
-export const PICTURE_URL = (filter) => SERVER_URL + `/monitor_place?day=${filter.day}&company_id=${filter.companyId}&pageNo=1&pageSize=1`
+export const PICTURE_URL = (filter) => SERVER_URL + `/monitor_place?day=${filter.day}&company_id=${filter.companyId}&pageNo=1&pageSize=3`
+export const UPDATE_PICTURE_URL = (filter) => SERVER_URL + `/picture/${filter.id}`
+
 
 //上传下载公司地址
 export const COMPANY_DOWNLOAD_URL = SERVER_ROOT + '/backend/excel'

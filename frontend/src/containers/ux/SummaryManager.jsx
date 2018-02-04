@@ -72,7 +72,7 @@ class SummaryManager extends React.Component {
             {
                 title: '统计日期',
                 dataIndex: 'day',
-                width: 20,
+                width: '12%',
                 render: (text, record) => {
                     if (record.id === -1){
                         return ''
@@ -82,14 +82,14 @@ class SummaryManager extends React.Component {
             },{
                 title: '公司',
                 dataIndex: 'company_name',
-                width: 20,
+                width: '33%',
                 render: (text, record) => {
                     return <a href={record.url} target="_blank">{text}</a>
                 }
             },{
                 title: '是否完成',
                 dataIndex: 'finish',
-                width: 20,
+                width: '10%',
                 render: (text, record) => {
                     var value 
                     if(text == "T") {
@@ -102,7 +102,7 @@ class SummaryManager extends React.Component {
             },{
                 title: '未完成的拍照地点',
                 dataIndex: 'unfinish_ids',
-                width: 40,
+                width: '45%',
                 render: (text, record) => {
                     return <a href={record.url} target="_blank">{text}</a>
                 }

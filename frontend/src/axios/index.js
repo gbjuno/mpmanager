@@ -202,6 +202,11 @@ export const fetchPictures = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+export const updatePicture = (filter={}) => {
+    let url = config.UPDATE_PICTURE_URL(filter)
+    return axios.put(url , filter, {headers: {Accept: 'application/json'}}).then(res => res.data);
+}
+
 // 效率低，查询很难用
 // export const fetchPicturesByPlaceId = (filter={}) => {
 //     let placeId = filter.placeId

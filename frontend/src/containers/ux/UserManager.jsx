@@ -243,7 +243,7 @@ class UserManager extends React.Component {
         }, {
             title: '手机号',
             dataIndex: 'phone',
-            width: '20%',
+            width: '15%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='user.phone' value={record.phone} onChange={this.onNewRowChange} />
@@ -263,7 +263,7 @@ class UserManager extends React.Component {
         }, {
             title: '所在公司',
             dataIndex: 'company_name',
-            width: '20%',
+            width: '25%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
                     return <EditableCell dataIndex='user.company_id' value={record.company_id} onChange={this.onNewRowChange}

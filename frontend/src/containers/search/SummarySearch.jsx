@@ -250,6 +250,7 @@ class SummarySearch extends Component {
                     })(
                         <Select
                         showSearch
+                        allowClear
                         style={{ width: 200 }}
                         placeholder="请选择镇"
                         optionFilterProp="children"
@@ -270,6 +271,7 @@ class SummarySearch extends Component {
                     })(
                         <Select
                         showSearch
+                        allowClear
                         style={{ width: 200 }}
                         placeholder="请选择村"
                         optionFilterProp="children"
@@ -293,6 +295,7 @@ class SummarySearch extends Component {
                     })(
                         <Select
                         showSearch
+                        allowClear
                         style={{ width: 200 }}
                         placeholder="请选择公司"
                         optionFilterProp="children"

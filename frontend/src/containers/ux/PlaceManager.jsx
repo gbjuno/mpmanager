@@ -172,13 +172,13 @@ class PlaceManager extends React.Component {
     }
 
     handleDeleteConfirm = () => {
-        const { deleteRecord } = this.state
+        const { deleteRecord, selectedCompanyId } = this.state
         const { fetchData }  = this.props
         fetchData({
             funcName: 'deletePlace', params: { id: deleteRecord.id }, stateName: 'deletePlaceStatus'
             }).then(res => {
                 message.success('删除成功')
-                this.fetchPlaceData()
+                this.searchPlace(selectedCompanyId)
                 this.setState({
                     deleteModal: false,
                     deleteRecord: {},

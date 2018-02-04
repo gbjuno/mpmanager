@@ -145,4 +145,76 @@ small {
   }
 }
 
+.anj-pic-icon-red{
+  font-size: 18px;
+  float: right;
+  margin-right: 10px;
+  color: rgb(255, 89, 89);
+  &:hover{
+    cursor: pointer;
+    font-size: 19px;
+    color: rgba(255, 160, 160, 0.966);
+  }
+}
+
+
+.vertical-center-modal {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.vertical-center-modal:before {
+  content: '';
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+  width: 0;
+}
+
+.vertical-center-modal .ant-modal {
+  display: inline-block;
+  vertical-align: middle;
+  top: 0;
+  text-align: left;
+}
+
+.un-qualified-pic{
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  width: 100%;
+  z-index: 33;
+  opacity: .63;
+  color: white;
+  text-align: center;
+  padding-right: 10px;
+  padding-left: 10px;
+  background-color: #FF3366;
+}
+
+.user-thumb {
+  overflow: hidden;
+  background: fade(#fff, 15);
+  height: 70px;
+  & > span {
+    width: 80px;
+    height: 60px;
+    margin: 5px 5px;
+    box-shadow: 0 0 5px fade(#000, 15);
+    background: transparent;
+    &.active {
+      background: fade(#fff, 45);
+    }
+    & i {
+      display: block;
+      width: 70px;
+      height: 50px;
+      margin: 5px;
+      background-size: cover;
+      background-position: center;
+    }
+  }
+}
+
+
 /* Added by Jingle Chen End **/
