@@ -98,14 +98,14 @@ class PictureDetail extends React.Component {
 
     getComment = () => {
         const { detailRecord } = this.props
-        if(detailRecord.pictures && detailRecord.pictures[0]){
+        if(detailRecord && detailRecord.pictures && detailRecord.pictures[0]){
             return detailRecord.pictures[0].judgecomment
         }
     }
 
     isUnqualified = () => {
         const { detailRecord } = this.props
-        if(detailRecord.pictures && detailRecord.pictures[0]){
+        if(detailRecord && detailRecord.pictures && detailRecord.pictures[0]){
             return detailRecord.pictures[0].judgement === 'F'
         }
         return false
@@ -123,7 +123,7 @@ class PictureDetail extends React.Component {
 
         const isMobile = this.props.responsive.data.isMobile
 
-        const title = detailRecord.name
+        const title = detailRecord?detailRecord.name:''
         const isUnqualified = this.isUnqualified()
         let comment 
         if(isUnqualified){
@@ -137,7 +137,7 @@ class PictureDetail extends React.Component {
                 <Row gutter={20}>
                     <Col className="gutter-row" md={18}>
                         <Card >
-                            {baseHeight !== 0 &&
+                            {baseHeight !== 0 && detailRecord &&
                             <Carousel elements={detailRecord} height={baseHeight}/>
                             }
                         </Card>

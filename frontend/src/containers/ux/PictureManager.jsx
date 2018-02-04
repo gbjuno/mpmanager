@@ -208,6 +208,11 @@ class PictureManager extends React.Component {
             viewMoreRecord: null,
             viewMore: false,
         }, () => {
+            const { fetchData, searchFilter } = this.props
+            const date = searchFilter.picture.date
+            const companyId = searchFilter.picture.companyId
+            fetchData({funcName: 'fetchPicturesWithPlace', params: {date, companyId}, 
+                stateName: 'picturesData'})
         })
         
     }
@@ -400,10 +405,9 @@ class PictureManager extends React.Component {
         return (
             <div id="scPic" className="gutter-example button-demo">
                 <BreadcrumbCustom first="图片管理" second="" />
-                {viewMore?
-                <div><PictureDetail onBack={this.backToMain} detailRecord={viewMoreRecord}/></div>
-                :
-                <div>
+                <div style={{display: viewMore?'inline': 'none'}}><PictureDetail onBack={this.backToMain} detailRecord={viewMoreRecord}/></div>
+                
+                <div style={{display: !viewMore?'inline': 'none'}}>
                 <PictureSearch onChange={this.handleSearchChange}  fetchData={fetchData}/>
                 <Row gutter={20}>
                     <Col className="gutter-row" md={24}>
@@ -479,7 +483,6 @@ class PictureManager extends React.Component {
                     </div>
                     </div>
                 </div>
-                }
                 <style>{`
                     .ant-card-body img {
                         cursor: pointer;
