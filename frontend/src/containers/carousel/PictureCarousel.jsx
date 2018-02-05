@@ -2,7 +2,12 @@
  * Created by Haiyang on 2018/2/4.
  */
 import React from 'react';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
 import BannerAnim, { Element, Thumb } from 'rc-banner-anim';
+import * as _ from 'lodash'
+import moment from 'moment';
+import { fetchData, receiveData, searchFilter } from '../../action';
 import TweenOne from 'rc-tween-one';
 import * as config from '../../axios/config'
 
@@ -11,13 +16,27 @@ import PhotoswipeUIDefault from 'photoswipe/dist/photoswipe-ui-default';
 
 const BgElement = Element.BgElement;
 
-class Carousel extends React.Component {
+class PictureCarousel extends React.Component {
     state = {
     };
+
+    componentDidMount = () => {
+        const { searchFilter, elements } = this.props
+        const pictures = elements.pictures
+        if(pictures === undefined || pictures.length === 0) return
+        searchFilter('pictureCarousel', {selectPicture: pictures[0]})
+    }
 
     componentWillUnmount = () => {
         this.closeGallery();
     };
+
+    handleChange = (before, index) => {
+        const { searchFilter, elements } = this.props
+        const pictures = elements.pictures
+        if(pictures === undefined || pictures.length === 0) return
+        searchFilter('pictureCarousel', {selectPicture: pictures[index]})
+    }
 
     onMouseEnter = () => {
         this.setState({
@@ -37,7 +56,7 @@ class Carousel extends React.Component {
         if(pictures === undefined || pictures.length === 0) return
         return (
             pictures.map(picture => (
-                <Element key={picture.id}
+                <Element key={`${picture.id}`}
                     prefixCls="banner-user-elem"
                 >
                     <BgElement
@@ -49,6 +68,7 @@ class Carousel extends React.Component {
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
                     }}
+                    onClick={() => this.openGallery(config.SERVER_ROOT + picture.full_uri)} 
                     />
                     <TweenOne
                     animation={{ y: 50, opacity: 0, type: 'from', delay: 200 }}
@@ -108,7 +128,8 @@ class Carousel extends React.Component {
         const { height } = this.props
         return (
             <div>
-            <BannerAnim prefixCls="banner-user" style={{height: height}} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <BannerAnim prefixCls="banner-user" style={{height: height}} onChange={this.handleChange}
+                onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 {this.generateElement()}
                 <Thumb prefixCls="user-thumb" key="thumb" component={TweenOne}
                 animation={{ bottom: this.state.enter ? 0 : -70 }}
@@ -177,5 +198,14 @@ class Carousel extends React.Component {
         );
     }
 }
+const mapStateToProps = state => {
+    const { searchFilter } = state;
+    return { filter: searchFilter };
+};
+const mapDispatchToProps = dispatch => ({
+    receiveData: bindActionCreators(receiveData, dispatch),
+    fetchData: bindActionCreators(fetchData, dispatch),
+    searchFilter: bindActionCreators(searchFilter, dispatch),
+});
 
-export default Carousel;
+export default connect(mapStateToProps, mapDispatchToProps)(PictureCarousel);

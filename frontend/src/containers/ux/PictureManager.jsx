@@ -326,9 +326,11 @@ class PictureManager extends React.Component {
                         <Tooltip placement="bottom" title={"更多"}>
                             <Icon className="anj-pic-icon" type="ellipsis" onClick={this.viewMore.bind(this, v2)}/>
                         </Tooltip>
+                        {moment(new Date()).format(CONSTANTS.DATE_QUERY_FORMAT) === this.props.searchFilter.picture.date &&
                         <Tooltip placement="bottom" title={"不合格"}>
                             <Icon className="anj-pic-icon-red" type="dislike-o" onClick={this.markUnqualified.bind(this, v2)}/>
                         </Tooltip>
+                        }
                         </span>
                         }
                         </h4>
@@ -395,12 +397,13 @@ class PictureManager extends React.Component {
 
     render() {
         const { rate, placeTypes, viewMore, viewMoreRecord, unQualifiedReason } = this.state
-        const { picturesData  } = this.props
+        const { picturesData, searchFilter } = this.props
 
         const isMobile = this.props.responsive.data.isMobile
 
         let chaosDataWithType = this.chaos(picturesData, placeTypes)
         let pictureGrids = this.generateGrid(chaosDataWithType, isMobile)
+
 
         return (
             <div id="scPic" className="gutter-example button-demo">

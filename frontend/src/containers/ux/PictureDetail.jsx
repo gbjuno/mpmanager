@@ -7,11 +7,11 @@ import { bindActionCreators } from 'redux';
 import { Row, Col, Card, Button, Alert } from 'antd';
 import * as _ from 'lodash'
 import moment from 'moment';
-import { fetchData, receiveData } from '../../action';
+import { fetchData, receiveData, searchFilter } from '../../action';
 import * as CONSTANTS from '../../constants';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
-import Carousel from '../../components/carousel';
 import PictureSearch from '../search/PictureSearch'
+import Carousel from '../carousel/PictureCarousel';
 import * as config from '../../axios/config'
 import * as utils from '../../utils'
 
@@ -111,6 +111,22 @@ class PictureDetail extends React.Component {
         return false
     }
 
+    generateComments = () => {
+        const { detailRecord, filter } = this.props
+        let item = []
+        if(!filter || !filter.pictureCarousel || !filter.pictureCarousel.selectPicture) return
+        let picture = filter.pictureCarousel.selectPicture 
+        let wrongComment = picture.judgecomment && picture.judgecomment !== ''?picture.judgecomment:'未填写不合格原因'
+
+        if(picture.judgement === 'F'){
+            item.push(<Alert style={{marginBottom: 15}} key={picture.id} message={wrongComment} type="error" showIcon />)
+        }else{
+            item.push(<Alert style={{marginBottom: 15}} key={picture.id} message="更新图片" type="success" showIcon /> )
+        }
+
+        return item
+    }
+
     handleBack = () => {
         if(this.props.onBack){
             this.props.onBack()
@@ -144,14 +160,11 @@ class PictureDetail extends React.Component {
                     </Col>
                     <Col className="gutter-row" md={6}>
                         <Card 
+                            className="comment-card"
                             title={title}
                             extra={<Button onClick={this.handleBack} style={{cursor:'pointer'}}>返回</Button>}
                             bodyStyle={{}}>
-                            <Alert
-                                message={comment}
-                                type={isUnqualified?"error":"success"}
-                                showIcon
-                            />
+                            {this.generateComments()}
                         </Card>
                     </Col>
                 </Row>
@@ -165,7 +178,8 @@ const mapStateToProps = state => {
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
-    fetchData: bindActionCreators(fetchData, dispatch)
+    fetchData: bindActionCreators(fetchData, dispatch),
+    searchFilter: bindActionCreators(searchFilter, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PictureDetail);
