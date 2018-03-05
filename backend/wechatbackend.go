@@ -78,15 +78,8 @@ func WechatBackendInit() {
 
 	if wechatMenu, _, err := menu.Get(wechatClient); err != nil {
 		glog.Errorf("%s cannot get menu, err %s", prefix, err)
-		if wechatMenu == nil || len(wechatMenu.Buttons) != 3 {
-			createMenu()
-		}
 	} else {
 		glog.Errorf("%s get Menu from wechat %v", prefix, wechatMenu)
-		if err := menu.Delete(wechatClient); err != nil {
-			glog.Errorf("%s cannot delete menu, err %s", prefix, err)
-		}
-		createMenu()
 	}
 
 	mux := core.NewServeMux()
@@ -124,11 +117,8 @@ func createMenu() {
 	companystatButton.SetAsViewButton("检查进度", companystatURI)
 	glog.Infof("set Button companystat for uri %s, wechat redirecturi %s", companystatRedirectURI, companystatURI)
 
-	wechatMenu := &menu.Menu{Buttons: []menu.Button{*bindingButton, *scanqrcodeButton, *companystatButton}}
-	if err := menu.Create(wechatClient, wechatMenu); err != nil {
-		glog.Fatalf("cannot connect with weixin server, err %s", err)
-	}
-	glog.Info("create menu succeed")
+	topButton := &menu.Button{}
+	topButton.SubButtons = []menu.Button{*bindingButton, *scanqrcodeButton, *companystatButton}
 }
 
 func textMsgHandler(ctx *core.Context) {

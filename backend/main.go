@@ -74,6 +74,9 @@ func main() {
 	todaySummary := TodaySummary{}
 	todaySummary.Register(wsContainer)
 
+	menu := Menu{}
+	menu.Register(wsContainer)
+
 	go func() {
 		glog.Infof("starting cronjob system")
 		jobWorker()
