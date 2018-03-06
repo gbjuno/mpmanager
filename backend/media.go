@@ -15,7 +15,7 @@ type MediaUrl struct {
 
 func (mp MediaPicture) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/materialpicture").Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
+	ws.Path(RESTAPIVERSION + "/mediapicture").Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.POST("").To(mp.uploadPicture))
 	container.Add(ws)
 }

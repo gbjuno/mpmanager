@@ -77,6 +77,12 @@ func main() {
 	menu := Menu{}
 	menu.Register(wsContainer)
 
+	materialPicture := MaterialPicture{}
+	materialPicture.Register(wsContainer)
+
+	mediaPicture := MediaPicture{}
+	mediaPicture.Register(wsContainer)
+
 	go func() {
 		glog.Infof("starting cronjob system")
 		jobWorker()

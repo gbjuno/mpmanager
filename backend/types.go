@@ -162,9 +162,14 @@ type MaterialPicture struct {
 	Url     string    `gorm:"column:url;not null" json:"url"`
 }
 
+func (MaterialPicture) TableName() string {
+	return "material_picture"
+}
+
 type MediaPicture struct {
 	Url string `gorm:"-" json:"url"`
 }
+
 type Article struct {
 }
 
@@ -182,7 +187,7 @@ func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}
-	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{})
+	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{})
 	db.Debug().Model(&Country{}).AddForeignKey("town_id", "towns(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&Company{}).AddForeignKey("country_id", "countries(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&User{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")

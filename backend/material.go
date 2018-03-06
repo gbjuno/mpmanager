@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/emicklei/go-restful"
@@ -66,7 +69,23 @@ func (mp MaterialPicture) findPicture(request *restful.Request, response *restfu
 func (mp MaterialPicture) uploadPicture(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [uploadPicture]", request.Request.RemoteAddr)
 	glog.Infof("%s POST %s", prefix, request.Request.URL)
-	media_id, url, err := material.UploadImageFromReader(wechatClient, "title", request.Request.Body)
+	var buf bytes.Buffer
+	tee := io.TeeReader(request.Request.Body, &buf)
+
+	f, err := os.Create("/tmp/media.png")
+	if err != nil {
+		errmsg := fmt.Sprintf("%s cannot open file", prefix)
+		glog.Errorf(errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		return
+	}
+	r.ParseForm()
+	phone := r.Form.Get("phone")
+	password := r.Form.Get("password")
+	f.Write(buf.Bytes())
+	f.Close()
+
+	media_id, url, err := material.UploadImageFromReader(wechatClient, "media.png", tee)
 	if err != nil {
 		errmsg := fmt.Sprintf("无法上传图片, err %s", err)
 		glog.Errorf("%s %s", prefix, errmsg)
