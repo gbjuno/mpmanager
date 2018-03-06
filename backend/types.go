@@ -155,6 +155,22 @@ func (TodaySummary) TableName() string {
 	return "today_summary"
 }
 
+type MaterialPicture struct {
+	ID      int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"-"`
+	Day     time.Time `gorm:"column:day;not null;unique_index:day_company_place;default:NOW()" json:"day"`
+	MediaId string    `gorm:"column:media_id;not null;unique_index" json:"media_id"`
+	Url     string    `gorm:"column:url;not null" json:"url"`
+}
+
+type MediaPicture struct {
+	Url string `gorm:"-" json:"url"`
+}
+type Article struct {
+}
+
+type TemplatePage struct {
+}
+
 type Response struct {
 	Status string `json:"status"`
 	Error  string `json:"error"`
