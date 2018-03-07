@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/emicklei/go-restful"
@@ -69,23 +66,17 @@ func (mp MaterialPicture) findPicture(request *restful.Request, response *restfu
 func (mp MaterialPicture) uploadPicture(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [uploadPicture]", request.Request.RemoteAddr)
 	glog.Infof("%s POST %s", prefix, request.Request.URL)
-	var buf bytes.Buffer
-	tee := io.TeeReader(request.Request.Body, &buf)
 
-	f, err := os.Create("/tmp/media.png")
+	request.Request.ParseMultipartForm(32 << 20)
+	file, handler, err := request.Request.FormFile("uploadImage")
 	if err != nil {
-		errmsg := fmt.Sprintf("%s cannot open file", prefix)
-		glog.Errorf(errmsg)
-		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: errmsg})
+		errmsg := fmt.Sprintf("cannot read image, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: "无法上传图片,请稍后再试"})
 		return
 	}
-	r.ParseForm()
-	phone := r.Form.Get("phone")
-	password := r.Form.Get("password")
-	f.Write(buf.Bytes())
-	f.Close()
 
-	media_id, url, err := material.UploadImageFromReader(wechatClient, "media.png", tee)
+	mediaID, url, err := material.UploadImageFromReader(wechatClient, handler.Filename, file)
 	if err != nil {
 		errmsg := fmt.Sprintf("无法上传图片, err %s", err)
 		glog.Errorf("%s %s", prefix, errmsg)
@@ -94,7 +85,7 @@ func (mp MaterialPicture) uploadPicture(request *restful.Request, response *rest
 	}
 
 	materialPicture := MaterialPicture{}
-	materialPicture.MediaId = media_id
+	materialPicture.MediaId = mediaID
 	materialPicture.Url = url
 
 	db.Debug().Create(&materialPicture)
@@ -133,7 +124,7 @@ func (mp MaterialPicture) deletePicture(request *restful.Request, response *rest
 	}
 
 	db.Debug().Delete(&materialPicture)
-	glog.Infof("%s delete materialPicture with id successfully", prefix, picture_id)
+	glog.Infof("%s delete materialPicture with id %s successfully", prefix, picture_id)
 	response.WriteHeaderAndEntity(http.StatusOK, Response{Status: "success"})
 	return
 }

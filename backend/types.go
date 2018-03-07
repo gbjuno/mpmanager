@@ -156,7 +156,7 @@ func (TodaySummary) TableName() string {
 }
 
 type MaterialPicture struct {
-	ID      int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"-"`
+	ID      int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
 	Day     time.Time `gorm:"column:day;not null;unique_index:day_company_place;default:NOW()" json:"day"`
 	MediaId string    `gorm:"column:media_id;not null;unique_index" json:"media_id"`
 	Url     string    `gorm:"column:url;not null" json:"url"`
@@ -170,7 +170,45 @@ type MediaPicture struct {
 	Url string `gorm:"-" json:"url"`
 }
 
-type Article struct {
+type Chapter struct {
+	ID               int    `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	NewsId           int    `gorm:"column:news_id" json:"news_id"`
+	Title            string `gorm:"column:title;not null" json:"title"`
+	ThumbMediaId     string `gorm:"column:thumb_media_id" json:"thumb_media_id"`
+	ShowCoverPic     int    `gorm:"column:show_cover_pic" json:"show_cover_pic"`
+	Author           string `gorm:"column:author" json:"author"`
+	Digest           string `gorm:"column:digest" json:"digest"`
+	Content          string `gorm:"column:content" json:"content"`
+	Url              string `gorm:"column:url" json:"url"`
+	ContentSourceUrl string `gorm:"column:content_source_url" json:"content_source_url"`
+}
+
+func (Chapter) TableName() string {
+	return "chapter"
+}
+
+type News struct {
+	ID          int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	MediaId     string    `gorm:"column:media_id;not null;unique_index" json:"media_id"`
+	Name        string    `gorm:"column:name;not null" json:"name"`
+	ChapterIds  string    `gorm:"column:chapterids" json:"chapterids"`
+	ChapterList []Chapter `gorm:"-" json:"chapter_list"`
+}
+
+func (News) TableName() string {
+	return "news"
+}
+
+type GroupSend struct {
+	ID        int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	MediaId   string    `gorm:"column:media_id;not null;unique_index" json:"media_id"`
+	CreateAt  time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
+	NewsID    int       `gorm:"column:news_id" json:"news_id"`
+	NewsName  string    `gorm:"column:news_name;index" json:"news_name"`
+	Errcode   int       `gorm:"errcode" json:"errcode"`
+	Errmsg    string    `gorm:"columen:errmsg" json:"errmsg"`
+	MsgId     int64     `gorm:"msg_id" json:"msg_id"`
+	MsgDataId int64     `gorm:"msg_data_id" json:"msg_data_id"`
 }
 
 type TemplatePage struct {
@@ -187,7 +225,7 @@ func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}
-	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{})
+	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &Chapter{}, &News{}, &GroupSend{})
 	db.Debug().Model(&Country{}).AddForeignKey("town_id", "towns(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&Company{}).AddForeignKey("country_id", "countries(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&User{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
