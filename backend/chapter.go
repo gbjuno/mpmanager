@@ -156,15 +156,15 @@ func (c Chapter) createChapter(request *restful.Request, response *restful.Respo
 
 	news := News{}
 	news.Name = chapter.Title
+	news.MediaId = media_id
 	tx.Debug().Create(&news)
-	chapter.NewsId = news.ID
 	tx.Debug().Create(&chapter)
 	news.ChapterIds = fmt.Sprintf("%d", chapter.ID)
-	tx.Debug().Update(&news)
-
+	tx.Debug().Save(&news)
+	glog.Infof("%s create news with id %d related to chapter %d succesfully", prefix, news.ID, chapter.ID)
 	tx.Commit()
 
-	glog.Info("%s create chapter with id %d succesfully", prefix, chapter.ID)
+	glog.Infof("%s create chapter with id %d succesfully", prefix, chapter.ID)
 	response.WriteHeader(http.StatusOK)
 	return
 }
@@ -246,6 +246,7 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 
 		tx := db.Begin()
 		news.Name = chapter.Title
+		news.MediaId = media_id
 		news.ChapterIds = fmt.Sprintf("%d", chapter.ID)
 		tx.Debug().Create(&news)
 

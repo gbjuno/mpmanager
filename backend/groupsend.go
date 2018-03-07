@@ -11,6 +11,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/mass/mass2all"
+	"gopkg.in/chanxuehong/wechat.v2/mp/message/mass/preview"
 )
 
 type GroupSendList struct {
@@ -18,17 +19,20 @@ type GroupSendList struct {
 	GroupSend []GroupSend `json:"groupsend"`
 }
 
+const PREVIEW_USER = "o1k8S0nPewTiG3vE6ZSl_1pQLDWA"
+
 func (g GroupSend) Register(container *restful.Container) {
 	ws := new(restful.WebService)
-	ws.Path(RESTAPIVERSION + "/groupSend").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
+	ws.Path(RESTAPIVERSION + "/groupsend").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(g.findGroupSend))
 	ws.Route(ws.GET("/?pageNo={pageNo}&pageSize={pageSize}&order={order}").To(g.findGroupSend))
 	ws.Route(ws.GET("/{groupSend_id}").To(g.findGroupSend))
-	ws.Route(ws.POST("?preview={preview}").To(g.createGroupSend))
+	ws.Route(ws.POST("").To(g.createGroupSend))
+	ws.Route(ws.POST("/?preview={preview}").To(g.createGroupSend))
 	container.Add(ws)
 }
 
-func (c GroupSend) findGroupSend(request *restful.Request, response *restful.Response) {
+func (g GroupSend) findGroupSend(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [findGroupSend]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	groupSend_id := request.PathParameter("groupSend_id")
@@ -113,10 +117,9 @@ func (c GroupSend) findGroupSend(request *restful.Request, response *restful.Res
 	return
 }
 
-func (c GroupSend) createGroupSend(request *restful.Request, response *restful.Response) {
+func (g GroupSend) createGroupSend(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [createGroupSend]", request.Request.RemoteAddr)
-	preview := request.QueryParameter("preview")
-
+	param_preview := request.QueryParameter("preview")
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s POST %s, content %s", prefix, request.Request.URL, content)
 	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
@@ -135,6 +138,20 @@ func (c GroupSend) createGroupSend(request *restful.Request, response *restful.R
 	db.Debug().First(&news, groupSend.NewsID)
 	groupSend.NewsName = news.Name
 	groupSend.MediaId = news.MediaId
+
+	if param_preview == "true" {
+		sendNews := preview.NewNews(PREVIEW_USER, groupSend.MediaId)
+		err := preview.Send(wechatClient, sendNews)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot create groupSend, err %s", err)
+			returnmsg := fmt.Sprintf("无法预览消息,请重试")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
+		}
+		glog.Infof("%s preview groupSend with id %d succesfully", prefix, groupSend.ID)
+		response.WriteHeader(http.StatusOK)
+		return
+	}
 
 	sendNews := mass2all.NewNews(groupSend.MediaId)
 	result, err := mass2all.Send(wechatClient, sendNews)

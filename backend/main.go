@@ -83,6 +83,15 @@ func main() {
 	mediaPicture := MediaPicture{}
 	mediaPicture.Register(wsContainer)
 
+	chapter := Chapter{}
+	chapter.Register(wsContainer)
+
+	news := News{}
+	news.Register(wsContainer)
+
+	groupsend := GroupSend{}
+	groupsend.Register(wsContainer)
+
 	go func() {
 		glog.Infof("starting cronjob system")
 		jobWorker()
