@@ -40,6 +40,14 @@ func parsePasswordSession(cookieValue string) (string, error) {
 	return session.(string), nil
 }
 
+func revokePasswordSession(cookieValue string) error {
+	prefix := fmt.Sprintf("[%s]", "parsePasswordSession")
+	glog.Infof("%s delete cookie, cookie value %s", prefix, cookieValue)
+	PasswordSessionStorage.Delete(cookieValue)
+
+	return nil
+}
+
 func PasswordAuthenticate(request *restful.Request, response *restful.Response, chain *restful.FilterChain) {
 	prefix := fmt.Sprintf("[%s]", "PasswordAuthenticate")
 	cookieStr := request.HeaderParameter("Cookie")

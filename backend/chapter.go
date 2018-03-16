@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -86,7 +87,10 @@ func (c Chapter) findChapter(request *restful.Request, response *restful.Respons
 		chapterList.Chapters = make([]Chapter, 0)
 		searchChapter.Find(&chapterList.Chapters)
 
-		response.WriteHeaderAndEntity(http.StatusOK, &chapterList)
+		response.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(response.ResponseWriter)
+		enc.SetEscapeHTML(false)
+		enc.Encode(&chapterList)
 		glog.Infof("%s return chapter list", prefix)
 		return
 	}
@@ -110,7 +114,10 @@ func (c Chapter) findChapter(request *restful.Request, response *restful.Respons
 		return
 	}
 
-	response.WriteHeaderAndEntity(http.StatusOK, &chapter)
+	response.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(response.ResponseWriter)
+	enc.SetEscapeHTML(false)
+	enc.Encode(&chapter)
 	glog.Infof("%s find chapter with id %d", prefix, chapter.ID)
 	return
 }
@@ -143,6 +150,7 @@ func (c Chapter) createChapter(request *restful.Request, response *restful.Respo
 
 	wxNews := material.News{}
 	wxNews.Articles = []material.Article{article}
+
 	media_id, err := material.AddNews(wechatClient, &wxNews)
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot create news, err %s", err)
@@ -152,8 +160,17 @@ func (c Chapter) createChapter(request *restful.Request, response *restful.Respo
 		return
 	}
 
-	tx := db.Begin()
+	returnWxNews, err := material.GetNews(wechatClient, media_id)
+	if err != nil {
+		errmsg := fmt.Sprintf("cannot get news, err %s", err)
+		returnmsg := fmt.Sprintf("无法创建文章,与微信通讯失联,请稍后重试")
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
+		return
+	}
 
+	tx := db.Begin()
+	chapter.Url = string(bytes.Replace([]byte(returnWxNews.Articles[0].URL), []byte("\\u0026"), []byte("&"), -1))
 	news := News{}
 	news.Name = chapter.Title
 	news.MediaId = media_id
@@ -171,6 +188,7 @@ func (c Chapter) createChapter(request *restful.Request, response *restful.Respo
 
 func (c Chapter) updateChapter(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] [updateChapter]", request.Request.RemoteAddr)
+
 	content, _ := ioutil.ReadAll(request.Request.Body)
 	glog.Infof("%s PUT %s, content %s", prefix, request.Request.URL, content)
 	newContent := ioutil.NopCloser(bytes.NewBuffer(content))
@@ -182,7 +200,7 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 	//fail to parse chapter entity
 	if err != nil {
 		errmsg := fmt.Sprintf("cannot update chapter, err %s", err)
-		returnmsg := fmt.Sprintf("无法更新公司信息，提供的公司信息解析失败")
+		returnmsg := fmt.Sprintf("无法更新文章信息，提供的信息解析失败")
 		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
@@ -200,7 +218,7 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 
 	if id != chapter.ID {
 		errmsg := fmt.Sprintf("cannot update chapter, path chapter_id %d is not equal to id %d in body content", id, chapter.ID)
-		returnmsg := fmt.Sprintf("无法更新公司信息，提供的文章id与URL中的文章id不匹配")
+		returnmsg := fmt.Sprintf("无法更新文章，提供的文章id与URL中的文章id不匹配")
 		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
@@ -244,6 +262,17 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 			return
 		}
 
+		returnWxNews, err := material.GetNews(wechatClient, news.MediaId)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot get news, err %s", err)
+			returnmsg := fmt.Sprintf("无法更新文章,与微信通讯失联,请稍后重试")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
+			return
+		}
+
+		chapter.Url = string(bytes.Replace([]byte(returnWxNews.Articles[0].URL), []byte("\\u0026"), []byte("&"), -1))
+
 		tx := db.Begin()
 		news.Name = chapter.Title
 		news.MediaId = media_id
@@ -254,19 +283,21 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 		tx.Debug().Model(&realChapter).Update(chapter)
 		tx.Commit()
 
+		glog.Infof("%s send news %d (chapter id %d) successfully and return", prefix, news.ID, realChapter.ID)
 		glog.Infof("%s update chapter with id %d successfully and return", prefix, realChapter.ID)
 		response.WriteHeader(http.StatusOK)
 		return
 	}
 
-	err = material.UpdateNews(wechatClient, news.MediaId, 0, &article)
+	returnWxNews, err := material.GetNews(wechatClient, news.MediaId)
 	if err != nil {
-		errmsg := fmt.Sprintf("cannot create news, err %s", err)
+		errmsg := fmt.Sprintf("cannot get news, err %s", err)
 		returnmsg := fmt.Sprintf("无法更新文章,与微信通讯失联,请稍后重试")
 		glog.Errorf("%s %s", prefix, errmsg)
 		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
+	chapter.Url = string(bytes.Replace([]byte(returnWxNews.Articles[0].URL), []byte("\\u0026"), []byte("&"), -1))
 
 	db.Debug().Model(&realChapter).Update(chapter)
 	glog.Infof("%s update chapter with id %d successfully and return", prefix, realChapter.ID)

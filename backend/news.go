@@ -89,7 +89,7 @@ func (c News) findNews(request *restful.Request, response *restful.Response) {
 
 		for index := range newsList.Newses {
 			newsList.Newses[index].ChapterList = make([]Chapter, 0)
-			for id := range strings.Split(newsList.Newses[index].ChapterIds, ",") {
+			for _, id := range strings.Split(newsList.Newses[index].ChapterIds, ",") {
 				temp_chapter := Chapter{}
 				db.Debug().Where("id=?", id).Find(&temp_chapter)
 				if temp_chapter.ID == 0 {
@@ -123,7 +123,7 @@ func (c News) findNews(request *restful.Request, response *restful.Response) {
 		return
 	}
 
-	for id := range strings.Split(news.ChapterIds, ",") {
+	for _, id := range strings.Split(news.ChapterIds, ",") {
 		temp_chapter := Chapter{}
 		db.Debug().Where("id=?", id).Find(&temp_chapter)
 		if temp_chapter.ID == 0 {
@@ -156,7 +156,7 @@ func (c News) createNews(request *restful.Request, response *restful.Response) {
 	wxNews := material.News{}
 	wxNews.Articles = make([]material.Article, 0)
 
-	for id := range strings.Split(news.ChapterIds, ",") {
+	for _, id := range strings.Split(news.ChapterIds, ",") {
 		temp_chapter := Chapter{}
 		db.Debug().Where("id=?", id).Find(&temp_chapter)
 		if temp_chapter.ID == 0 {
@@ -186,6 +186,23 @@ func (c News) createNews(request *restful.Request, response *restful.Response) {
 		return
 	}
 
+	returnWxNews, err := material.GetNews(wechatClient, media_id)
+	if err != nil {
+		errmsg := fmt.Sprintf("cannot get news, err %s", err)
+		returnmsg := fmt.Sprintf("无法创建消息,连接微信服务器失败,请重试")
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
+		return
+	}
+
+	for index, id := range strings.Split(news.ChapterIds, ",") {
+		temp_chapter := Chapter{}
+		db.Debug().Where("id=?", id).Find(&temp_chapter)
+
+		temp_chapter.Url = string(bytes.Replace([]byte(returnWxNews.Articles[index].URL), []byte("\\u0026"), []byte("&"), -1))
+		db.Debug().Save(&temp_chapter)
+	}
+
 	news.MediaId = media_id
 	db.Debug().Create(&news)
 
@@ -198,7 +215,7 @@ func (c News) createNews(request *restful.Request, response *restful.Response) {
 		return
 	}
 
-	glog.Info("%s create news with id %d succesfully", prefix, news.ID)
+	glog.Infof("%s create news with id %d succesfully", prefix, news.ID)
 	response.WriteHeader(http.StatusOK)
 	return
 }
@@ -254,7 +271,7 @@ func (c News) updateNews(request *restful.Request, response *restful.Response) {
 
 	articles := make([]material.Article, 0)
 
-	for id := range strings.Split(news.ChapterIds, ",") {
+	for _, id := range strings.Split(news.ChapterIds, ",") {
 		temp_chapter := Chapter{}
 		db.Debug().Where("id=?", id).Find(&temp_chapter)
 		if temp_chapter.ID == 0 {
@@ -284,6 +301,22 @@ func (c News) updateNews(request *restful.Request, response *restful.Response) {
 			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
+	}
+
+	returnWxNews, err := material.GetNews(wechatClient, news.MediaId)
+	if err != nil {
+		errmsg := fmt.Sprintf("cannot get news, err %s", err)
+		returnmsg := fmt.Sprintf("无法更新消息,连接微信服务器失败,请重试")
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
+		return
+	}
+
+	for index, id := range strings.Split(news.ChapterIds, ",") {
+		temp_chapter := Chapter{}
+		db.Debug().Where("id=?", id).Find(&temp_chapter)
+		temp_chapter.Url = string(bytes.Replace([]byte(returnWxNews.Articles[index].URL), []byte("\\u0026"), []byte("&"), -1))
+		db.Debug().Save(&temp_chapter)
 	}
 
 	db.Debug().Model(&realNews).Update(news)

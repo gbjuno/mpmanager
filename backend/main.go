@@ -92,6 +92,9 @@ func main() {
 	groupsend := GroupSend{}
 	groupsend.Register(wsContainer)
 
+	templatePage := TemplatePage{}
+	templatePage.Register(wsContainer)
+
 	go func() {
 		glog.Infof("starting cronjob system")
 		jobWorker()

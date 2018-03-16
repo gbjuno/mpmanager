@@ -212,6 +212,12 @@ type GroupSend struct {
 }
 
 type TemplatePage struct {
+	ID          int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	Name        string    `gorm:"column:name;not null" json:"name"`
+	CreateAt    time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
+	ChapterIds  string    `gorm:"column:chapterids" json:"chapterids"`
+	ChapterList []Chapter `gorm:"-" json:"chapter_list"`
+	URL         string    `gorm:"column:url" json:"url"`
 }
 
 type Response struct {
@@ -225,7 +231,7 @@ func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}
-	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &Chapter{}, &News{}, &GroupSend{})
+	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &Chapter{}, &News{}, &GroupSend{}, &TemplatePage{})
 	db.Debug().Model(&Country{}).AddForeignKey("town_id", "towns(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&Company{}).AddForeignKey("country_id", "countries(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&User{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emicklei/go-restful"
 	"github.com/gbjuno/mpmanager/backend/utils"
@@ -68,6 +69,12 @@ func (u User) Register(container *restful.Container) {
 	loginWs.Route(loginWs.POST("/").To(u.loginUser))
 	container.Add(loginWs)
 	glog.Infof("register login service")
+
+	logoutWs := new(restful.WebService)
+	logoutWs.Path(RESTAPIVERSION + "/logout").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON)
+	logoutWs.Route(logoutWs.GET("").To(u.logoutUser))
+	container.Add(logoutWs)
+	glog.Infof("register logout service")
 }
 
 func (u User) loginUser(request *restful.Request, response *restful.Response) {
@@ -140,6 +147,36 @@ func (u User) loginUser(request *restful.Request, response *restful.Response) {
 		response.WriteHeaderAndEntity(http.StatusUnauthorized, &r)
 		return
 	}
+}
+
+func (u User) logoutUser(request *restful.Request, response *restful.Response) {
+	prefix := fmt.Sprintf("[%s] [logoutUser]", request.Request.RemoteAddr)
+	glog.Infof("%s GET %s", prefix, request.Request.URL)
+
+	cookieStr := request.HeaderParameter("Cookie")
+	var sessionid string
+	for _, cookie := range strings.Split(cookieStr, ";") {
+		temp := strings.Split(cookie, "=")
+		if temp[0] == "sessionid" {
+			sessionid = temp[1]
+		}
+	}
+
+	if sessionid == "" {
+		glog.Infof("%s no sessionid", prefix)
+		response.WriteHeader(http.StatusOK)
+		return
+	}
+
+	err := revokePasswordSession(sessionid)
+	if err != nil {
+		glog.Errorf("%s cannot revoke session id, err %s", prefix, err)
+		response.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	glog.Infof("%s remove session successfully", prefix)
+	response.WriteHeader(http.StatusOK)
+	return
 }
 
 func (u User) findUser(request *restful.Request, response *restful.Response) {

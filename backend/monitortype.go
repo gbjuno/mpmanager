@@ -121,7 +121,7 @@ func (m MonitorType) createMonitorType(request *restful.Request, response *restf
 			return
 		} else {
 			//create monitor_type on database
-			glog.Info("%s create monitor_type with id %d succesfully", prefix, monitor_type.ID)
+			glog.Infof("%s create monitor_type with id %d succesfully", prefix, monitor_type.ID)
 			response.WriteHeaderAndEntity(http.StatusOK, monitor_type)
 			return
 		}

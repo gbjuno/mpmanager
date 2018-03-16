@@ -166,7 +166,7 @@ func (g GroupSend) createGroupSend(request *restful.Request, response *restful.R
 	groupSend.MsgId = result.MsgId
 	groupSend.MsgDataId = result.MsgDataId
 	db.Debug().Create(&groupSend)
-	glog.Info("%s create groupSend with id %d succesfully", prefix, groupSend.ID)
+	glog.Infof("%s create groupSend with id %d succesfully", prefix, groupSend.ID)
 	response.WriteHeader(http.StatusOK)
 	return
 }

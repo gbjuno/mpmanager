@@ -90,7 +90,7 @@ func (mp MaterialPicture) uploadPicture(request *restful.Request, response *rest
 
 	db.Debug().Create(&materialPicture)
 	response.WriteHeaderAndEntity(http.StatusOK, &materialPicture)
-	glog.Info("%s upload material picture success")
+	glog.Infof("%s upload material picture success")
 	return
 }
 

@@ -139,7 +139,7 @@ func (c Country) createCountry(request *restful.Request, response *restful.Respo
 			return
 		} else {
 			//create country on database
-			glog.Info("%s create country with id %d succesfully", prefix, country.ID)
+			glog.Infof("%s create country with id %d succesfully", prefix, country.ID)
 			response.WriteHeaderAndEntity(http.StatusOK, country)
 			return
 		}

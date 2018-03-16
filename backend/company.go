@@ -216,7 +216,7 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 		} else {
 			//create company on database
 
-			glog.Info("%s create company with id %d succesfully", prefix, company.ID)
+			glog.Infof("%s create company with id %d succesfully", prefix, company.ID)
 			response.WriteHeaderAndEntity(http.StatusOK, company)
 
 			//insert a new row into Summary
@@ -226,7 +226,7 @@ func (c Company) createCompany(request *restful.Request, response *restful.Respo
 			shortForm := "20060102"
 			todayTime, _ := time.ParseInLocation(shortForm, todayStr, loc)
 			summary := Summary{Day: todayTime, CompanyId: company.ID, IsFinish: "F"}
-			glog.Info("%s try to create summary for company with id %d succesfully", prefix, company.ID)
+			glog.Infof("%s try to create summary for company with id %d succesfully", prefix, company.ID)
 			db.Debug().Create(&summary)
 
 			return

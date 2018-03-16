@@ -8,6 +8,7 @@ import (
 
 	restful "github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"gopkg.in/chanxuehong/wechat.v2/mp/core"
 	"gopkg.in/chanxuehong/wechat.v2/mp/menu"
 	mpoauth2 "gopkg.in/chanxuehong/wechat.v2/mp/oauth2"
 )
@@ -27,6 +28,14 @@ func (m Menu) getMenu(request *restful.Request, response *restful.Response) {
 	prefix := fmt.Sprintf("[%s] getMenu", request.Request.RemoteAddr)
 	wechatMenu, _, err := menu.Get(wechatClient)
 	if err != nil {
+		if err.(*core.Error).ErrCode == 46003 {
+			emptyMenu := &menu.Menu{}
+			emptyMenu.Buttons = make([]menu.Button, 0)
+			glog.Infof("%s get wechat menu errcode 46003, empty menu", prefix)
+			glog.Infof("%s get wechat menu successfully", prefix)
+			response.WriteHeaderAndEntity(http.StatusOK, &emptyMenu)
+			return
+		}
 		errmsg := fmt.Sprintf("%s cannot get menu, err %s", prefix, err)
 		glog.Errorf(errmsg)
 		r := Response{Status: "error", Error: "无法连接腾讯服务器,请稍后重试"}
@@ -90,7 +99,7 @@ func (m Menu) updateMenu(request *restful.Request, response *restful.Response) {
 	}
 
 	response.WriteHeader(http.StatusOK)
-	glog.Info("%s update menu succeed")
+	glog.Infof("%s update menu succeed")
 	return
 }
 

@@ -150,7 +150,7 @@ func (t Town) createTown(request *restful.Request, response *restful.Response) {
 			return
 		} else {
 			//create town on database
-			glog.Info("%s create town with id %d succesfully", prefix, town.ID)
+			glog.Infof("%s create town with id %d succesfully", prefix, town.ID)
 			response.WriteHeaderAndEntity(http.StatusOK, town)
 			return
 		}

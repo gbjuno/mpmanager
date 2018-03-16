@@ -411,3 +411,30 @@ const SUBSCRIBE = `
 </body>
 </html>
 `
+
+const TEMPLATEPAGE = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ .Name }}</title>
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
+    <link rel="stylesheet" href="/html/weui.css">
+</head>
+<body>
+<div class="weui-panel weui-panel_access">
+{{ range .HtmlChapters }}
+<div class="weui-panel__bd">
+    <a href="{{ .HtmlUrl }}" class="weui-media-box weui-media-box_appmsg">
+        <div class="weui-media-box__hd">
+            <img class="weui-media-box__thumb" src="{{ .PictureUrl }}" alt="">
+        </div>
+        <div class="weui-media-box__bd">
+            <h4 class="weui-media-box__title">{{ .Title }}</h4>
+            <p class="weui-media-box__desc">{{ .Digest }}</p>
+        </div>
+    </a>
+</div>
+{{ end }}
+</div>
+</body>
+`
