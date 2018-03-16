@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
@@ -90,6 +91,7 @@ func (c Chapter) findChapter(request *restful.Request, response *restful.Respons
 		response.WriteHeader(http.StatusOK)
 		enc := json.NewEncoder(response.ResponseWriter)
 		enc.SetEscapeHTML(false)
+		enc.SetIndent("", "  ")
 		enc.Encode(&chapterList)
 		glog.Infof("%s return chapter list", prefix)
 		return
@@ -117,6 +119,7 @@ func (c Chapter) findChapter(request *restful.Request, response *restful.Respons
 	response.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(response.ResponseWriter)
 	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
 	enc.Encode(&chapter)
 	glog.Infof("%s find chapter with id %d", prefix, chapter.ID)
 	return
@@ -175,11 +178,24 @@ func (c Chapter) createChapter(request *restful.Request, response *restful.Respo
 	news.Name = chapter.Title
 	news.MediaId = media_id
 	tx.Debug().Create(&news)
+	chapter.NewsId = news.ID
 	tx.Debug().Create(&chapter)
 	news.ChapterIds = fmt.Sprintf("%d", chapter.ID)
 	tx.Debug().Save(&news)
 	glog.Infof("%s create news with id %d related to chapter %d succesfully", prefix, news.ID, chapter.ID)
 	tx.Commit()
+
+	for _, tid := range strings.Split(chapter.TemplatePageIds, ",") {
+		t := TemplatePage{}
+		db.Debug().Where("id = ?", tid).Find(&t)
+		if t.ID == 0 {
+			continue
+		}
+
+		t.ChapterIds = fmt.Sprintf("%d,%s", chapter.ID, t.ChapterIds)
+		glog.Infof("%s add chapter %d to template id %d(%s) successfully and return", prefix, chapter.ID, t.ID, t.Name)
+		db.Debug().Save(&t)
+	}
 
 	glog.Infof("%s create chapter with id %d succesfully", prefix, chapter.ID)
 	response.WriteHeader(http.StatusOK)
@@ -298,8 +314,29 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 		return
 	}
 	chapter.Url = string(bytes.Replace([]byte(returnWxNews.Articles[0].URL), []byte("\\u0026"), []byte("&"), -1))
-
 	db.Debug().Model(&realChapter).Update(chapter)
+
+	for _, tid := range strings.Split(chapter.TemplatePageIds, ",") {
+		t := TemplatePage{}
+		db.Debug().Where("id = ?", tid).Find(&t)
+		if t.ID == 0 {
+			continue
+		}
+		needUpdate := true
+		cid := fmt.Sprintf("%d", chapter.ID)
+		for _, c := range strings.Split(t.ChapterIds, ",") {
+			if c == cid {
+				needUpdate = false
+				break
+			}
+		}
+		if needUpdate {
+			t.ChapterIds = fmt.Sprintf("%d,%s", chapter.ID, t.ChapterIds)
+			glog.Infof("%s add chapter %d to template id %d(%s) successfully and return", prefix, realChapter.ID, t.ID, t.Name)
+			db.Debug().Save(&t)
+		}
+	}
+
 	glog.Infof("%s update chapter with id %d successfully and return", prefix, realChapter.ID)
 	response.WriteHeader(http.StatusOK)
 	return

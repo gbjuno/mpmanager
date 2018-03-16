@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -99,7 +100,11 @@ func (c News) findNews(request *restful.Request, response *restful.Response) {
 			}
 		}
 
-		response.WriteHeaderAndEntity(http.StatusOK, &newsList)
+		response.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(response.ResponseWriter)
+		enc.SetEscapeHTML(false)
+		enc.SetIndent("", "  ")
+		enc.Encode(&newsList)
 		glog.Infof("%s return news list", prefix)
 		return
 	}
@@ -132,7 +137,11 @@ func (c News) findNews(request *restful.Request, response *restful.Response) {
 		news.ChapterList = append(news.ChapterList, temp_chapter)
 	}
 
-	response.WriteHeaderAndEntity(http.StatusOK, &news)
+	response.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(response.ResponseWriter)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	enc.Encode(&news)
 	glog.Infof("%s find news with id %d", prefix, news.ID)
 	return
 }

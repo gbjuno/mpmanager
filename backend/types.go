@@ -181,6 +181,7 @@ type Chapter struct {
 	Content          string `gorm:"column:content" json:"content"`
 	Url              string `gorm:"column:url" json:"url"`
 	ContentSourceUrl string `gorm:"column:content_source_url" json:"content_source_url"`
+	TemplatePageIds  string `gorm:"column:templatepageids" json:"templatepageids"`
 }
 
 func (Chapter) TableName() string {

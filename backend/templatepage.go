@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -149,18 +150,22 @@ func (t TemplatePage) findTemplatePage(request *restful.Request, response *restf
 		templatePageList.TemplatePages = make([]TemplatePage, 0)
 		searchTemplatePage.Find(&templatePageList.TemplatePages)
 
-		for _, t := range templatePageList.TemplatePages {
-			t.ChapterList = make([]Chapter, 0)
-			for _, chapterid := range strings.Split(t.ChapterIds, ",") {
+		for index := range templatePageList.TemplatePages {
+			templatePageList.TemplatePages[index].ChapterList = make([]Chapter, 0)
+			for _, chapterid := range strings.Split(templatePageList.TemplatePages[index].ChapterIds, ",") {
 				chapter := Chapter{}
 				db.Debug().Where("id = ?", chapterid).Find(&chapter)
 				if chapter.ID != 0 {
-					t.ChapterList = append(t.ChapterList, chapter)
+					templatePageList.TemplatePages[index].ChapterList = append(templatePageList.TemplatePages[index].ChapterList, chapter)
 				}
 			}
 		}
 
-		response.WriteHeaderAndEntity(http.StatusOK, &templatePageList)
+		response.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(response.ResponseWriter)
+		enc.SetEscapeHTML(false)
+		enc.SetIndent("", "  ")
+		enc.Encode(&templatePageList)
 		glog.Infof("%s return templatePage list", prefix)
 		return
 	}
@@ -185,7 +190,7 @@ func (t TemplatePage) findTemplatePage(request *restful.Request, response *restf
 	}
 
 	templatePage.ChapterList = make([]Chapter, 0)
-	for _, chapterid := range strings.Split(t.ChapterIds, ",") {
+	for _, chapterid := range strings.Split(templatePage.ChapterIds, ",") {
 		chapter := Chapter{}
 		db.Debug().Where("id = ?", chapterid).Find(&chapter)
 		if chapter.ID != 0 {
@@ -193,7 +198,11 @@ func (t TemplatePage) findTemplatePage(request *restful.Request, response *restf
 		}
 	}
 
-	response.WriteHeaderAndEntity(http.StatusOK, &templatePage)
+	response.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(response.ResponseWriter)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	enc.Encode(&templatePage)
 	glog.Infof("%s find templatePage with id %d", prefix, templatePage.ID)
 	return
 }
