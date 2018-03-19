@@ -29,3 +29,9 @@ export const searchFilter = (scope, condition) => ({
     scope,
     condition,
 })
+
+export const updateMenu = (prevMenus, updateMenu) => ({
+    type: type.UPDATE_WECHAT_MENU,
+    prevMenus,
+    updateMenu
+})

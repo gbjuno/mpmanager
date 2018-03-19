@@ -1,9 +1,29 @@
 /**
- * Created by hao.cheng on 2017/4/16.
+ * Created by Jingle Chen on 2018/3/11.
  */
 import axios from 'axios';
 import { get } from './tools';
 import * as config from './config';
+
+import createHistory from 'history/createBrowserHistory'
+
+export const history = createHistory()
+
+axios.defaults.withCredentials = true;
+
+/**
+ * 全局拦截器，当session过期或者没有登陆信息时，跳到登录页面
+ */
+axios.interceptors.response.use(response => {
+    console.log('response ---> ', response)
+    return response;
+}, error => {
+    console.log('error ---> interceptor --->', error)
+    if(error.response && error.response && error.response.status === 401){
+        window.location.href = config.PAGE_CONTEXT;
+    }
+    return Promise.reject(error);
+});
 
 export const getPros = () => axios.post('http://api.xitu.io/resources/github', {
     category: "trending",
@@ -37,6 +57,20 @@ export const admin = () => get({url: config.MOCK_AUTH_ADMIN});
 
 // 访问权限获取
 export const guest = () => get({url: config.MOCK_AUTH_VISITOR});
+
+// real login
+export const authLogin = (authBody) => axios.request({
+    method: 'post',
+    url: config.LOGIN_URL,
+    maxRedirects: 0,
+    validateStatus: function(status) {
+        return status >= 200 && status < 303;
+    },
+    data: authBody,
+    headers:  {
+        Accept: 'application/json',
+    },
+})
 
 
 // 村镇管理API
@@ -221,3 +255,9 @@ export const fetchPicturesWithPlace = (filter={}) => {
     let url = config.PICTURE_URL({day, companyId})
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
+
+export const fetchMenus = () => {
+    let url = config.WECHAT_MENU_URL
+    return axios.get(url ,{}).then(res => res.data);
+}
+

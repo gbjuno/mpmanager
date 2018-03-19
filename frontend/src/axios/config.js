@@ -13,12 +13,16 @@ const PROTOCOL = 'https'
 const HOST = 'www.juntengshoes.cn'
 const PORT = 80
 const CONTEXT = 'api'
-const VERSION = 'v1'
+const VERSION = 'v1' 
+// const VERSION = 'v1test' //测试端口
+
+export const PAGE_CONTEXT = process.env.NODE_ENV === 'production'? '/anj/admin/' : '/';
 
 export const SERVER_ROOT = `${PROTOCOL}://${HOST}`
 export const SERVER_HOST = `//${HOST}`
 export const SERVER_URL = `${PROTOCOL}://${HOST}/${CONTEXT}/${VERSION}`
 
+export const LOGIN_URL = SERVER_URL + `/login`
 
 export const TOWN_URL = SERVER_URL + '/town'
 export const TOWN_COUNTRY_URL = townId => `${TOWN_URL}/${townId}/country`
@@ -40,3 +44,6 @@ export const UPDATE_PICTURE_URL = (filter) => SERVER_URL + `/picture/${filter.id
 //上传下载公司地址
 export const COMPANY_DOWNLOAD_URL = SERVER_ROOT + '/backend/excel'
 export const COMPANY_UPLOAD_URL = SERVER_ROOT + '/backend/excel'
+
+//微信相关的API路径
+export const WECHAT_MENU_URL = SERVER_URL +'/menu'

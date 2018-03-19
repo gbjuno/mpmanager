@@ -1,5 +1,5 @@
 /**
- * Created by 叶子 on 2017/8/13.
+ * Created by Jingle on 2017/8/13.
  */
 import React, { Component } from 'react';
 // import { Router, Route, hashHistory, IndexRedirect } from 'react-router';
@@ -12,6 +12,7 @@ import CompanyManager from '../containers/ux/CompanyManager';
 import PlaceManager from '../containers/ux/PlaceManager';
 import UserManager from '../containers/ux/UserManager';
 import SummaryManager from '../containers/ux/SummaryManager';
+import MenuManager from '../containers/wechat/MenuManager';
 
 
 export default class CRouter extends Component {
@@ -19,19 +20,23 @@ export default class CRouter extends Component {
         const { auth } = this.props;
         const { permissions } = auth.data;
         // const { auth } = store.getState().httpData;
-        if (!permissions || !permissions.includes(permission)) return <Redirect to={'404'} push />;
+        if (!permissions || !permissions.includes(permission)) return <Redirect to={'/login'} push />;
         return component;
     };
     render() {
         return (
             <Switch>
 
+                {/* <Route exact path="/app/ux/tp" component={(props) => this.requireAuth('auth/ux/tp', <PictureManager {...props} />)} /> */}
                 <Route exact path="/app/ux/tp" component={PictureManager} />
                 <Route exact path="/app/ux/cz" component={CountryManager} />
                 <Route exact path="/app/ux/gs" component={CompanyManager} />
                 <Route exact path="/app/ux/dd" component={PlaceManager} />
                 <Route exact path="/app/ux/yh" component={UserManager} />
                 <Route exact path="/app/ux/tj" component={SummaryManager} />
+
+                <Route exact path="/app/wechat/cd" component={MenuManager} />
+                <Route exact path="/app/wechat/wz" component={MenuManager} />
 
                 <Route exact path="/app/auth/basic" component={AuthBasic} />
                 <Route exact path="/app/auth/routerEnter" component={(props) => this.requireAuth('auth/testPage', <RouterEnter {...props} />)} />

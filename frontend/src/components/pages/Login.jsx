@@ -1,15 +1,21 @@
 /**
- * Created by hao.cheng on 2017/4/16.
+ * Created by Jingle Chen on 2018/3/5.
  */
 import React from 'react';
-import { Form, Icon, Input, Button, Checkbox } from 'antd';
+import { Form, Icon, Input, Button, Checkbox, message } from 'antd';
 import { connect } from 'react-redux';
+import { Link, withRouter, Redirect } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { fetchData, receiveData } from '@/action';
 
 const FormItem = Form.Item;
 
 class Login extends React.Component {
+
+    state = {
+        redirectToHome: false,
+    }
+
     componentWillMount() {
         const { receiveData } = this.props;
         receiveData(null, 'auth');
@@ -26,10 +32,22 @@ class Login extends React.Component {
         e.preventDefault();
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                console.log('Received values of form: ', values);
+                console.log('Received values of form: ', {...values});
                 const { fetchData } = this.props;
-                if (values.userName === 'admin' && values.password === 'admin') fetchData({funcName: 'admin', stateName: 'auth'});
-                if (values.userName === 'guest' && values.password === 'guest') fetchData({funcName: 'guest', stateName: 'auth'});
+                fetchData({funcName: 'authLogin', params: {...values}, stateName: 'authStatus'})
+                .then(res => {
+                    if(res.data.status === 200){
+                        this.setState({
+                            redirectToHome: true,
+                        })
+                    }
+                    message.success('登录成功')
+                }).catch(err => {
+                    let errRes = err.response
+                    if(errRes.data && errRes.data.status === 'error'){
+                        message.error(errRes.data.error)
+                    }
+                });
             }
         });
     };
@@ -38,42 +56,40 @@ class Login extends React.Component {
     };
     render() {
         const { getFieldDecorator } = this.props.form;
+        const { redirectToHome } = this.state
+        const { from } = this.props.location.state || { from: { pathname: "/app/ux/tp" } };
+
+        if(redirectToHome){
+            return (
+                <Redirect to="/app/ux/tp"/>
+            )
+        }
+
         return (
             <div className="login">
                 <div className="login-form" >
                     <div className="login-logo">
-                        <span>React Admin</span>
+                        <span>佛山市顺德市安监局</span>
                     </div>
                     <Form onSubmit={this.handleSubmit} style={{maxWidth: '300px'}}>
                         <FormItem>
-                            {getFieldDecorator('userName', {
+                            {getFieldDecorator('Phone', {
                                 rules: [{ required: true, message: '请输入用户名!' }],
                             })(
-                                <Input prefix={<Icon type="user" style={{ fontSize: 13 }} />} placeholder="管理员输入admin, 游客输入guest" />
+                                <Input prefix={<Icon type="user" style={{ fontSize: 13 }} />} placeholder="请输入用户名或手机号码" />
                             )}
                         </FormItem>
                         <FormItem>
-                            {getFieldDecorator('password', {
+                            {getFieldDecorator('Password', {
                                 rules: [{ required: true, message: '请输入密码!' }],
                             })(
-                                <Input prefix={<Icon type="lock" style={{ fontSize: 13 }} />} type="password" placeholder="管理员输入admin, 游客输入guest" />
+                                <Input prefix={<Icon type="lock" style={{ fontSize: 13 }} />} type="password" placeholder="请输入密码" />
                             )}
                         </FormItem>
                         <FormItem>
-                            {getFieldDecorator('remember', {
-                                valuePropName: 'checked',
-                                initialValue: true,
-                            })(
-                                <Checkbox>记住我</Checkbox>
-                            )}
-                            <a className="login-form-forgot" href="" style={{float: 'right'}}>忘记密码</a>
                             <Button type="primary" htmlType="submit" className="login-form-button" style={{width: '100%'}}>
                                 登录
                             </Button>
-                            <p style={{display: 'flex', justifyContent: 'space-between'}}>
-                                <a href="">或 现在就去注册!</a>
-                                <a onClick={this.gitHub} ><Icon type="github" />(第三方登录)</a>
-                            </p>
                         </FormItem>
                     </Form>
                 </div>
@@ -84,8 +100,8 @@ class Login extends React.Component {
 }
 
 const mapStateToPorps = state => {
-    const { auth } = state.httpData;
-    return { auth };
+    const { authStatus } = state.httpData;
+    return { authStatus };
 };
 const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch),

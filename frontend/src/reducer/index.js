@@ -39,6 +39,20 @@ const searchFilter = (state = {}, action) => {
     }
 }
 
+const wechatLocal = (state = {}, action) => {
+    switch (action.type){
+        case type.UPDATE_WECHAT_MENU:
+            return {
+                ...state,
+                mergedMenus: this.mergeMenu(action.prevMenus, action.updateMenu),
+            }
+    }
+}
+
+const mergeMenu = (prevMenus, updateMenu) => {
+    return null
+}
+
 export default combineReducers({
     httpData,
     searchFilter,

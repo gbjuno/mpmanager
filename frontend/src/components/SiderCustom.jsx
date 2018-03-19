@@ -81,6 +81,15 @@ class SiderCustom extends Component {
                     <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}><Icon type="user" /><span className="nav-text">用户管理</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}><Icon type="environment-o" /><span className="nav-text">地点管理</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}><Icon type="line-chart" /><span className="nav-text">统计报表</span></Link></Menu.Item>
+                    <SubMenu
+                        key="/app/table"
+                        title={<span><Icon type="wechat" /><span className="nav-text">微信管理</span></span>}
+                    >
+                        <Menu.Item key="/app/wechat/cd"><Link to={'/app/wechat/cd'}><Icon type="bars" /><span className="nav-text">菜单管理</span></Link></Menu.Item>
+                        <Menu.Item key="/app/wechat/wz"><Link to={'/app/wechat/wz'}><Icon type="file-text" /><span className="nav-text">文章管理</span></Link></Menu.Item>
+                        <Menu.Item key="/app/wechat/xx"><Link to={'/app/wechat/xx'}><Icon type="message" /><span className="nav-text">消息管理</span></Link></Menu.Item>
+                        <Menu.Item key="/app/wechat/ym"><Link to={'/app/wechat/ym'}><Icon type="profile" /><span className="nav-text">页面模板</span></Link></Menu.Item>
+                    </SubMenu>
                 </Menu>
                 <style>
                     {`
