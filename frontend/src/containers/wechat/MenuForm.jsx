@@ -7,7 +7,7 @@ import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
 import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
-import { fetchData, receiveData } from '../../action';
+import { fetchData, receiveData, updateMenu } from '../../action';
 
 const FormItem = Form.Item;
 const Search = Input.Search;
@@ -20,21 +20,10 @@ function hasErrors(fieldsError) {
     return Object.keys(fieldsError).some(field => fieldsError[field]);
 }
 
-const ACTION = {
-    CREATE: 'create',
-    UPDATE: 'update',
-}
 
 class MenuForm extends Component {
 
     state = {
-        action: this.props.action || ACTION.CREATE,
-        townsData: [],
-        countriesData: [],
-        companiesData: [],
-        selectedTownId: '',
-        selectedCountryId: '',
-        selectedDate: new Date(),
     }
 
     componentDidMount() {
@@ -67,7 +56,12 @@ class MenuForm extends Component {
         });
     };
 
-    handleChange = (e) => {
+    handleChangeName = (e) => {
+        const { updateMenu, wechatLocal, menu } = this.props
+        console.log('jjjjjj', wechatLocal, e.target.value, menu)
+    }
+
+    handleChangeUrl = (e) => {
         if(this.props.onChange){
             this.props.onChange(e.target.value)
         }
@@ -110,7 +104,7 @@ class MenuForm extends Component {
                             required: true, message: '请输入菜单名称!',
                         }],
                     })(
-                        <Input  onChange={this.handleChange}/>
+                        <Input  onChange={this.handleChangeName}/>
                     )}
                 </FormItem>
                 <FormItem 
@@ -124,7 +118,7 @@ class MenuForm extends Component {
                             required: true, message: '请输入菜单链接!',
                         }],
                     })(
-                        <Input onChange={this.handleChange}/>
+                        <Input onChange={this.handleChangeUrl}/>
                     )}
                 </FormItem>
             </Form>
@@ -134,11 +128,12 @@ class MenuForm extends Component {
 
 const mapStateToProps = state => {
     const { searchFilter } = state
-    return { ...state.httpData, filter: searchFilter};
+    return { wechatLocal: state.wechatLocal };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
+    updateMenu: bindActionCreators(updateMenu, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(MenuForm))

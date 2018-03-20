@@ -97,8 +97,20 @@ class MenuManager extends React.Component {
         fetchData({funcName: 'fetchMenus', stateName: 'menusData'})
             .then(res => {
                 let resData = menusDemoData // res.data
+                let i = 1;
+                resData.menu.button.map(b => {
+                    b.frontend_key = i + "";
+                    i++;
+                    let j = 1;
+                    b.sub_button.map(sb => {
+                        sb.frontend_key = i + "-" + j;
+                        j++;
+                        return sb;
+                    })
+                    return b;
+                })
+                console.log('from wechat api---', resData)
                 updateMenu(resData, null)
-                console.log('from wechat api---', res)
             })
     }
 
