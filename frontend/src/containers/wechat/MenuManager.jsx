@@ -13,6 +13,49 @@ import * as config from '../../axios/config'
 import * as utils from '../../utils'
 import MenuForm from './MenuForm'
 
+const menusDemoData = {
+    "menu": {
+        "button": [
+            {
+                "type": "click", 
+                "name": "今日歌曲", 
+                "key": "V1001_TODAY_MUSIC", 
+                "sub_button": [
+                    {
+                        "type": "view", 
+                        "name": "搜索", 
+                        "url": "http://www.soso.com/", 
+                        "sub_button": [ ]
+                    }
+                 ]
+            }, 
+           
+            {
+                "name": "菜单", 
+                "sub_button": [
+                    {
+                        "type": "view", 
+                        "name": "搜索", 
+                        "url": "http://www.soso.com/", 
+                        "sub_button": [ ]
+                    }, 
+                    {
+                        "type": "view", 
+                        "name": "视频", 
+                        "url": "http://v.qq.com/", 
+                        "sub_button": [ ]
+                    }, 
+                    {
+                        "type": "click", 
+                        "name": "赞一下我们", 
+                        "key": "V1001_GOOD", 
+                        "sub_button": [ ]
+                    }
+                ]
+            }
+        ]
+    }
+}
 
 class MenuManager extends React.Component {
     state = {
@@ -53,7 +96,8 @@ class MenuManager extends React.Component {
         const { fetchData, updateMenu } = this.props
         fetchData({funcName: 'fetchMenus', stateName: 'menusData'})
             .then(res => {
-                updateMenu(res.data, null)
+                let resData = menusDemoData // res.data
+                updateMenu(resData, null)
                 console.log('from wechat api---', res)
             })
     }
@@ -121,54 +165,12 @@ class MenuManager extends React.Component {
         return newSubMenus
     }
 
-    genMenuList = (menusData0) => {
+    genMenuList = (menusData) => {
         const { selectedMenuKey, selectedMenu } = this.state
-        let menusData = {
-            "menu": {
-                "button": [
-                    {
-                        "type": "click", 
-                        "name": "今日歌曲", 
-                        "key": "V1001_TODAY_MUSIC", 
-                        "sub_button": [
-                            {
-                                "type": "view", 
-                                "name": "搜索", 
-                                "url": "http://www.soso.com/", 
-                                "sub_button": [ ]
-                            }
-                         ]
-                    }, 
-                   
-                    {
-                        "name": "菜单", 
-                        "sub_button": [
-                            {
-                                "type": "view", 
-                                "name": "搜索", 
-                                "url": "http://www.soso.com/", 
-                                "sub_button": [ ]
-                            }, 
-                            {
-                                "type": "view", 
-                                "name": "视频", 
-                                "url": "http://v.qq.com/", 
-                                "sub_button": [ ]
-                            }, 
-                            {
-                                "type": "click", 
-                                "name": "赞一下我们", 
-                                "key": "V1001_GOOD", 
-                                "sub_button": [ ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        }
+        
 
-        let buttons = menusData.menu.button
-        if(buttons.length < 3){
+        let buttons = menusData.button
+        if(buttons && buttons.length < 3){
             buttons.push(
                 {
                     frontend_key: buttons.length + 1,
@@ -251,8 +253,12 @@ class MenuManager extends React.Component {
         const { detailRecord, wechatLocal } = this.props
 
         console.log('wulun duome langbei douxihuanni menu', wechatLocal)
+        let menusData = {}
+        if(wechatLocal && wechatLocal.mergedMenus && wechatLocal.mergedMenus.menu){
+            menusData = wechatLocal.mergedMenus.menu
+        }
 
-        let wrappedMenusData = this.genMenuList()
+        let wrappedMenusData = this.genMenuList(menusData)
 
         const title = detailRecord?detailRecord.name:''
         let comment
