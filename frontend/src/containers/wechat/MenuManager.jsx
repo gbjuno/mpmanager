@@ -50,8 +50,12 @@ class MenuManager extends React.Component {
 
 
     fetchMenusData = () => {
-        const { fetchData } = this.props
+        const { fetchData, updateMenu } = this.props
         fetchData({funcName: 'fetchMenus', stateName: 'menusData'})
+            .then(res => {
+                updateMenu(res.data, null)
+                console.log('from wechat api---', res)
+            })
     }
 
 
@@ -243,14 +247,12 @@ class MenuManager extends React.Component {
     }
 
     render() {
-        const { rate, baseHeight, selectedMenu } = this.state
-        const { detailRecord, menusData  } = this.props
+        const { baseHeight, selectedMenu } = this.state
+        const { detailRecord, wechatLocal } = this.props
 
-        console.log('wulun duome langbei douxihuanni', selectedMenu)
+        console.log('wulun duome langbei douxihuanni menu', wechatLocal)
 
         let wrappedMenusData = this.genMenuList()
-
-        const isMobile = this.props.responsive.data.isMobile
 
         const title = detailRecord?detailRecord.name:''
         let comment
@@ -262,7 +264,8 @@ class MenuManager extends React.Component {
                     <Col className="gutter-row" md={8}>
                         <Card 
                             className="comment-card"
-                            bodyStyle={{}}>
+                            bodyStyle={{}} 
+                        >
                             <div style={{height: baseHeight-60}}>
                                 <Row className="wechat-menu-row">
                                     {wrappedMenusData}
@@ -272,7 +275,8 @@ class MenuManager extends React.Component {
                     </Col>
                     <Col className="gutter-row" md={16}>
                         <Card 
-                            title={"菜单"}>
+                            title={"菜单"}
+                        >
                             <div 
                                 style={{height: baseHeight-113}}
                             >
@@ -297,7 +301,7 @@ class MenuManager extends React.Component {
 }
 
 const mapStateToProps = state => {
-    return { ...state.httpData };
+    return { wechatLocal: state.wechatLocal };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
