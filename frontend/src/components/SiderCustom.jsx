@@ -82,7 +82,7 @@ class SiderCustom extends Component {
                     <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}><Icon type="environment-o" /><span className="nav-text">地点管理</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}><Icon type="line-chart" /><span className="nav-text">统计报表</span></Link></Menu.Item>
                     <SubMenu
-                        key="/app/table"
+                        key="/app/wechat"
                         title={<span><Icon type="wechat" /><span className="nav-text">微信管理</span></span>}
                     >
                         <Menu.Item key="/app/wechat/cd"><Link to={'/app/wechat/cd'}><Icon type="bars" /><span className="nav-text">菜单管理</span></Link></Menu.Item>

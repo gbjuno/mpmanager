@@ -4,20 +4,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Row, Col, Card, Button, Alert, Icon, Popover } from 'antd';
+import { Row, Col, Card, Button, Icon, Popover } from 'antd';
 import * as _ from 'lodash'
-import moment from 'moment';
-import { fetchData, receiveData, searchFilter } from '../../action';
+import { fetchData, receiveData, updateMenu } from '../../action';
 import * as CONSTANTS from '../../constants';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import * as config from '../../axios/config'
 import * as utils from '../../utils'
 import MenuForm from './MenuForm'
 
-import 'photoswipe/dist/photoswipe.css';
-import 'photoswipe/dist/default-skin/default-skin.css';
-
-const DEFAULT_PIC_URL = '/html/static/null.png'
 
 class MenuManager extends React.Component {
     state = {
@@ -81,7 +76,8 @@ class MenuManager extends React.Component {
         
     }
 
-    handleMenuClick = (menu, isSub) => {
+    handleMenuClick = (menu, isSub, isMenuOpacity) => {
+        if(isMenuOpacity) return
         if(isSub && menu.type === 'new') return
         this.setState({
             selectedMenuKey: menu.frontend_key,
@@ -92,7 +88,7 @@ class MenuManager extends React.Component {
     genSubMenus = (menu) => {
         let newSubMenus = menu.sub_button.slice(0)
         const len = newSubMenus.length
-        for(let i=len; i<5; i++){
+        for(let i=len; i<4; i++){
             newSubMenus.unshift(
                 {
                     "type": "new", 
@@ -102,17 +98,27 @@ class MenuManager extends React.Component {
                 }
             )
         }
+        newSubMenus.push(
+            {
+                "type": "newButton", 
+                "name": "子菜单名称", 
+                "url": "", 
+                "sub_button": [ ]
+            }
+        )
+        
         let j = 0;
         const k = menu.frontend_key
         newSubMenus.map(m => {
             m.frontend_key = k + "-" + j;
             j++;
+            return m
         })
         return newSubMenus
     }
 
     genMenuList = (menusData0) => {
-        const { selectedMenuKey } = this.state
+        const { selectedMenuKey, selectedMenu } = this.state
         let menusData = {
             "menu": {
                 "button": [
@@ -162,7 +168,7 @@ class MenuManager extends React.Component {
             buttons.push(
                 {
                     frontend_key: buttons.length + 1,
-                    "type": "new", 
+                    "type": "newButton", 
                     "name": "菜单名称", 
                     "sub_button": [ ]
                 }
@@ -180,19 +186,23 @@ class MenuManager extends React.Component {
                         this.genSubMenus(menu).map(subMenu => (
                             <Row key={subMenu.frontend_key} 
                                 className={"wechat-sub-menu " + (selectedMenuKey === subMenu.frontend_key?"wechat-sub-menu-selected":"wechat-sub-menu-unselected") }
-                                style={{opacity:subMenu.type === "new"?0:1}}
-                                onClick={this.handleMenuClick.bind(this, subMenu, true)}
-                                >
-                                {subMenu.name}
+                                style={{opacity: this.isMenuOpacity(subMenu, selectedMenu)?0:1}}
+                                onClick={this.handleMenuClick.bind(this, subMenu, true, this.isMenuOpacity(subMenu, selectedMenu))}
+                            >
+                                {subMenu.type ==='newButton'?
+                                <Icon style={{fontSize: 14, fontWeight: 'bold'}} type="plus" />
+                                :
+                                subMenu.name
+                                }
                             </Row>
                             
                         ))
                     }
-                    <div style={{opacity:menu.sub_button.length > 0?1:0, height: 9}}>
-                    <i className="arrow arrow_out"></i>
-                    <i className="arrow arrow_in"></i>
+                    <div style={{opacity:this.isMenuOpacity(menu, selectedMenu)?0:1, height: 9}}>
+                    <i className="arrow arrow_out" />
+                    <i className="arrow arrow_in" />
                     </div>
-                    {menu.type !== "new"?
+                    {menu.type !== "newButton"?
                     <Row className={"wechat-main-menu " + (selectedMenuKey === menu.frontend_key?"wechat-main-menu-selected":"wechat-main-menu-unselected")} 
                         onClick={this.handleMenuClick.bind(this, menu)}
                     >
@@ -202,7 +212,7 @@ class MenuManager extends React.Component {
                     <Row className={"wechat-main-menu " + (selectedMenuKey === menu.frontend_key?"wechat-main-menu-selected":"wechat-main-menu-unselected")} 
                         onClick={this.handleMenuClick.bind(this, menu, false)}
                     >
-                        <Icon style={{fontSize: 14, fontWeight: 'bold'}} type="plus"/>
+                        <Icon style={{fontSize: 14, fontWeight: 'bold'}} type="plus" />
                     </Row>
                     }
                 </Col>
@@ -210,13 +220,26 @@ class MenuManager extends React.Component {
             })
         }else{
             return (
-                <Col className="wechat-menu-row-item" md={12}><Icon style={{fontSize: 14, fontWeight: 'bold'}} type="plus"/>添加菜单</Col>
+                <Col className="wechat-menu-row-item" md={12}><Icon style={{fontSize: 14, fontWeight: 'bold'}} type="plus" />添加菜单</Col>
             )
         }
     }
 
-    isMenuOpacity = () => {
-        
+    isMenuOpacity = (menu, selectedMenu) => {
+        if(menu.type === 'new'){
+            return true
+        }
+
+        if(selectedMenu === null){
+            return true
+        }
+
+        let menuKeyPrefix = menu.frontend_key.toString().split('-')[0]
+        let selectedMenuKeyPrefix = selectedMenu.frontend_key.toString().split('-')[0]
+        if(menuKeyPrefix === selectedMenuKeyPrefix){
+            return false
+        }
+        return true
     }
 
     render() {
@@ -264,7 +287,7 @@ class MenuManager extends React.Component {
                         bodyStyle={{}}>
                         <div style={{height: 40, textAlign: 'center'}}>
                             <Button type="primary">保存并发布</Button>
-                            <Button>取消</Button>
+                            <Button>重置</Button>
                         </div>
                     </Card>
                 </Row>
@@ -274,13 +297,12 @@ class MenuManager extends React.Component {
 }
 
 const mapStateToProps = state => {
-    console.log('you are my angel...', state)
-    return { ...state.httpData, filter: state.searchFilter };
+    return { ...state.httpData };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
-    searchFilter: bindActionCreators(searchFilter, dispatch),
+    updateMenu: bindActionCreators(updateMenu, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(MenuManager);
