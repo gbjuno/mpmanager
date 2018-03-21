@@ -24,6 +24,7 @@ function hasErrors(fieldsError) {
 class MenuForm extends Component {
 
     state = {
+        currentMenu: null,
     }
 
     componentDidMount() {
@@ -39,6 +40,21 @@ class MenuForm extends Component {
         }
     }
 
+    componentDidUpdate = (prevProps, preState) =>{
+        const prevMenu = prevProps.menu
+        const currMenu = this.props.menu
+        if(prevMenu && (prevMenu.name !== currMenu.name)){
+            this.props.form.setFieldsValue({
+                name: currMenu.name,
+            })
+        }
+        
+        if(prevMenu && (prevMenu.url !== currMenu.url)){
+            this.props.form.setFieldsValue({
+                url: currMenu.url,
+            })
+        }
+    }
 
     handleSubmit = (e) => {
         e.preventDefault();
@@ -58,13 +74,13 @@ class MenuForm extends Component {
 
     handleChangeName = (e) => {
         const { updateMenu, wechatLocal, menu } = this.props
+        menu.name = e.target.value
         console.log('jjjjjj', wechatLocal, e.target.value, menu)
     }
 
     handleChangeUrl = (e) => {
-        if(this.props.onChange){
-            this.props.onChange(e.target.value)
-        }
+        const { updateMenu, wechatLocal, menu } = this.props
+        menu.url = e.target.value
     }
 
 
