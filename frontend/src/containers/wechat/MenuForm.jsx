@@ -75,7 +75,7 @@ class MenuForm extends Component {
     handleChangeName = (e) => {
         const { updateMenu, wechatLocal, menu } = this.props
         menu.name = e.target.value
-        console.log('jjjjjj', wechatLocal, e.target.value, menu)
+        updateMenu(wechatLocal.mergedMenus, menu)
     }
 
     handleChangeUrl = (e) => {

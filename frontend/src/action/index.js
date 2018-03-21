@@ -30,8 +30,10 @@ export const searchFilter = (scope, condition) => ({
     condition,
 })
 
-export const updateMenu = (prevMenus, updateMenu) => ({
+export const updateMenu = (prevMenus, updateMenu, isNew, isSub) => ({
     type: type.UPDATE_WECHAT_MENU,
     prevMenus,
-    updateMenu
+    updateMenu,
+    isNew,
+    isSub,
 })

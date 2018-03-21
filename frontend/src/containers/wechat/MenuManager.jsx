@@ -143,6 +143,24 @@ class MenuManager extends React.Component {
             selectedMenuKey: menu.frontend_key,
             selectedMenu: menu,
         })
+        if(menu.type === 'newButton' && isSub){
+            this.handleAddSubMenu(menu)
+        }
+    }
+
+    handleAddSubMenu = (subMenu) => {
+        const { updateMenu, wechatLocal } = this.props
+        updateMenu(wechatLocal.mergedMenus, subMenu, true, true)
+        let sm_fk = subMenu.frontend_key
+        let sm_fk_l = sm_fk.split('-')[0]
+        let sm_fk_r = sm_fk.split('-')[1]
+        let new_fk = sm_fk_l + "-" + (parseInt(sm_fk_r) - 1)
+        subMenu.frontend_key = new_fk
+
+        this.setState({
+            selectedMenuKey: new_fk,
+            selectedMenu: subMenu,
+        })
     }
 
     genSubMenus = (menu) => {
