@@ -37,3 +37,9 @@ export const updateMenu = (prevMenus, updateMenu, isNew, isSub) => ({
     isNew,
     isSub,
 })
+
+export const deleteMenu = (prevMenus, deleteMenu) => ({
+    type: type.DELETE_WECHAT_MENU,
+    prevMenus,
+    deleteMenu,
+})

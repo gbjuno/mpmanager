@@ -3,6 +3,7 @@
  */
 import { combineReducers } from 'redux';
 import * as type from '../action/type';
+import * as _ from 'lodash'
 
 const handleData = (state = {isFetching: true, data: {}}, action) => {
     switch (action.type) {
@@ -42,11 +43,15 @@ const searchFilter = (state = {}, action) => {
 const wechatLocal = (state = {}, action) => {
     switch (action.type){
         case type.UPDATE_WECHAT_MENU:
-            console.log('menu action...', action)
             return {
                 ...state,
                 mergedMenus: mergeMenu(action.prevMenus, action.updateMenu, action.isNew,  action.isSub),
             };
+        case type.DELETE_WECHAT_MENU:
+            return {
+                ...state,
+                mergedMenus: deleteMenu(action.prevMenus, action.deleteMenu)
+            }
         default:
             return {...state};
     }
@@ -56,17 +61,18 @@ const mergeMenu = (prevMenus, updateMenu, isNew, isSub) => {
     if(updateMenu === null){
         return prevMenus
     }
-    if(prevMenus && prevMenus.menu){
+    if(prevMenus){
 
         if(isNew){
             if(isSub){
-                prevMenus.menu.button.filter(m => {
+                prevMenus.button.filter(m => {
                     if(isOneOfSubMenus(updateMenu, m)){
                         return true
                     }else {
                         return false
                     }
                 }).map(m => {
+                    delete m['url']
                     m.sub_button.push({
                         "type": "view", 
                         "name": "子菜单名称", 
@@ -75,11 +81,18 @@ const mergeMenu = (prevMenus, updateMenu, isNew, isSub) => {
                     })
                 })
                 return prevMenus
+            }else{
+                prevMenus.button.push({
+                    "type": "view", 
+                    "name": "菜单名称", 
+                    "url": "", 
+                    "sub_button": [ ]
+                })
             }
 
         }
 
-        prevMenus.menu.button.map(m => {
+        prevMenus.button.map(m => {
             if(m.frontend_key === updateMenu.frontend_key){
                 m.name = updateMenu.name
                 m.url = updateMenu.url
@@ -98,11 +111,24 @@ const mergeMenu = (prevMenus, updateMenu, isNew, isSub) => {
     return null
 }
 
+const deleteMenu = (prevMenus, deleteMenu) => {
+    if(prevMenus){
+        let dm_fk = deleteMenu.frontend_key
+        if(dm_fk.toString().split('-').length > 1){
+
+        }else{
+            let index = _.findIndex(prevMenus.button, {frontend_key: dm_fk})
+            console.log('delete index', index)
+            prevMenus.button.splice(index, 1)
+            return prevMenus
+        }
+    }
+}
+
 const isOneOfSubMenus = (subMenu, menu) => {
     const sm_fk = subMenu.frontend_key
     const m_fk = menu.frontend_key
 
-    console.log('xiangxinaiqing,,,,,', subMenu, menu)
     if(m_fk.toString() === sm_fk.split('-')[0]){
         return true
     }

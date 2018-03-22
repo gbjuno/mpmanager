@@ -256,8 +256,16 @@ export const fetchPicturesWithPlace = (filter={}) => {
     return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
 }
 
+// Wechat API
+
 export const fetchMenus = () => {
     let url = config.WECHAT_MENU_URL
     return axios.get(url ,{}).then(res => res.data);
 }
 
+
+export const saveMenus = (payload) => {
+    let url = config.WECHAT_MENU_URL
+    return axios.post(url, payload, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}

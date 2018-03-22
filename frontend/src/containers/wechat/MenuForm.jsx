@@ -81,15 +81,20 @@ class MenuForm extends Component {
     handleChangeUrl = (e) => {
         const { updateMenu, wechatLocal, menu } = this.props
         menu.url = e.target.value
+        updateMenu(wechatLocal.mergedMenus, menu)
     }
 
+    isSubMenu = (menu) => {
+        if(menu === null) return false
+        if(menu.frontend_key.toString().split('-').length > 1) return true
+        return false
+    }
 
     render() {
         const { getFieldDecorator } = this.props.form;
-        const { style, filter } = this.props
-        const { value } = this.state
-
         const { menu } = this.props
+
+        let isSub = this.isSubMenu(menu)
         let defaultName = '', defaultUrl = ''
         if(menu !== null){
             defaultName = menu.name
@@ -103,16 +108,16 @@ class MenuForm extends Component {
             },
             wrapperCol: {
               xs: { span: 24 },
-              sm: { span: 12 },
+              sm: { span: 20 },
             },
           };
 
         return (
-            <Form style={style} onSubmit={this.handleSubmit}>
+            <Form onSubmit={this.handleSubmit}>
                 <FormItem 
                     {...formItemLayout}
                     style={{}}
-                    label="菜单名称"
+                    label={isSub?"子菜单名称":"菜单名称"}
                 >
                     {getFieldDecorator('name', {
                         initialValue: defaultName,
@@ -123,10 +128,11 @@ class MenuForm extends Component {
                         <Input  onChange={this.handleChangeName}/>
                     )}
                 </FormItem>
+                {(menu && (!menu.sub_button ||  menu.sub_button.length === 0)) &&
                 <FormItem 
                     {...formItemLayout}
                     style={{}}
-                    label="菜单链接"
+                    label={isSub?"子菜单链接":"菜单链接"}
                 >
                     {getFieldDecorator('url', {
                         initialValue: defaultUrl,
@@ -137,6 +143,7 @@ class MenuForm extends Component {
                         <Input onChange={this.handleChangeUrl}/>
                     )}
                 </FormItem>
+                }
             </Form>
         );
     }

@@ -4,58 +4,14 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Row, Col, Card, Button, Icon, Popover } from 'antd';
+import { Row, Col, Card, Button, Icon, Modal, message } from 'antd';
 import * as _ from 'lodash'
-import { fetchData, receiveData, updateMenu } from '../../action';
+import { fetchData, receiveData, updateMenu, deleteMenu } from '../../action';
 import * as CONSTANTS from '../../constants';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import * as config from '../../axios/config'
 import * as utils from '../../utils'
 import MenuForm from './MenuForm'
-
-const menusDemoData = {
-    "menu": {
-        "button": [
-            {
-                "type": "click", 
-                "name": "今日歌曲", 
-                "key": "V1001_TODAY_MUSIC", 
-                "sub_button": [
-                    {
-                        "type": "view", 
-                        "name": "搜索", 
-                        "url": "http://www.soso.com/", 
-                        "sub_button": [ ]
-                    }
-                 ]
-            }, 
-           
-            {
-                "name": "菜单", 
-                "sub_button": [
-                    {
-                        "type": "view", 
-                        "name": "搜索", 
-                        "url": "http://www.soso.com/", 
-                        "sub_button": [ ]
-                    }, 
-                    {
-                        "type": "view", 
-                        "name": "视频", 
-                        "url": "http://v.qq.com/", 
-                        "sub_button": [ ]
-                    }, 
-                    {
-                        "type": "click", 
-                        "name": "赞一下我们", 
-                        "key": "V1001_GOOD", 
-                        "sub_button": [ ]
-                    }
-                ]
-            }
-        ]
-    }
-}
 
 class MenuManager extends React.Component {
     state = {
@@ -65,12 +21,13 @@ class MenuManager extends React.Component {
         selectedMenuKey: null,
         selectedMenu: null,
         filter: {},
+        visible: false,
     };
 
     componentDidMount = () => {
-        this.resizePicture();
+        this.resize();
         window.onresize = () =>{
-            this.resizePicture();
+            this.resize();
         };
 
         this.fetchMenusData()
@@ -96,17 +53,19 @@ class MenuManager extends React.Component {
         const { fetchData, updateMenu } = this.props
         fetchData({funcName: 'fetchMenus', stateName: 'menusData'})
             .then(res => {
-                let resData = menusDemoData // res.data
+                let resData = res.data
                 let i = 1;
-                resData.menu.button.map(b => {
+                resData.button.map(b => {
                     b.frontend_key = i + "";
                     i++;
                     let j = 1;
-                    b.sub_button.map(sb => {
-                        sb.frontend_key = i + "-" + j;
-                        j++;
-                        return sb;
-                    })
+                    if(b.sub_button){
+                        b.sub_button.map(sb => {
+                            sb.frontend_key = i + "-" + j;
+                            j++;
+                            return sb;
+                        })
+                    }
                     return b;
                 })
                 console.log('from wechat api---', resData)
@@ -122,7 +81,7 @@ class MenuManager extends React.Component {
     };
 
 
-    resizePicture = () => {
+    resize = () => {
         this.getClientWidth();
         const scPic = document.getElementById("scPic");
         if(scPic === undefined || scPic === null) return;
@@ -136,7 +95,20 @@ class MenuManager extends React.Component {
         
     }
 
+    showModal = () => {
+        this.setState({
+            visible: true,
+        })
+    }
+
+    hideModal = () => {
+        this.setState({
+            visible: false,
+        })
+    }
+
     handleMenuClick = (menu, isSub, isMenuOpacity) => {
+        console.log('ccccccc', menu, isSub, isMenuOpacity)
         if(isMenuOpacity) return
         if(isSub && menu.type === 'new') return
         this.setState({
@@ -145,7 +117,21 @@ class MenuManager extends React.Component {
         })
         if(menu.type === 'newButton' && isSub){
             this.handleAddSubMenu(menu)
+        }else if(menu.type === 'newButton' && !isSub){
+            this.handleAddMenu(menu)
         }
+    }
+
+    handleAddMenu = (menu) => {
+        const { updateMenu, wechatLocal } = this.props
+        updateMenu(wechatLocal.mergedMenus, menu, true, false)
+
+        console.log('add main menu...', menu)
+
+        this.setState({
+            selectedMenuKey: menu.frontend_key,
+            selectedMenu: menu,
+        })
     }
 
     handleAddSubMenu = (subMenu) => {
@@ -163,8 +149,27 @@ class MenuManager extends React.Component {
         })
     }
 
+    handleDeleteMenu = (selectedMenu) => {
+        const { deleteMenu, wechatLocal } = this.props
+        console.log('selected delete menu', selectedMenu)
+        deleteMenu(wechatLocal.mergedMenus, selectedMenu)
+        this.setState({
+            visible: false,
+        })
+    }
+
+    saveAndPublish = () => {
+        const { wechatLocal, fetchData } = this.props
+        fetchData({funcName:'saveMenus', params: {...wechatLocal.mergedMenus},stateName:'saveMenuStatus'})
+            .then(res => {
+                this.fetchMenusData()
+                message.info('发布成功')
+            })
+    }
+
     genSubMenus = (menu) => {
-        let newSubMenus = menu.sub_button.slice(0)
+        let newSubMenus = []
+        if(menu.sub_button) newSubMenus =  menu.sub_button.slice(0)
         const len = newSubMenus.length
         for(let i=len; i<4; i++){
             newSubMenus.unshift(
@@ -176,14 +181,16 @@ class MenuManager extends React.Component {
                 }
             )
         }
-        newSubMenus.push(
-            {
-                "type": "newButton", 
-                "name": "子菜单名称", 
-                "url": "", 
-                "sub_button": [ ]
-            }
-        )
+        if(len < 5){
+            newSubMenus.push(
+                {
+                    "type": "newButton", 
+                    "name": "子菜单名称", 
+                    "url": "", 
+                    "sub_button": [ ]
+                }
+            )
+        }
         
         let j = 0;
         const k = menu.frontend_key
@@ -198,15 +205,26 @@ class MenuManager extends React.Component {
     genMenuList = (menusData) => {
         const { selectedMenuKey, selectedMenu } = this.state
         
+        console.log('fffffff', menusData)
 
-        let buttons = menusData.button
+        let buttons = [] 
+        if(menusData.button){
+            menusData.button.map(m => {
+                if(m.sub_button && m.sub_button.length > 0){
+                    delete m['url']
+                }
+                return m
+            })
+            buttons = menusData.button.slice(0)
+        }
         if(buttons && buttons.length < 3){
             buttons.push(
                 {
                     frontend_key: buttons.length + 1,
                     "type": "newButton", 
                     "name": "菜单名称", 
-                    "sub_button": [ ]
+                    "sub_button": [ ],
+                    "url": "",
                 }
             )
         }
@@ -240,13 +258,13 @@ class MenuManager extends React.Component {
                     </div>
                     {menu.type !== "newButton"?
                     <Row className={"wechat-main-menu " + (selectedMenuKey === menu.frontend_key?"wechat-main-menu-selected":"wechat-main-menu-unselected")} 
-                        onClick={this.handleMenuClick.bind(this, menu)}
+                        onClick={this.handleMenuClick.bind(this, menu, false, false)}
                     >
                         {menu.name}
                     </Row>
                     :
                     <Row className={"wechat-main-menu " + (selectedMenuKey === menu.frontend_key?"wechat-main-menu-selected":"wechat-main-menu-unselected")} 
-                        onClick={this.handleMenuClick.bind(this, menu, false)}
+                        onClick={this.handleMenuClick.bind(this, menu, false, false)}
                     >
                         <Icon style={{fontSize: 14, fontWeight: 'bold'}} type="plus" />
                     </Row>
@@ -283,9 +301,10 @@ class MenuManager extends React.Component {
         const { detailRecord, wechatLocal } = this.props
 
         console.log('wulun duome langbei douxihuanni menu', wechatLocal)
+        console.log('wulun duome langbei douxihuanni selectedMenu', selectedMenu)
         let menusData = {}
-        if(wechatLocal && wechatLocal.mergedMenus && wechatLocal.mergedMenus.menu){
-            menusData = wechatLocal.mergedMenus.menu
+        if(wechatLocal && wechatLocal.mergedMenus){
+            menusData = wechatLocal.mergedMenus
         }
 
         let wrappedMenusData = this.genMenuList(menusData)
@@ -311,14 +330,16 @@ class MenuManager extends React.Component {
                     </Col>
                     <Col className="gutter-row" md={16}>
                         <Card 
-                            title={"菜单"}
+                            extra={selectedMenu&&<a onClick={this.showModal}>删除菜单</a>}
+                            title={selectedMenu?selectedMenu.name:'菜单'}
                         >
                             <div 
                                 style={{height: baseHeight-113}}
                             >
-                                <MenuForm menuFrontendKey={selectedMenu?selectedMenu.frontend_key:0} menu={selectedMenu}/>
+                                <MenuForm menuFrontendKey={selectedMenu?selectedMenu.frontend_key:1} menu={selectedMenu}/>
                             </div>
                         </Card>
+                        
                     </Col>
                 </Row>
                 <Row style={{marginTop: 10}}>
@@ -326,11 +347,21 @@ class MenuManager extends React.Component {
                         className="comment-card"
                         bodyStyle={{}}>
                         <div style={{height: 40, textAlign: 'center'}}>
-                            <Button type="primary">保存并发布</Button>
+                            <Button type="primary" onClick={this.saveAndPublish}>保存并发布</Button>
                             <Button>重置</Button>
                         </div>
                     </Card>
                 </Row>
+                <Modal
+                    title="警告"
+                    visible={this.state.visible}
+                    onOk={this.handleDeleteMenu.bind(this, selectedMenu)}
+                    onCancel={this.hideModal}
+                    okText="确认"
+                    cancelText="取消"
+                    >
+                    <p>确认删除菜单：{selectedMenu?selectedMenu.name:''}</p>
+                </Modal>
             </div>
         )
     }
@@ -343,6 +374,7 @@ const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
     updateMenu: bindActionCreators(updateMenu, dispatch),
+    deleteMenu: bindActionCreators(deleteMenu, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(MenuManager);
