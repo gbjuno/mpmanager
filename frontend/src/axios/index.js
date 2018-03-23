@@ -153,15 +153,17 @@ export const deleteCompany = (company) => {
 
 // 用户管理API
 
-export const fetchUsers = (filter={}) => {
-    let url = config.USER_URL
-    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+export const fetchUsers = (prevFilter={}) => {
+    const filter = {
+        pageNo: prevFilter.pageNo?prevFilter.pageNo:1,
+        pageSize: prevFilter.pageSize?prevFilter.pageSize:10,
+        name: prevFilter.name?prevFilter.name:'',
+        phone: prevFilter.phone?prevFilter.phone:'',
+    }
+    let url = `${config.USER_URL}?pageNo=${filter.pageNo}&pageSize=${filter.pageSize}&name=${filter.name}&phone=${filter.phone}`
+    return axios.get(url ,{}).then(res => res.data);
 }
 
-export const searchUsers = (user) => {
-    let url = config.SEARCH_URL(user)
-    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
-}
 
 export const newUser = (user) => {
     return axios.post(config.USER_URL, {...user}, {headers: {Accept: 'application/json'}})

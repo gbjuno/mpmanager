@@ -33,8 +33,13 @@ const searchFilter = (state = {}, action) => {
         case type.TRIGGER_SEARCH:
             return {
                 ...state,
-                [action.scope]: {...action.condition},
+                [action.scope]: mergeCondition(state, action.scope, action.condition),
             };
+        case type.RESET_SEARCH:
+            return {
+                ...state,
+                [action.scope]: {},
+            }
         default:
             return {...state};
     }
@@ -57,6 +62,10 @@ const wechatLocal = (state = {}, action) => {
     }
 }
 
+const mergeCondition = (state, scope, condition) => {
+    return _.merge(state[scope], condition)
+}
+
 const mergeMenu = (prevMenus, updateMenu, isNew, isSub) => {
     if(updateMenu === null){
         return prevMenus
@@ -73,6 +82,9 @@ const mergeMenu = (prevMenus, updateMenu, isNew, isSub) => {
                     }
                 }).map(m => {
                     delete m['url']
+                    if(!m.sub_button){
+                        m.sub_button = []
+                    }
                     m.sub_button.push({
                         "type": "view", 
                         "name": "子菜单名称", 
@@ -115,10 +127,14 @@ const deleteMenu = (prevMenus, deleteMenu) => {
     if(prevMenus){
         let dm_fk = deleteMenu.frontend_key
         if(dm_fk.toString().split('-').length > 1){
-
+            prevMenus.button.map(m => {
+                let index = _.findIndex(m.sub_button, {frontend_key: dm_fk})
+                m.sub_button.splice(index, 1)
+                return m
+            })
+            return prevMenus
         }else{
             let index = _.findIndex(prevMenus.button, {frontend_key: dm_fk})
-            console.log('delete index', index)
             prevMenus.button.splice(index, 1)
             return prevMenus
         }

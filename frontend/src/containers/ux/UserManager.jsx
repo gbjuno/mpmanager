@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import { Table, Button, Row, Col, Card, Input, Icon, message } from 'antd';
-import { fetchData, receiveData } from '../../action';
+import { fetchData, receiveData, searchFilter, resetFilter } from '../../action';
 import { getPros } from '../../axios';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import EditableCell from '../../components/cells/EditableCell';
@@ -23,20 +23,33 @@ class UserManager extends React.Component {
         selectedCompany: '',
         selectedCompanyId: '',
         editable: false,
+        hasNewRow: false,
+        currentPage: 1,
+        pageSize: 10,
+        total: 0,
     };
     componentDidMount() {
         this.start();
     }
     start = () => {
-        this.setState({ loading: true });
-        this.fetchData();
-        this.fetchCompanyList();
+        const { resetFilter, searchFilter } = this.props
+        const { currentPage, pageSize } = this.state
+        resetFilter('user')
+        searchFilter('user', {
+            pageNo: currentPage,
+            pageSize: pageSize,
+        })
+        this.setState({ loading: true }, () => {
+            this.fetchData();
+            this.fetchCompanyList();
+        });
+        
     };
 
     fetchData = () => {
-        const { fetchData } = this.props
-        let tempTownId
-        fetchData({funcName: 'fetchUsers', stateName: 'usersData'}).then(res => {
+        const { fetchData, searchFilter, filter } = this.props
+
+        fetchData({funcName: 'fetchUsers', params: filter.user, stateName: 'usersData'}).then(res => {
             if(res === undefined || res.data === undefined || res.data.users === undefined) return
             this.setState({
                 usersData: [...res.data.users.map(val => {
@@ -45,6 +58,9 @@ class UserManager extends React.Component {
                 })],
                 loading: false,
             });
+            searchFilter('user', {
+                total: res.data.count,
+            })
         });
     }
 
@@ -90,6 +106,7 @@ class UserManager extends React.Component {
 
     handleAdd = () => {
         this.setState({
+            hasNewRow: true,
             usersData: [{
                 key: -1,
                 id: -1,
@@ -105,6 +122,7 @@ class UserManager extends React.Component {
     handleCancelEditRow = () => {
         let tmpUsersData = [...this.state.usersData.filter(item => item.id !== -1)]
         this.setState({
+            hasNewRow: false,
             editable: false,
             usersData: tmpUsersData,
             selectedRowKeys: [],
@@ -207,16 +225,35 @@ class UserManager extends React.Component {
             });
     }
 
+    handlePageChange = (page, pageSize) => {
+        const { searchFilter }  = this.props
+        searchFilter('user', {
+            pageSize: 10,
+            pageNo: page,
+        })
+        this.setState({
+            currentPage: page,
+        }, () => this.fetchData())
+    }
+
     render() {
 
-        const { loading, selectedRowKeys, companiesData,
+        const { loading, selectedRowKeys, companiesData, hasNewRow, pageSize,
              editable } = this.state;
-        const { usersData } = this.props;
+        const { usersData, filter } = this.props;
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
             type: 'radio',
         };
+
+        let total = 0; 
+        let currentPage = 1;
+        if(filter.user) {
+            total = filter.user.total
+            currentPage = filter.user.pageNo
+        }
+        console.log('sally, i will take all my life to protect you...', filter)
 
         let options = [];
         if(companiesData){
@@ -226,6 +263,19 @@ class UserManager extends React.Component {
         let usersWrappedData = []
         if(usersData.data && usersData.data.users){
             usersWrappedData = [...usersData.data.users.map(item => {item.key = item.id; return item})]
+        }
+
+        if(hasNewRow){
+            usersWrappedData = [{
+                key: -1,
+                id: -1,
+                name: '',
+                phone: '',
+                job: '',
+                company_id: '',
+            }, ...usersWrappedData]
+        }else{
+            usersWrappedData = [...usersWrappedData.filter(item => item.id !== -1)]
         }
 
         const hasSelected = selectedRowKeys.length > 0 && selectedRowKeys[0] !== -1
@@ -307,6 +357,14 @@ class UserManager extends React.Component {
                                     onRow={(record) => ({
                                         onClick: () => this.onRowClick(record),
                                     })}
+                                    pagination={{
+                                        hideOnSinglePage: true,
+                                        onChange: this.handlePageChange,
+                                        current: currentPage,
+                                        defaultCurrent: 1,
+                                        pageSize,
+                                        total,
+                                    }}
                                 />
                             </Card>
                         </div>
@@ -320,15 +378,14 @@ class UserManager extends React.Component {
 const mapStateToProps = state => {
     const { 
         usersData = {data: {count:0, companies:[]}}, 
-        companiesData = {data: {count:0, companies:[]}}, 
-        townsData = {data: {count:0, towns:[]}}, 
-        countries = {data: {count:0, countries:[]}} 
     } = state.httpData;
-    return { companiesData, townsData, usersData };
+    return { usersData, filter: state.searchFilter };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
-    fetchData: bindActionCreators(fetchData, dispatch)
+    fetchData: bindActionCreators(fetchData, dispatch),
+    searchFilter: bindActionCreators(searchFilter, dispatch),
+    resetFilter: bindActionCreators(resetFilter, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(UserManager)

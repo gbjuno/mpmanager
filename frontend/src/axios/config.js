@@ -30,7 +30,6 @@ export const COUNTRY_URL = SERVER_URL + '/country'
 
 export const COMPANY_URL = SERVER_URL + "/company"
 export const USER_URL = SERVER_URL + "/user"
-export const SEARCH_URL = (user) => SERVER_URL + `/user/?name=${user.name}&phone=${user.phone}`
 export const PLACE_URL = SERVER_URL + "/monitor_place"
 export const SEARCH_PLACE_URL = (filter) => SERVER_URL + `/monitor_place?company_id=${filter.companyId}`
 export const PLACETYPE_URL = SERVER_URL + "/monitor_type"

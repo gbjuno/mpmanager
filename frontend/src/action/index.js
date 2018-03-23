@@ -30,6 +30,11 @@ export const searchFilter = (scope, condition) => ({
     condition,
 })
 
+export const resetFilter = (scope) => ({
+    type: type.RESET_SEARCH,
+    scope,
+})
+
 export const updateMenu = (prevMenus, updateMenu, isNew, isSub) => ({
     type: type.UPDATE_WECHAT_MENU,
     prevMenus,

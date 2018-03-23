@@ -7,7 +7,7 @@ import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
 import { Form, Icon, Input, Button, Select, DatePicker } from 'antd';
-import { fetchData, receiveData } from '../../action';
+import { fetchData, receiveData, searchFilter } from '../../action';
 
 const FormItem = Form.Item;
 const Search = Input.Search;
@@ -41,15 +41,33 @@ class PictureSearch extends Component {
         
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                let user = {}
-                user.name = values.name !== undefined? values.name : ''
-                user.phone = values.phone !== undefined? values.phone : ''
-                const { fetchData } = this.props
-                fetchData({funcName: 'searchUsers', params: user, 
-                    stateName: 'usersData'})
+                const { fetchData, searchFilter, filter } = this.props
+                filter.user.pageNo = 1
+                fetchData({funcName: 'fetchUsers', params: filter.user, 
+                    stateName: 'usersData'}).then(res => {
+                    if(res === undefined || res.data === undefined || res.data.users === undefined) return
+                    searchFilter('user', {
+                        total: res.data.count,
+                        pageNo: 1,
+                    })
+                });
             }
         });
     };
+
+    handleChangeName = (e) => {
+        const { searchFilter } = this.props
+        searchFilter('user', {
+            name: e.target.value,
+        })
+    }
+
+    handleChangePhone = (e) => {
+        const { searchFilter } = this.props
+        searchFilter('user', {
+            phone: e.target.value,
+        })
+    }
 
 
     getOptions = ( data=[] ) => {
@@ -81,6 +99,7 @@ class PictureSearch extends Component {
                         <Input
                         style={{ width: 200 }}
                         placeholder="请输入用户名"
+                        onChange={this.handleChangeName}
                         >
                         </Input>
                     )}
@@ -95,6 +114,7 @@ class PictureSearch extends Component {
                         <Input
                         style={{ width: 200 }}
                         placeholder="请输入手机号"
+                        onChange={this.handleChangePhone}
                         >
                         </Input>
                     )}
@@ -121,6 +141,7 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),
     fetchData: bindActionCreators(fetchData, dispatch),
+    searchFilter: bindActionCreators(searchFilter, dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PictureSearch))

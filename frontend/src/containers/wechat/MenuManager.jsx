@@ -314,7 +314,7 @@ class MenuManager extends React.Component {
 
         return (
             <div id="scPic" className="button-demo">
-            <BreadcrumbCustom first="菜单管理" second="" />
+            <BreadcrumbCustom first="微信管理" second="菜单管理" />
                 <Row gutter={20}>
                     <Col className="gutter-row" md={8}>
                         <Card 

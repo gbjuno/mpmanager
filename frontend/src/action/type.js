@@ -7,6 +7,8 @@ export const RECEIVE_DATA = 'RECEIVE_DATA';
 
 export const TRIGGER_SEARCH = 'TRIGGER_SEARCH';
 
+export const RESET_SEARCH = 'RESET_SEARCH';
+
 export const UPDATE_WECHAT_MENU = 'UPDATE_WECHAT_MENU';
 
 export const DELETE_WECHAT_MENU = 'DELETE_WECHAT_MENU';
