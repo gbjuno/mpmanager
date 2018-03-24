@@ -75,3 +75,37 @@
     height: 78px;
     margin-left: -6px;
 }
+
+.wechat-article-ipt{
+    border: 0px solid white;
+    margin-bottom: 13px; 
+    &:focus{
+        border: 0px solid white;
+        box-shadow: 0 0 0 0px rgba(0, 21, 41, 0.2);
+        -webkit-box-shadow: 0 0 0 0px rgba(0, 21, 41, 0.2);
+        border-bottom: 1px solid rgb(177, 177, 177);
+        border-radius: 0px;
+    }
+}
+
+.wechat-article-title{
+    font-size: 20px;
+}
+
+.wechat-article-txa{
+    border: 1px solid rgba(0, 21, 41, 0.2);
+    border-radius: 0px;
+    &:focus{
+        box-shadow: 0 0 0 0px rgba(0, 21, 41, 0.2);
+        -webkit-box-shadow: 0 0 0 0px rgba(0, 21, 41, 0.2);
+        border-bottom: 1px solid rgb(177, 177, 177);
+        border-radius: 0px;
+    } 
+}
+
+.wechat-article-upload-cover {
+    & > .ant-upload.ant-upload-select.ant-upload-select-picture-card { 
+        width: 100%;
+        height: 160px;
+    }
+}

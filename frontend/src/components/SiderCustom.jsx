@@ -87,6 +87,7 @@ class SiderCustom extends Component {
                     >
                         <Menu.Item key="/app/wechat/cd"><Link to={'/app/wechat/cd'}><Icon type="bars" /><span className="nav-text">菜单管理</span></Link></Menu.Item>
                         <Menu.Item key="/app/wechat/wz"><Link to={'/app/wechat/wz'}><Icon type="file-text" /><span className="nav-text">文章管理</span></Link></Menu.Item>
+                        <Menu.Item key="/app/wechat/sc"><Link to={'/app/wechat/sc'}><Icon type="file-text" /><span className="nav-text">素材管理</span></Link></Menu.Item>
                         <Menu.Item key="/app/wechat/xx"><Link to={'/app/wechat/xx'}><Icon type="message" /><span className="nav-text">消息管理</span></Link></Menu.Item>
                         <Menu.Item key="/app/wechat/ym"><Link to={'/app/wechat/ym'}><Icon type="profile" /><span className="nav-text">页面模板</span></Link></Menu.Item>
                     </SubMenu>

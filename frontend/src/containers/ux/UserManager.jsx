@@ -226,7 +226,7 @@ class UserManager extends React.Component {
     }
 
     handlePageChange = (page, pageSize) => {
-        const { searchFilter }  = this.props
+        const { searchFilter } = this.props
         searchFilter('user', {
             pageSize: 10,
             pageNo: page,
@@ -286,7 +286,7 @@ class UserManager extends React.Component {
             width: '15%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell dataIndex='user.name' value={record.name} onChange={this.onNewRowChange} />
+                    return <EditableCell dataIndex="user.name" value={record.name} onChange={this.onNewRowChange} />
                 }
                 return <a>{text}</a>
             }
@@ -296,7 +296,7 @@ class UserManager extends React.Component {
             width: '15%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell dataIndex='user.phone' value={record.phone} onChange={this.onNewRowChange} />
+                    return <EditableCell dataIndex="user.phone" value={record.phone} onChange={this.onNewRowChange} />
                 }
                 return <a>{text}</a>
             }
@@ -306,7 +306,7 @@ class UserManager extends React.Component {
             width: '15%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell dataIndex='user.job'  value={record.job} onChange={this.onNewRowChange} />
+                    return <EditableCell dataIndex="user.job" value={record.job} onChange={this.onNewRowChange} />
                 }
                 return <a>{text}</a>
             }
@@ -316,7 +316,7 @@ class UserManager extends React.Component {
             width: '25%',
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell dataIndex='user.company_id' value={record.company_id} onChange={this.onNewRowChange}
+                    return <EditableCell dataIndex="user.company_id" value={record.company_id} onChange={this.onNewRowChange}
                         editType="select" valueType="int" options={options} placeholder="请选择公司"/>
                 }
                 return <a>{text}</a>
@@ -337,7 +337,7 @@ class UserManager extends React.Component {
         return (
             <div className="gutter-example">
                 <BreadcrumbCustom first="用户管理" second="" />
-                <UserSearch  fetchData={fetchData}/>
+                <UserSearch fetchData={fetchData} />
                 <Row gutter={16}>
                     <Col className="gutter-row" md={24}>
                         <div className="gutter-box">

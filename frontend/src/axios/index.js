@@ -271,3 +271,9 @@ export const saveMenus = (payload) => {
     return axios.post(url, payload, {headers: {Accept: 'application/json'}})
         .then(res => res.data);
 }
+
+
+export const fetchArticles = () => {
+    let url = config.WECHAT_ARTICLE_URL
+    return axios.get(url ,{}).then(res => res.data);
+}
