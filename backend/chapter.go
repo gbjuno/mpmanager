@@ -173,6 +173,9 @@ func (c Chapter) createChapter(request *restful.Request, response *restful.Respo
 	}
 
 	tx := db.Begin()
+	materialPicture := MaterialPicture{}
+	tx.Debug().Where("media_id = ?", chapter.ThumbMediaId).First(&materialPicture)
+	chapter.ThumbUrl = materialPicture.Url
 	chapter.Url = string(bytes.Replace([]byte(returnWxNews.Articles[0].URL), []byte("\\u0026"), []byte("&"), -1))
 	news := News{}
 	news.Name = chapter.Title
@@ -199,6 +202,10 @@ func (c Chapter) createChapter(request *restful.Request, response *restful.Respo
 
 	glog.Infof("%s create chapter with id %d succesfully", prefix, chapter.ID)
 	response.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(response.ResponseWriter)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	enc.Encode(&chapter)
 	return
 }
 
@@ -264,6 +271,10 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 		ContentSourceURL: chapter.ContentSourceUrl,
 	}
 
+	materialPicture := MaterialPicture{}
+	db.Debug().Where("media_id = ?", chapter.ThumbMediaId).First(&materialPicture)
+	chapter.ThumbUrl = materialPicture.Url
+
 	news := News{}
 	db.Debug().First(&news, chapter.NewsId)
 	if news.ID == 0 {
@@ -302,6 +313,10 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 		glog.Infof("%s send news %d (chapter id %d) successfully and return", prefix, news.ID, realChapter.ID)
 		glog.Infof("%s update chapter with id %d successfully and return", prefix, realChapter.ID)
 		response.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(response.ResponseWriter)
+		enc.SetEscapeHTML(false)
+		enc.SetIndent("", "  ")
+		enc.Encode(&realChapter)
 		return
 	}
 
@@ -339,6 +354,10 @@ func (c Chapter) updateChapter(request *restful.Request, response *restful.Respo
 
 	glog.Infof("%s update chapter with id %d successfully and return", prefix, realChapter.ID)
 	response.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(response.ResponseWriter)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	enc.Encode(&realChapter)
 	return
 }
 

@@ -166,6 +166,19 @@ func (MaterialPicture) TableName() string {
 	return "material_picture"
 }
 
+type MaterialVideo struct {
+	ID           int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	Day          time.Time `gorm:"column:day;not null;unique_index:day_company_place;default:NOW()" json:"day"`
+	Title        string    `gorm:"column:title;not nul" json:"title"`
+	Introduction string    `gorm:"column:introduction" json:"introduction"`
+	MediaId      string    `gorm:"column:media_id" json:"media_id"`
+	Url          string    `gorm:"column:url;not null" json:"url"`
+}
+
+func (MaterialVideo) TableName() string {
+	return "material_video"
+}
+
 type MediaPicture struct {
 	Url string `gorm:"-" json:"url"`
 }
@@ -175,6 +188,7 @@ type Chapter struct {
 	NewsId           int    `gorm:"column:news_id" json:"news_id"`
 	Title            string `gorm:"column:title;not null" json:"title"`
 	ThumbMediaId     string `gorm:"column:thumb_media_id" json:"thumb_media_id"`
+	ThumbUrl         string `gorm:"column:thumb_url;not null" json:"thumb_url"`
 	ShowCoverPic     int    `gorm:"column:show_cover_pic" json:"show_cover_pic"`
 	Author           string `gorm:"column:author" json:"author"`
 	Digest           string `gorm:"column:digest" json:"digest"`
@@ -232,7 +246,7 @@ func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}
-	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &Chapter{}, &News{}, &GroupSend{}, &TemplatePage{})
+	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &MaterialVideo{}, &Chapter{}, &News{}, &GroupSend{}, &TemplatePage{})
 	db.Debug().Model(&Country{}).AddForeignKey("town_id", "towns(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&Company{}).AddForeignKey("country_id", "countries(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&User{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")

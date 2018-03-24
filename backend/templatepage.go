@@ -226,7 +226,7 @@ func (c TemplatePage) createTemplatePage(request *restful.Request, response *res
 	templatePage.URL = request.Request.URL.Path + "/html"
 	glog.Infof("%s create templatePage with id %d succesfully", prefix, templatePage.ID)
 	db.Debug().Create(&templatePage)
-	response.WriteHeader(http.StatusOK)
+	response.WriteHeaderAndEntity(http.StatusOK, templatePage)
 	return
 }
 
@@ -282,7 +282,7 @@ func (c TemplatePage) updateTemplatePage(request *restful.Request, response *res
 	templatePage.URL = realTemplatePage.URL
 	db.Debug().Model(&realTemplatePage).Update(templatePage)
 	glog.Infof("%s update templatePage with id %d successfully and return", prefix, realTemplatePage.ID)
-	response.WriteHeader(http.StatusOK)
+	response.WriteHeaderAndEntity(http.StatusOK, templatePage)
 	return
 }
 

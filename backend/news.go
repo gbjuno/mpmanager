@@ -225,7 +225,7 @@ func (c News) createNews(request *restful.Request, response *restful.Response) {
 	}
 
 	glog.Infof("%s create news with id %d succesfully", prefix, news.ID)
-	response.WriteHeader(http.StatusOK)
+	response.WriteHeaderAndEntity(http.StatusOK, news)
 	return
 }
 

@@ -80,6 +80,9 @@ func main() {
 	materialPicture := MaterialPicture{}
 	materialPicture.Register(wsContainer)
 
+	materialVideo := MaterialVideo{}
+	materialVideo.Register(wsContainer)
+
 	mediaPicture := MediaPicture{}
 	mediaPicture.Register(wsContainer)
 
