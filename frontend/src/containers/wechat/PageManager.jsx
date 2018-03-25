@@ -32,6 +32,7 @@ class PageManager extends React.Component {
         total: 0,
         expandedRowKeys: [],
 
+        chapterEditable: false,
         selectedChapterKeys: [],
         selectedChapterId: '',
     };
@@ -230,15 +231,44 @@ class PageManager extends React.Component {
         }, () => this.fetchData())
     }
 
+
+    onChapterChange = (selectedChapterKeys) => {
+        if (selectedChapterKeys.length > 0) {
+            selectedChapterKeys = [selectedChapterKeys[selectedChapterKeys.length - 1]]
+        }
+
+        this.setState({ selectedChapterKeys });
+    };
+
+    onChapterSelect = (record, selected, selectedChapterKeys) => {
+        if (selected && selectedChapterKeys[0] === record.id) {
+            this.setState({
+                selectedChapterKeys: []
+            })
+        }
+    }
+
+    onChapterClick = (record, index, event) => {
+        const { selectedChapterKeys, chapterEditable } = this.state
+        if (record.id === -1 || chapterEditable) {
+            return
+        }
+        this.setState({
+            selectedChapterId: record.id,
+            selectedChapterKeys: selectedChapterKeys.length > 0 && selectedChapterKeys[0] === record.id ? [] : [record.id],
+        });
+    }
+
     additionalTable = () => {
         const { selectedChapterKeys, selectedPageId, hasSelectedPage } = this.state
-        const { chaptersInPage, hasSelectedChapter, pagesData } = this.props
+        const { pagesData } = this.props
         const chapterRowSelection = {
             selectedRowKeys: selectedChapterKeys,
-            onChange: this.onPageChange,
-            onSelect: this.onPageSelect,
+            onChange: this.onChapterChange,
+            onSelect: this.onChapterSelect,
             type: 'radio',
         }
+
 
         const chapterColumns = [
             {
@@ -268,6 +298,17 @@ class PageManager extends React.Component {
         ];
 
         let chaptersData = []
+        if (pagesData && pagesData.data && pagesData.data.templatePages) {
+            for (var page in pagesData.data.templatePages) {
+                if (page && page.chapter_list) {
+                    if (page.id == selectedChapterKeys[0]) {
+                        chaptersData = [...page.chapter_list.map(item => { item.key = item.id; return item })]
+                    }
+                }
+            }
+        }
+
+        const hasSelectedChapter = selectedChapterKeys.length > 0 && selectedChapterKeys[0] !== -1
 
         return (
             <Tabs defaultActiveKey="1">
@@ -337,7 +378,7 @@ class PageManager extends React.Component {
             width: "100%",
             render: (text, record) => {
                 if (record.id === -1 || (editable && record.id === selectedRowKeys[0])) {
-                    return <EditableCell dataIndex='templatepage.name' value={record.name} onChange={this.onNewRowChange} />
+                    return <EditableCell dataIndex='templatepage.name' value={record.name} onChange={this.onNewRowChange} onCancel={this.handleCancelEditRow} />
                 }
                 return <a>{text}</a>
             }
@@ -391,7 +432,7 @@ class PageManager extends React.Component {
                     </Col>
                     <Col className="gutter-row" md={10}>
                         <div className="gutter-box">
-                            <Card title={selectedPage ? selectedPage : "请选择页面模板"} bordered={false}
+                            <Card title={selectedPage ? "页面模板 " + selectedPage : "请选择页面模板"} bordered={false}
                                 bodyStyle={{ paddingTop: 0 }}>
                                 <div style={{}}>
                                 </div>
