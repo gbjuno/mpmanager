@@ -87,21 +87,26 @@ class ArticleForm extends React.Component {
             const { title, digest, author, content, thumb_media_id } = article
             if(!title){
                 message.error('请输入标题')
+                return
             }
             if(!digest){
                 message.error('请输入摘要')
+                return
             }
             if(!author){
                 message.error('请输入作者')
+                return
             }
             if(!content){
                 message.error('请输入文章内容')
+                return
             }
             if(!thumb_media_id){
                 message.error('请上传封面图片')
+                return
             }
             fetchData({funcName:'newArticle', params: article, stateName: 'newArticleStatus'}).then(res => {
-                message.info('保存文章成功')
+                message.success('保存文章成功')
             })
         }
     }
