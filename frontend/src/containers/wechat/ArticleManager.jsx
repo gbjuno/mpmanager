@@ -24,9 +24,7 @@ class ArticleManager extends React.Component {
         selectedRowKeys: [],  // Check here to configure the default column
         loading: false,
         usersData: [],
-        companiesData: [],
-        selectedCompany: '',
-        selectedCompanyId: '',
+        selectedArticles: [],
         editable: false,
         hasNewRow: false,
         currentPage: 1,
@@ -54,7 +52,6 @@ class ArticleManager extends React.Component {
         const { fetchData, searchFilter, filter } = this.props
 
         fetchData({funcName: 'fetchArticles', params: filter.user, stateName: 'articlesData'}).then(res => {
-            console.log('from api article data...', res)
             if(res === undefined || res.data === undefined || res.data.users === undefined) return
             this.setState({
                 usersData: [...res.data.users.map(val => {
@@ -93,6 +90,39 @@ class ArticleManager extends React.Component {
         this.setState({
             selectedRowKeys: selectedRowKeys.length > 0 && selectedRowKeys[0] === record.id ? [] : [record.id],
         });
+    }
+
+    handleItemClick = (item) => {
+        const { selectedArticles } = this.state
+        let idx = _.indexOf(selectedArticles, item.news_id)
+        console.log('iiiiiiiiii ====', idx)
+        if(idx < 0){
+            selectedArticles.splice(0, selectedArticles.length)
+            selectedArticles.push(item.news_id)
+        }else{
+            selectedArticles.splice(idx, 1)
+        }
+        this.setState({
+            selectedArticles,
+        })
+    }
+
+    isItemSelected = (item) => _.indexOf(this.state.selectedArticles, item.news_id) > -1
+
+    groupSendNews = () => {
+        const { fetchData } = this.props
+        const { selectedArticles } = this.state
+        if(selectedArticles.length < 1){
+            message.error('请选择要发送的消息文章')
+            return
+        }
+        fetchData({funcName: 'groupSend', params: {
+            news_id: selectedArticles[0]
+        }, stateName:'sendStatus'}).then(res => {
+            message.success('发送成功')
+        }).catch(err => {
+            message.error('发送失败')
+        })
     }
 
     handleAdd = () => {
@@ -158,7 +188,8 @@ class ArticleManager extends React.Component {
             total = filter.user.total
             currentPage = filter.user.pageNo
         }
-        console.log('sally, i will take all my life to protect you...', articlesData)
+
+        console.log('node process env', process.env.NODE_ENV)
 
         let options = [];
 
@@ -169,7 +200,6 @@ class ArticleManager extends React.Component {
 
         const hasSelected = selectedRowKeys.length > 0 && selectedRowKeys[0] !== -1
 
-        
         return (
             <div className="gutter-example">
                 <BreadcrumbCustom first="微信管理" second="文章管理" />
@@ -178,6 +208,7 @@ class ArticleManager extends React.Component {
                         <div className="gutter-box">
                             <Card title="文章列表" bordered={false}>
                                 <Link to="/app/wechat/wzbj" ><Button type="primary">新增</Button></Link>
+                                <Button style={{marginLeft: 10}} type="primary" onClick={this.groupSendNews}>群发</Button>
                                 <Divider />
                                 <List
                                     itemLayout="vertical"
@@ -193,16 +224,18 @@ class ArticleManager extends React.Component {
                                     dataSource={articlesWrappedData}
                                     renderItem={item => (
                                     <List.Item
+                                        className={this.isItemSelected(item)?"wechat-article-selected":"wechat-article-unselected"}
                                         key={item.title}
+                                        onClick={this.handleItemClick.bind(this, item)}
                                         actions={[<IconText type="edit" text="编辑" />, <IconText type="delete" text="删除" />, <IconText type="message" text="2" />]}
-                                        extra={<img width={272} alt="logo" src={item.url} />}
+                                        extra={<img width={273} height={173} alt="logo" src={item.thumb_url} />}
                                     >
                                         <List.Item.Meta
                                         avatar={<Avatar src={item.avatar} />}
                                         title={<a href={item.href}>{item.title}</a>}
-                                        description={item.digest}
+                                        description={item.author}
                                         />
-                                        {item.content}
+                                        {item.digest}
                                     </List.Item>
                                     )}
                                 />

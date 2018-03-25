@@ -50,21 +50,26 @@ const wechatLocal = (state = {}, action) => {
         case type.UPDATE_WECHAT_MENU:
             return {
                 ...state,
-                mergedMenus: mergeMenu(action.prevMenus, action.updateMenu, action.isNew,  action.isSub),
+                mergedMenus: mergeMenu(action.prevMenus, action.updateMenu, action.isNew, action.isSub),
             };
         case type.DELETE_WECHAT_MENU:
             return {
                 ...state,
                 mergedMenus: deleteMenu(action.prevMenus, action.deleteMenu)
             }
+        case type.HANDLE_WECHAT_ARTICLE_ATTRIBUTE:
+            return {
+                ...state,
+                article: mergeAttribute(state.article, action.attribute, action.value)
+            }
         default:
             return {...state};
     }
 }
 
-const mergeCondition = (state, scope, condition) => {
-    return _.merge(state[scope], condition)
-}
+const mergeCondition = (state, scope, condition) => _.merge(state[scope], condition)
+
+const mergeAttribute = (prevArticle, attribute, value) => _.merge(prevArticle, {[attribute]: value})
 
 const mergeMenu = (prevMenus, updateMenu, isNew, isSub) => {
     if(updateMenu === null){
@@ -116,7 +121,9 @@ const mergeMenu = (prevMenus, updateMenu, isNew, isSub) => {
                     sm.url = updateMenu.url
                     return sm
                 }
+                return sm
             })
+            return m
         })
         return prevMenus
     }

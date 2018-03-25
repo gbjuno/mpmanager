@@ -48,3 +48,9 @@ export const deleteMenu = (prevMenus, deleteMenu) => ({
     prevMenus,
     deleteMenu,
 })
+
+export const handleArticleAttribute = (attribute, value) => ({
+    type: type.HANDLE_WECHAT_ARTICLE_ATTRIBUTE,
+    attribute,
+    value,
+})

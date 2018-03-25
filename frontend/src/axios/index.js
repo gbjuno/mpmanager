@@ -278,6 +278,15 @@ export const fetchArticles = () => {
     return axios.get(url ,{}).then(res => res.data);
 }
 
+export const newArticle = (payload) => {
+    let url = config.WECHAT_ARTICLE_URL
+    return axios.post(url, payload, {headers: {Accept: 'application/json'}}).then(res => res.data);
+}
+
+export const groupSend = (payload) => {
+    let url = config.WECHAT_GROUP_SEND_URL
+    return axios.post(url, payload, {headers: {Accept: 'application/json'}}).then(res => res.data);
+}
 
 // 页面模板
 export const fetchPages = (filter={}) => {

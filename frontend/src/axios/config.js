@@ -14,9 +14,24 @@ const HOST = 'www.juntengshoes.cn'
 const PORT = 80
 const CONTEXT = 'api'
 const VERSION = 'v1' 
+
+// 生产跟开发不同的参数，裂缝产生器
+const PRODUCTION = 'production', DEVELOPMENT = 'development';
+const RIFT_GENERTOR = {
+    PUBLIC_PAGE_CONTEXT: {
+        [PRODUCTION]: '/anj/admin/',
+        [DEVELOPMENT]: '/',
+    },
+
+    WECHAT_GROUP_SEND_URL: {
+        [PRODUCTION]: '/groupsend',
+        [DEVELOPMENT]: '/groupsend?preview=true',
+    }
+}
+
 // const VERSION = 'v1test' //测试端口
 
-export const PAGE_CONTEXT = process.env.NODE_ENV === 'production'? '/anj/admin/' : '/';
+export const PAGE_CONTEXT = RIFT_GENERTOR.PUBLIC_PAGE_CONTEXT[process.env.NODE_ENV];
 
 export const SERVER_ROOT = `${PROTOCOL}://${HOST}`
 export const SERVER_HOST = `//${HOST}`
@@ -48,3 +63,5 @@ export const COMPANY_UPLOAD_URL = SERVER_ROOT + '/backend/excel'
 export const WECHAT_MENU_URL = SERVER_URL +'/menu'
 export const WECHAT_ARTICLE_URL = SERVER_URL +'/chapter'
 export const Page_URL = SERVER_URL + "/templatepage"
+export const WECHAT_UPLOAD_METERIAL_IMAGE = SERVER_URL + '/materialpicture'
+export const WECHAT_GROUP_SEND_URL = SERVER_URL + RIFT_GENERTOR.WECHAT_GROUP_SEND_URL[process.env.NODE_ENV]
