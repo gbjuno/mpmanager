@@ -12,8 +12,8 @@ import { getPros } from '../../axios';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import EditableCell from '../../components/cells/EditableCell';
 
-const IconText = ({ type, text }) => (
-    <span>
+const IconText = ({ type, text, onClick }) => (
+    <span onClick={onClick}>
       <Icon type={type} style={{ marginRight: 8 }} />
       {text}
     </span>
@@ -95,7 +95,6 @@ class ArticleManager extends React.Component {
     handleItemClick = (item) => {
         const { selectedArticles } = this.state
         let idx = _.indexOf(selectedArticles, item.news_id)
-        console.log('iiiiiiiiii ====', idx)
         if(idx < 0){
             selectedArticles.splice(0, selectedArticles.length)
             selectedArticles.push(item.news_id)
@@ -176,6 +175,12 @@ class ArticleManager extends React.Component {
         }, () => this.fetchData())
     }
 
+    handlePreview = (item, e) => {
+        e.stopPropagation();
+        console.log('the item url is: =====', item.url)
+        window.open(item.url)
+    }
+
     render() {
 
         const { loading, selectedRowKeys, hasNewRow, pageSize,
@@ -189,7 +194,6 @@ class ArticleManager extends React.Component {
             currentPage = filter.user.pageNo
         }
 
-        console.log('node process env', process.env.NODE_ENV)
 
         let options = [];
 
@@ -227,7 +231,10 @@ class ArticleManager extends React.Component {
                                         className={this.isItemSelected(item)?"wechat-article-selected":"wechat-article-unselected"}
                                         key={item.title}
                                         onClick={this.handleItemClick.bind(this, item)}
-                                        actions={[<IconText type="edit" text="编辑" />, <IconText type="delete" text="删除" />, <IconText type="message" text="2" />]}
+                                        actions={[
+                                            <IconText type="edit" text="编辑" />, 
+                                            <IconText type="delete" text="删除" />, 
+                                            <IconText type="file-text" text="预览" onClick={this.handlePreview.bind(this, item)} />]}
                                         extra={<img width={273} height={173} alt="logo" src={item.thumb_url} />}
                                     >
                                         <List.Item.Meta

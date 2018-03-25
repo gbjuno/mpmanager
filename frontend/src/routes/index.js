@@ -41,6 +41,8 @@ export default class CRouter extends Component {
                 <Route exact path="/app/wechat/cd" component={MenuManager} />
                 <Route exact path="/app/wechat/wz" component={ArticleManager} />
                 <Route exact path="/app/wechat/wzbj" component={ArticleForm} />
+                <Route exact path="/app/wechat/sc" component={PageManager} />
+                <Route exact path="/app/wechat/xx" component={PageManager} />
                 <Route exact path="/app/wechat/ym" component={PageManager} />
 
                 <Route exact path="/app/auth/basic" component={AuthBasic} />
