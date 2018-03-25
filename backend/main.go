@@ -21,6 +21,7 @@ var imgRepo string
 var domain string
 var wxport string
 var restport string
+var previewuser string
 
 const RESTAPIVERSION = "/api/v1"
 
@@ -35,6 +36,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "debug mode, disable weixin init")
 	flag.StringVar(&wxport, "wxport", "8001", "wx port")
 	flag.StringVar(&restport, "restport", "8000", "rest port")
+	flag.StringVar(&previewuser, "previewuser", "", "previewuser")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 

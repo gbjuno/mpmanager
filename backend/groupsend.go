@@ -19,8 +19,6 @@ type GroupSendList struct {
 	GroupSend []GroupSend `json:"groupsend"`
 }
 
-const PREVIEW_USER = "o1k8S0nPewTiG3vE6ZSl_1pQLDWA"
-
 func (g GroupSend) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/groupsend").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
@@ -140,7 +138,7 @@ func (g GroupSend) createGroupSend(request *restful.Request, response *restful.R
 	groupSend.MediaId = news.MediaId
 
 	if param_preview == "true" {
-		sendNews := preview.NewNews(PREVIEW_USER, groupSend.MediaId)
+		sendNews := preview.NewNews(previewuser, groupSend.MediaId)
 		err := preview.Send(wechatClient, sendNews)
 		if err != nil {
 			errmsg := fmt.Sprintf("cannot create groupSend, err %s", err)
