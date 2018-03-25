@@ -277,3 +277,26 @@ export const fetchArticles = () => {
     let url = config.WECHAT_ARTICLE_URL
     return axios.get(url ,{}).then(res => res.data);
 }
+
+
+// 页面模板
+export const fetchPages = (filter={}) => {
+    let url = `${config.Page_URL}?pageNo=${filter.pageNo}&pageSize=${filter.pageSize}`
+    return axios.get(url ,{}).then(res => res.data).catch(err => console.log(err));
+}
+
+export const newPage= (page) => {
+    return axios.post(config.Page_URL, {...page}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
+export const updatePage= (page) => {
+    return axios.put(config.Page_URL+ "/" + page.id, {...page}, {headers: {Accept: 'application/json'}})
+        .then(res => res.data);
+}
+
+export const deletePage = (page) => {
+    if(page === undefined || page.id === -1) return
+    return axios.delete(config.Page_URL+ "/" + page.id)
+        .then(res => res.data);
+}

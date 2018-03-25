@@ -15,6 +15,7 @@ import SummaryManager from '../containers/ux/SummaryManager';
 import MenuManager from '../containers/wechat/MenuManager';
 import ArticleManager from '../containers/wechat/ArticleManager';
 import ArticleForm from '../containers/wechat/ArticleForm';
+import PageManager from '../containers/wechat/PageManager';
 
 
 export default class CRouter extends Component {
@@ -40,6 +41,7 @@ export default class CRouter extends Component {
                 <Route exact path="/app/wechat/cd" component={MenuManager} />
                 <Route exact path="/app/wechat/wz" component={ArticleManager} />
                 <Route exact path="/app/wechat/wzbj" component={ArticleForm} />
+                <Route exact path="/app/wechat/ym" component={PageManager} />
 
                 <Route exact path="/app/auth/basic" component={AuthBasic} />
                 <Route exact path="/app/auth/routerEnter" component={(props) => this.requireAuth('auth/testPage', <RouterEnter {...props} />)} />

@@ -47,3 +47,4 @@ export const COMPANY_UPLOAD_URL = SERVER_ROOT + '/backend/excel'
 //微信相关的API路径
 export const WECHAT_MENU_URL = SERVER_URL +'/menu'
 export const WECHAT_ARTICLE_URL = SERVER_URL +'/chapter'
+export const Page_URL = SERVER_URL + "/templatepage"
