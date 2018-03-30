@@ -55,22 +55,26 @@ class ArticleForm extends React.Component {
 
     handleImageChange = (info) =>{
         const { handleArticleAttribute } = this.props
+        console.log('upload image...love sha before upload', info)
         if (info.file.status === 'uploading') {
-            this.setState({ coverLoading: true });
+            // this.setState({ coverLoading: true });
             return;
         }
         if (info.file.status === 'done') {
             message.success(`${info.file.name}上传成功`);
             
-            this.setState({
-                responseImageList: [{
-                    key: info.file.response.media_id,
-                    url: info.file.response.url,
-                }]
-            })
+            console.log('upload image...love sha', info)
+            
         } else if (info.file.status === 'error') {
             message.error(`${info.file.name}上传失败`);
         }
+
+        this.setState({
+            responseImageList: this.state.responseImageList.push({
+                key: info.file.response.media_id,
+                url: info.file.response.url,
+            })
+        })
     }
 
 
@@ -124,10 +128,10 @@ class ArticleForm extends React.Component {
     }
 
     render() {
-        const { fileList, imageUrl, coverLoading } = this.state
+        const { fileList, imageUrl, coverLoading, responseImageList } = this.state
         const { wechatLocal } = this.props
 
-        if(wechatLocal)console.log('ba xiao shuo xie wan', wechatLocal.article)
+        if(wechatLocal)console.log('ba xiao shuo xie wan', responseImageList)
 
         let policy = "";
 
@@ -137,7 +141,7 @@ class ArticleForm extends React.Component {
             onChange: this.handleImageChange,
             withCredentials: true,
             listType: 'picture',
-            fileList: this.state.responseImageList,
+            fileList: responseImageList,
             data: (file) => {
 
             },

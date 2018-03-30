@@ -165,6 +165,7 @@ class UploadImage extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    console.log('next props...', nextProps)
     clearTimeout(this.state.upReceiverFun);
     if (nextProps.uploadProps) {
 
@@ -204,29 +205,29 @@ class UploadImage extends Component {
 
   render() {
     let {isMultiple, isShowUploadList, uploadProps} = this.props,that=this;
-    uploadProps = uploadProps&&Object.keys(uploadProps).length>0
-    ?uploadProps
-    :({
-      action: PRO_URL.QINIU_URL||this.props.uploadConfig.QINIU_URL,
-      onChange: this.onChange.bind(this),
-      listType: 'picture',
-      fileList: this.state.files,
-      data: (file)=>{//支持自定义保存文件名、扩展名支持
-          let token =that.state.qiniu.token,key="";
-          if (!token) {
-            token = PRO_QINIU.checkQiniu.returnToken(this.props.uploadConfig);
-          }
-          key = PRO_COMMON.String.RndNum(20)+"."+PRO_COMMON.String.GetFileExtensionName(file.name)[0];
-          if (this.props.uploadConfig.QINIU_KEY_PREFIX) {
-            key = this.props.uploadConfig.QINIU_KEY_PREFIX + '/' + key
-          }
-          return {token,key}
-        },
-      multiple: isMultiple || false,
-      beforeUpload: this.beforeUpload.bind(this),
-      showUploadList: isShowUploadList !== undefined ? isShowUploadList : true
-    });
-    // console.log("uploadProps",uploadProps);
+    // uploadProps = uploadProps&&Object.keys(uploadProps).length>0
+    // ?uploadProps
+    // :({
+    //   action: PRO_URL.QINIU_URL||this.props.uploadConfig.QINIU_URL,
+    //   onChange: this.onChange.bind(this),
+    //   listType: 'picture',
+    //   fileList: this.state.files,
+    //   data: (file)=>{//支持自定义保存文件名、扩展名支持
+    //       let token =that.state.qiniu.token,key="";
+    //       if (!token) {
+    //         token = PRO_QINIU.checkQiniu.returnToken(this.props.uploadConfig);
+    //       }
+    //       key = PRO_COMMON.String.RndNum(20)+"."+PRO_COMMON.String.GetFileExtensionName(file.name)[0];
+    //       if (this.props.uploadConfig.QINIU_KEY_PREFIX) {
+    //         key = this.props.uploadConfig.QINIU_KEY_PREFIX + '/' + key
+    //       }
+    //       return {token,key}
+    //     },
+    //   multiple: isMultiple || false,
+    //   beforeUpload: this.beforeUpload.bind(this),
+    //   showUploadList: isShowUploadList !== undefined ? isShowUploadList : true
+    // });
+    console.log("uploadProps ----> chen double",uploadProps);
 
     return (
       <div>
