@@ -253,7 +253,6 @@ class UserManager extends React.Component {
             total = filter.user.total
             currentPage = filter.user.pageNo
         }
-        console.log('sally, i will take all my life to protect you...', filter)
 
         let options = [];
         if(companiesData){
