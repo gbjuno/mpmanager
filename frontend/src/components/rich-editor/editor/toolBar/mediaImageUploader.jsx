@@ -156,7 +156,7 @@ class ImgStyleControls extends Component {
     return (
       <div className="RichEditor-controls">
 
-        <GroupUpload
+        {/* <GroupUpload
           limitCount={50}
           imageList={this.state.images&&this.state.images.map((item) => {
             item.url
@@ -170,7 +170,7 @@ class ImgStyleControls extends Component {
           <span className={className}>
               <Icon type="editor_image_masker" title={this.props.lang.imageMasker}/>
           </span>
-        </GroupUpload>
+        </GroupUpload> */}
         <span className={className} onClick={that.onImgToggle}>
             <Icon type="editor_image" title={this.props.lang.originalImage}/>
         </span>

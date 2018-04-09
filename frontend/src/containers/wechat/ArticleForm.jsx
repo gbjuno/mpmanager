@@ -20,7 +20,7 @@ class ArticleForm extends React.Component {
     state = {
         htmlContent: ``,
         responseList: [],
-        responseImageList: [],
+        responseImageList: null,
         coverLoading: false,
     }
 
@@ -51,30 +51,6 @@ class ArticleForm extends React.Component {
         } else if (info.file.status === 'error') {
             message.error(`${info.file.name}上传失败`);
         }
-    }
-
-    handleImageChange = (info) =>{
-        const { handleArticleAttribute } = this.props
-        console.log('upload image...love sha before upload', info)
-        if (info.file.status === 'uploading') {
-            // this.setState({ coverLoading: true });
-            return;
-        }
-        if (info.file.status === 'done') {
-            message.success(`${info.file.name}上传成功`);
-            
-            console.log('upload image...love sha', info)
-            
-        } else if (info.file.status === 'error') {
-            message.error(`${info.file.name}上传失败`);
-        }
-
-        this.setState({
-            responseImageList: this.state.responseImageList.push({
-                key: info.file.response.media_id,
-                url: info.file.response.url,
-            })
-        })
     }
 
 
@@ -118,8 +94,8 @@ class ArticleForm extends React.Component {
                 return
             }
             if(!thumb_media_id){
-                message.error('请上传封面图片')
-                return
+                // message.error('请上传封面图片')
+                // return
             }
             fetchData({funcName:'newArticle', params: article, stateName: 'newArticleStatus'}).then(res => {
                 message.success('保存文章成功')
@@ -138,20 +114,58 @@ class ArticleForm extends React.Component {
         const uploadImageProps = {
             name: 'uploadImage',
             action: config.WECHAT_UPLOAD_METERIAL_IMAGE,
-            onChange: this.handleImageChange,
+            onStart: (file) => {
+                console.log('onStart', file.name);
+                // this.refs.inner.abort(file);
+            },
+            onSuccess: (file) => {
+                console.log('onSuccess', file);
+                this.setState({
+                    responseImageList: [{
+                        key: file.media_id,
+                        url: file.url,
+                    }]
+                })
+            },
+            onProgress: (step, file) => {
+                console.log('onProgress', Math.round(step.percent), file.name);
+            },
+            onError: (err) => {
+                console.log('onError', err);
+            },
             withCredentials: true,
             listType: 'picture',
             fileList: responseImageList,
             data: (file) => {
-
             },
-            multiple: false,
+            multiple: true,
             beforeUpload: this.beforeCoverUpload,
             showUploadList: false,
         }
         const uploadVideoProps = {
-            action: config.WECHAT_UPLOAD_METERIAL_IMAGE,
+            name: 'uploadVideo',
+            action: config.WECHAT_UPLOAD_METERIAL_VIDEO,
             onChange: this.onChange,
+            onStart: (file) => {
+                console.log('onStart', file.name);
+                // this.refs.inner.abort(file);
+            },
+            onSuccess: (file) => {
+                console.log('onSuccess', file);
+                this.setState({
+                    responseImageList: [{
+                        key: file.media_id,
+                        url: file.url,
+                    }]
+                })
+            },
+            onProgress: (step, file) => {
+                console.log('onProgress', Math.round(step.percent), file.name);
+            },
+            onError: (err) => {
+                console.log('onError', err);
+            },
+            withCredentials: true,
             listType: 'picture',
             fileList: this.state.responseList,
             data: (file) => {
@@ -214,7 +228,7 @@ class ArticleForm extends React.Component {
                         name="uploadImage"
                         accept="image/*"
                         action={config.WECHAT_UPLOAD_METERIAL_IMAGE}
-                        withCredentials={true}
+                        withCredentials
                         showUploadList={false}
                         listType="picture-card"
                         beforeUpload={this.beforeCoverUpload}
@@ -237,7 +251,7 @@ class ArticleForm extends React.Component {
                         uploadProps={uploadProps}
                     /> */}
                     <RichEditor 
-                        active={true}
+                        active
                         lang="zh-CN"
                         importContent={this.state.htmlContent} 
                         cbReceiver={this.receiveHtml} 

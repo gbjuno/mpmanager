@@ -64,4 +64,5 @@ export const WECHAT_MENU_URL = SERVER_URL +'/menu'
 export const WECHAT_ARTICLE_URL = SERVER_URL +'/chapter'
 export const Page_URL = SERVER_URL + "/templatepage"
 export const WECHAT_UPLOAD_METERIAL_IMAGE = SERVER_URL + '/materialpicture'
+export const WECHAT_UPLOAD_METERIAL_VIDEO = SERVER_URL + '/materialvideo'
 export const WECHAT_GROUP_SEND_URL = SERVER_URL + RIFT_GENERTOR.WECHAT_GROUP_SEND_URL[process.env.NODE_ENV]

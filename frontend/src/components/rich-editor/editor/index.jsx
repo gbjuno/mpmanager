@@ -719,8 +719,8 @@ class EditorConcist extends React.Component {
           uploadProps={this.props.uploadImageProps}/>}
           {this.state.showMarkdownSource==false&&this.props.video&&<VideoStyleControls uploadConfig={this.props.uploadConfig} receiveVideo={this.addVideo} lang={lang[this.state.language]}
           uploadProps={this.props.uploadVideoProps}/>}
-          {this.state.showMarkdownSource==false&&this.props.audio&&<AudioStyleControls uploadConfig={this.props.uploadConfig} receiveAudio={this.addAudio} lang={lang[this.state.language]}
-          uploadProps={this.props.uploadAudioProps}/>}
+          {/* {this.state.showMarkdownSource==false&&this.props.audio&&<AudioStyleControls uploadConfig={this.props.uploadConfig} receiveAudio={this.addAudio} lang={lang[this.state.language]}
+          uploadProps={this.props.uploadAudioProps}/>} */}
           {this.state.showMarkdownSource==false&&this.props.urls&&<AddUrl editorState={editorState} onToggle={this.promptForLink} lang={lang[this.state.language]}/>}
           {this.state.showMarkdownSource==false&&this.props.urls&&<CloseUrl editorState={editorState} onToggle={this.removeLink} lang={lang[this.state.language]}/>}
           {this.state.showMarkdownSource==false&&this.props.autoSave&&<AutoSaveControls receiveSavedItem={this.choiceAutoSave} lang={lang[this.state.language]}/>}
