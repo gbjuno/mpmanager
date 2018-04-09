@@ -31,7 +31,6 @@ class MenuForm extends Component {
         // To disabled submit button at the beginning.
         //this.props.form.validateFields();
         const { menu } = this.props
-        console.log('control your mind...', menu)
         if(menu !== null && menu !== undefined){
             this.props.form.setFieldsValue({
                 name: menu.name,
