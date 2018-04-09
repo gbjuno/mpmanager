@@ -195,7 +195,7 @@ class ImgStyleControls extends Component {
           title={this.props.lang.insertImageModalTitle}
           visible={that.state.provisible}
           closable={false}
-          footer={[< Button key = "back" size = "large" onClick = {
+          footer={[<Button key = "back" size = "large" onClick = {
             that.handleCancel
           } > {this.props.lang.cancelText} </Button>, <Button key="submit" type="primary" size="large" disabled={that.state.disabled} onClick={()=>that.successLoading("fromOld")}> {this.props.lang.OKText} </Button >]}>
           <UploadImage

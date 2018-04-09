@@ -9,7 +9,7 @@ import {
   message,
   Icon
 } from 'antd';
-import {UploadImage} from '../../global/components/businessComponents';
+import {UploadVideo} from '../../global/components/businessComponents';
 class VideoStyleControls extends Component {
   constructor(props) {
     super(props);
@@ -68,7 +68,8 @@ class VideoStyleControls extends Component {
           footer={[<Button key = "back" size = "large" onClick = {
             that.handleCancel
           }> {this.props.lang.cancelText} </Button>, <Button key="submit" type="primary" size="large" disabled={that.state.disabled} onClick={that.sendVideoToEditor}> {this.props.lang.OKText} </Button>]}>
-          <UploadImage isMultiple={true}
+          <UploadVideo 
+            isMultiple
             limit={10}
             fileList={that.state.videos}
             isOpenModel={that.state.visible}
