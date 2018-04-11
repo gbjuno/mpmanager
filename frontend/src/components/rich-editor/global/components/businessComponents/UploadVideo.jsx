@@ -233,38 +233,41 @@ class UploadVideo extends Component {
     // });
 
     return (
-      <div>
-        <Upload {...uploadProps}>
-          <Button>
-            <Icon type="upload"/>
-            {this.props.lang.btnUpload}
-          </Button>
-        </Upload>
-
-        <div style={{margin:"10px 0 0"}}>
-            <Input
-                style={{marginTop: 10}}
-                placeholder="请输入标题"
-                value={this.state.inputVideoUrl}
-                onChange={this.changeInputVideo}
-            />
-            <TextArea
-                style={{marginTop: 10}}
-                placeholder="请输入描述"
-                autosize={{maxRows: 4, minRows: 4}}
-                value={this.state.inputVideoUrl}
-                onChange={this.changeInputVideo}
-            />
-            <Input
-                style={{marginTop: 10}}
-                placeholder={this.props.lang.manuallyUploadTip}
-                value={this.state.inputVideoUrl}
-                onChange={this.changeInputVideo}
-                onPressEnter={this.getInputVideo}
-            />
-          <span style={{color:'red'}}>{this.state.inputVideoHelp}&nbsp;</span>
-        </div>
-        <span>{this.props.lang.limitAndTypeTip.replace("$limit$",this.props.limit).replace("$type$",PRO_QINIU.supportMime[this.props.fileType].join(", "))}</span>
+        <div>
+            <Upload {...uploadProps}>
+              {this.props.loading?
+                <Button><Icon type="loading" />上传中...</Button>
+                :
+                <Button>
+                    <Icon type="upload" />
+                    {this.props.lang.btnUpload}
+                </Button>
+                }
+            </Upload>
+            <div style={{margin:"10px 0 0"}}>
+                {/* <Input
+                    style={{marginTop: 10}}
+                    placeholder="请输入标题"
+                    value={this.state.inputVideoUrl}
+                    onChange={this.changeInputVideo}
+                />
+                <TextArea
+                    style={{marginTop: 10}}
+                    placeholder="请输入描述"
+                    autosize={{maxRows: 4, minRows: 4}}
+                    value={this.state.inputVideoUrl}
+                    onChange={this.changeInputVideo}
+                /> */}
+                <Input
+                    style={{marginTop: 10}}
+                    placeholder={this.props.lang.manuallyUploadTip}
+                    value={this.state.inputVideoUrl}
+                    onChange={this.changeInputVideo}
+                    onPressEnter={this.getInputVideo}
+                />
+            <span style={{color:'red'}}>{this.state.inputVideoHelp}&nbsp;</span>
+            </div>
+            <span>{this.props.lang.limitAndTypeTip.replace("$limit$",this.props.limit).replace("$type$",PRO_QINIU.supportMime[this.props.fileType].join(", "))}</span>
       </div>
     )
   }

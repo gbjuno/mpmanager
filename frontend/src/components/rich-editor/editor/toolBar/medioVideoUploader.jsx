@@ -67,7 +67,7 @@ class VideoStyleControls extends Component {
           closable={false}
           footer={[<Button key = "back" size = "large" onClick = {
             that.handleCancel
-          }> {this.props.lang.cancelText} </Button>, <Button key="submit" type="primary" size="large" disabled={that.state.disabled} onClick={that.sendVideoToEditor}> {this.props.lang.OKText} </Button>]}>
+          }> {this.props.lang.cancelText} </Button>, <Button key="submit" type="primary" size="large" disabled={that.state.disabled} onClick={that.sendVideoToEditor}>{this.props.lang.OKText} </Button>]}>
           <UploadVideo 
             isMultiple
             limit={10}
@@ -76,6 +76,7 @@ class VideoStyleControls extends Component {
             cbReceiver={that.getVideoObject}
             uploadConfig={this.props.uploadConfig}
             lang={this.props.lang}
+            loading={this.props.loading}
             fileType="video"
             uploadProps={this.props.uploadProps}/>
         </Modal>

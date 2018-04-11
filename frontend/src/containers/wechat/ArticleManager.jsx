@@ -235,7 +235,7 @@ class ArticleManager extends React.Component {
                                             <IconText type="edit" text="编辑" />, 
                                             <IconText type="delete" text="删除" />, 
                                             <IconText type="file-text" text="预览" onClick={this.handlePreview.bind(this, item)} />]}
-                                        extra={<img width={273} height={173} alt="logo" src={item.thumb_url} />}
+                                        extra={<img width={273} height={173} alt="logo" src={`${item.thumb_url}`} />}
                                     >
                                         <List.Item.Meta
                                         avatar={<Avatar src={item.avatar} />}

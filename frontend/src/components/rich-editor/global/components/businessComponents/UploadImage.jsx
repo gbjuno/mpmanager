@@ -227,7 +227,6 @@ class UploadImage extends Component {
     //   beforeUpload: this.beforeUpload.bind(this),
     //   showUploadList: isShowUploadList !== undefined ? isShowUploadList : true
     // });
-    console.log("uploadProps ----> chen double",uploadProps);
 
     return (
       <div>

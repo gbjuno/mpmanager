@@ -708,40 +708,39 @@ class EditorConcist extends React.Component {
     return (
       <div className="RichEditor-root editorHidden" content={this.state.HTML} id="text-editor-container">
         <div>
-          {this.state.showMarkdownSource==false&&this.props.undoRedo&&<UndoRedo onToggle={this.undoRedo} lang={lang[this.state.language]}/>}
-          {this.state.showMarkdownSource==false&&this.props.removeStyle&&<RemoveStyleControls onToggle={this.removeStyle} lang={lang[this.state.language]}/>}
-          {this.state.showMarkdownSource==false&&this.props.pasteNoStyle&&<PasteNoStyleControls receiveText={this.pasteNoStyle} lang={lang[this.state.language]}/>}
-          {this.state.showMarkdownSource==false&&this.props.blockStyle&&<BlockStyleControls editorState={editorState} onToggle={this.toggleBlockType} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.undoRedo&&<UndoRedo onToggle={this.undoRedo} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.removeStyle&&<RemoveStyleControls onToggle={this.removeStyle} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.pasteNoStyle&&<PasteNoStyleControls receiveText={this.pasteNoStyle} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.blockStyle&&<BlockStyleControls editorState={editorState} onToggle={this.toggleBlockType} lang={lang[this.state.language]}/>}
           {this.props.alignment&&this.props.convertFormat!=="markdown"&&<AlignmentControls editorState={editorState} onToggle={this.toggleAlignment} lang={lang[this.state.language]}/>}
-          {this.state.showMarkdownSource==false&&this.props.inlineStyle&&<InlineStyleControls editorState={editorState} onToggle={this.toggleInlineStyle} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.inlineStyle&&<InlineStyleControls editorState={editorState} onToggle={this.toggleInlineStyle} lang={lang[this.state.language]}/>}
           {this.props.color&&this.props.convertFormat!=="markdown"&&<ColorControls editorState={editorState} onToggle={this.toggleColor} lang={lang[this.state.language]}/>}
-          {this.state.showMarkdownSource==false&&this.props.image&&<ImgStyleControls uploadConfig={this.props.uploadConfig} receiveImage={this.addImage} watermarkImage={this.props.watermarkImage} lang={lang[this.state.language]}
+          {this.state.showMarkdownSource===false&&this.props.image&&<ImgStyleControls uploadConfig={this.props.uploadConfig} receiveImage={this.addImage} watermarkImage={this.props.watermarkImage} lang={lang[this.state.language]}
           uploadProps={this.props.uploadImageProps}/>}
-          {this.state.showMarkdownSource==false&&this.props.video&&<VideoStyleControls uploadConfig={this.props.uploadConfig} receiveVideo={this.addVideo} lang={lang[this.state.language]}
-          uploadProps={this.props.uploadVideoProps}/>}
+          {this.state.showMarkdownSource===false&&this.props.video&&<VideoStyleControls uploadConfig={this.props.uploadConfig} receiveVideo={this.addVideo} lang={lang[this.state.language]}
+          uploadProps={this.props.uploadVideoProps} loading={this.props.videoUploading} />}
           {/* {this.state.showMarkdownSource==false&&this.props.audio&&<AudioStyleControls uploadConfig={this.props.uploadConfig} receiveAudio={this.addAudio} lang={lang[this.state.language]}
           uploadProps={this.props.uploadAudioProps}/>} */}
-          {this.state.showMarkdownSource==false&&this.props.urls&&<AddUrl editorState={editorState} onToggle={this.promptForLink} lang={lang[this.state.language]}/>}
-          {this.state.showMarkdownSource==false&&this.props.urls&&<CloseUrl editorState={editorState} onToggle={this.removeLink} lang={lang[this.state.language]}/>}
-          {this.state.showMarkdownSource==false&&this.props.autoSave&&<AutoSaveControls receiveSavedItem={this.choiceAutoSave} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.urls&&<AddUrl editorState={editorState} onToggle={this.promptForLink} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.urls&&<CloseUrl editorState={editorState} onToggle={this.removeLink} lang={lang[this.state.language]}/>}
+          {this.state.showMarkdownSource===false&&this.props.autoSave&&<AutoSaveControls receiveSavedItem={this.choiceAutoSave} lang={lang[this.state.language]}/>}
           {this.props.fullScreen&&<OpenFull editorState={editorState} onToggle={this.openFull} coverTitle={this.state.openFullTest} lang={lang[this.state.language]}/>}
-          {this.props.convertFormat=="markdown"&&<SourceEditor editorState={editorState} onToggle={this.toggleSource} coverTitle={this.state.showSourceEditor} lang={lang[this.state.language]}/>}
+          {this.props.convertFormat==="markdown"&&<SourceEditor editorState={editorState} onToggle={this.toggleSource} coverTitle={this.state.showSourceEditor} lang={lang[this.state.language]}/>}
         </div>
-        <div className={className} onClick={this.focus} style={{display:this.state.showMarkdownSource==true?"none":"block"}}>
-          <Editor
-            blockRendererFn={mediaBlockRenderer}
-            editorState={this.state.editorState}
-            blockStyleFn={getBlockStyle}
-            customStyleMap={styleMap}
-            customStyleMap={colorStyleMap}
-            editorState={editorState}
-            handleKeyCommand={this.handleKeyCommand}
-            keyBindingFn={this.customKeyBinding}
-            onChange={this.onChange}
-            handlePastedText={this.handlePastedText}
-            spellCheck={true}/>
+        <div className={className} onClick={this.focus} style={{display:this.state.showMarkdownSource===true?"none":"block"}}>
+            <Editor
+                blockRendererFn={mediaBlockRenderer}
+                blockStyleFn={getBlockStyle}
+                customStyleMap={colorStyleMap}
+                editorState={editorState}
+                handleKeyCommand={this.handleKeyCommand}
+                keyBindingFn={this.customKeyBinding}
+                onChange={this.onChange}
+                handlePastedText={this.handlePastedText}
+                spellCheck 
+            />
         </div>
-        <div style={{display:this.state.showMarkdownSource==true?"block":"none",height:"500px",width:"100%"}}>
+        <div style={{display:this.state.showMarkdownSource===true?"block":"none",height:"500px",width:"100%"}}>
           <textarea
             style={{height:"100%",width:"100%",overflowY:"visible" }}
             onChange={this.changeMrakdownContent}

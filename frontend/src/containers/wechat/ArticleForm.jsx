@@ -21,7 +21,9 @@ class ArticleForm extends React.Component {
         htmlContent: ``,
         responseList: [],
         responseImageList: null,
+        responseVideoList: [],
         coverLoading: false,
+        videoUploading: false,
     }
 
     receiveHtml = (content) => {
@@ -104,7 +106,7 @@ class ArticleForm extends React.Component {
     }
 
     render() {
-        const { fileList, imageUrl, coverLoading, responseImageList } = this.state
+        const { fileList, imageUrl, coverLoading, responseImageList, responseVideoList, videoUploading } = this.state
         const { wechatLocal } = this.props
 
         if(wechatLocal)console.log('ba xiao shuo xie wan', responseImageList)
@@ -144,7 +146,8 @@ class ArticleForm extends React.Component {
         }
         const uploadVideoProps = {
             name: 'uploadVideo',
-            action: config.WECHAT_UPLOAD_METERIAL_VIDEO,
+            action: `${config.WECHAT_UPLOAD_METERIAL_VIDEO}?title=t_${new Date().getMilliseconds()}&introduction=i_${new Date().getMilliseconds()}`,
+            // action: `${config.WECHAT_UPLOAD_METERIAL_VIDEO}`,
             onChange: this.onChange,
             onStart: (file) => {
                 console.log('onStart', file.name);
@@ -153,21 +156,28 @@ class ArticleForm extends React.Component {
             onSuccess: (file) => {
                 console.log('onSuccess', file);
                 this.setState({
-                    responseImageList: [{
+                    responseVideoList: [{
                         key: file.media_id,
                         url: file.url,
-                    }]
+                    }],
+                    videoUploading: false,
                 })
             },
             onProgress: (step, file) => {
+                this.setState({
+                    videoUploading: true,
+                })
                 console.log('onProgress', Math.round(step.percent), file.name);
             },
             onError: (err) => {
+                this.setState({
+                    videoUploading: false,
+                })
                 console.log('onError', err);
             },
             withCredentials: true,
             listType: 'picture',
-            fileList: this.state.responseList,
+            fileList: responseVideoList,
             data: (file) => {
 
             },
@@ -257,6 +267,7 @@ class ArticleForm extends React.Component {
                         cbReceiver={this.receiveHtml} 
                         uploadImageProps={uploadImageProps}
                         uploadVideoProps={uploadVideoProps}
+                        videoUploading={videoUploading}
                         uploadAudioProps={uploadAudioProps}
                     />
                     </Col>
