@@ -175,14 +175,22 @@ class UploadVideo extends Component {
 
       this.state.upReceiverFun = setTimeout(() => {
         //限制频繁调用组件制定的cbReceiver
-        if (!!nextProps.uploadProps.fileList && nextProps.uploadProps.fileList.length == 0) {
+        if (!!nextProps.uploadProps.fileList && nextProps.uploadProps.fileList.length === 0) {
           return false;
         }
+
+        console.log('file List...', nextProps.fileList, this.props.fileList)
+
+        if(isEqual(nextProps.fileList, this.props.fileList) && nextProps.fileList.length > 0){
+          return false;
+        }
+
         this.props.cbReceiver(nextProps.uploadProps.fileList);
 
       }, 1000);
       return false;
     }
+    console.log('sweet...',nextProps.fileList, this.state.files);
     if (isEqual(nextProps.fileList, this.state.files)) {
       return false;
     }
@@ -201,7 +209,7 @@ class UploadVideo extends Component {
     }else {
       list = cloneDeep(nextProps.fileList);
     }
-    if (!!list) {
+    if (!!list && list.length <= 1) {
       PRO_COMMON.obj.refsKeyTo(list, "uid");
       this.setState({files: list});
     }

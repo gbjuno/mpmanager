@@ -110,6 +110,7 @@ class ArticleForm extends React.Component {
         const { wechatLocal } = this.props
 
         if(wechatLocal)console.log('ba xiao shuo xie wan', responseImageList)
+        if(wechatLocal)console.log('ba xiao shuo xie wan', responseVideoList)
 
         let policy = "";
 
@@ -148,7 +149,6 @@ class ArticleForm extends React.Component {
             name: 'uploadVideo',
             action: `${config.WECHAT_UPLOAD_METERIAL_VIDEO}?title=t_${new Date().getMilliseconds()}&introduction=i_${new Date().getMilliseconds()}`,
             // action: `${config.WECHAT_UPLOAD_METERIAL_VIDEO}`,
-            onChange: this.onChange,
             onStart: (file) => {
                 console.log('onStart', file.name);
                 // this.refs.inner.abort(file);
@@ -156,10 +156,10 @@ class ArticleForm extends React.Component {
             onSuccess: (file) => {
                 console.log('onSuccess', file);
                 this.setState({
-                    responseVideoList: [{
+                    responseVideoList: this.state.responseVideoList.concat({
                         key: file.media_id,
                         url: file.url,
-                    }],
+                    }),
                     videoUploading: false,
                 })
             },
@@ -183,7 +183,7 @@ class ArticleForm extends React.Component {
             },
             multiple: true,
             beforeUpload: this.beforeUpload,
-            showUploadList: true,
+            showUploadList: false,
         }
         const uploadAudioProps = {
             action: config.WECHAT_UPLOAD_METERIAL_IMAGE,

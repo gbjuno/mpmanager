@@ -25,7 +25,8 @@ class VideoStyleControls extends Component {
   }
 
   getVideoObject(fileObj) {
-    this.state.videos = this.state.videos.concat(fileObj);
+    // this.state.videos = this.state.videos.concat(fileObj);
+    this.state.videos = [fileObj]
     if (!!this.state.videos) {
       this.setState({disabled: false})
     }
@@ -37,7 +38,7 @@ class VideoStyleControls extends Component {
     let videos = this.state.videos.map((item) => {
       return item;
     });
-    this.props.receiveVideo(videos);
+    this.props.receiveVideo(videos[0]);
     this.state.videos = [];
     this.forceUpdate();
   }
