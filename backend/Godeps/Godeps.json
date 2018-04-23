@@ -1,0 +1,193 @@
+{
+	"ImportPath": "github.com/gbjuno/mpmanager/backend",
+	"GoVersion": "go1.10",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/360EntSecGroup-Skylar/excelize",
+			"Comment": "v1.2-31-g9ee57fd",
+			"Rev": "9ee57fdb388e6e0a50dd8c945c27f051205fa23d"
+		},
+		{
+			"ImportPath": "github.com/chanxuehong/internal",
+			"Rev": "c1d8ef0f5517e0ec054ea9ba5aedb0094d9bbb6a"
+		},
+		{
+			"ImportPath": "github.com/chanxuehong/rand",
+			"Rev": "b54bf7f93440da0b6c81b05276d69cdcbf32c918"
+		},
+		{
+			"ImportPath": "github.com/chanxuehong/session",
+			"Rev": "62053c2ee975b03d43b8d7a1c4bbbff233a7bf7d"
+		},
+		{
+			"ImportPath": "github.com/chanxuehong/sid",
+			"Rev": "1426da3b0352d9da0efdf92986e68a04cb03dd7f"
+		},
+		{
+			"ImportPath": "github.com/chanxuehong/util/security",
+			"Rev": "00a36f7ea8773cee5da9389513bf78bbcbdb09ed"
+		},
+		{
+			"ImportPath": "github.com/emicklei/go-restful",
+			"Comment": "v2.6.1",
+			"Rev": "92cd0815dd1a028a6e69faee9757c7436238e252"
+		},
+		{
+			"ImportPath": "github.com/emicklei/go-restful/log",
+			"Comment": "v2.6.1",
+			"Rev": "92cd0815dd1a028a6e69faee9757c7436238e252"
+		},
+		{
+			"ImportPath": "github.com/fogleman/gg",
+			"Comment": "v1.0.0-20-ga9ff18e",
+			"Rev": "a9ff18eccd6d57b3c8576a71a91a04868f62078c"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.3-60-g3287d94",
+			"Rev": "3287d94d4c6a48a63e16fffaabf27ab20203af2a"
+		},
+		{
+			"ImportPath": "github.com/golang/freetype/raster",
+			"Comment": "release-137-ge2365df",
+			"Rev": "e2365dfdc4a05e4b8299a783240d4a7d5a65d4e4"
+		},
+		{
+			"ImportPath": "github.com/golang/freetype/truetype",
+			"Comment": "release-137-ge2365df",
+			"Rev": "e2365dfdc4a05e4b8299a783240d4a7d5a65d4e4"
+		},
+		{
+			"ImportPath": "github.com/golang/glog",
+			"Rev": "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/gorm",
+			"Comment": "v1.9.1-3-g6842b49",
+			"Rev": "6842b49a1ad0feb6b93be830fe63a682cf853ada"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/gorm/dialects/mysql",
+			"Comment": "v1.9.1-3-g6842b49",
+			"Rev": "6842b49a1ad0feb6b93be830fe63a682cf853ada"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/inflection",
+			"Rev": "04140366298a54a039076d798123ffa108fff46c"
+		},
+		{
+			"ImportPath": "github.com/robfig/cron",
+			"Comment": "v1-62-gda757ee",
+			"Rev": "da757ee1bf6762b4f03db86a7f043c43ca23866e"
+		},
+		{
+			"ImportPath": "github.com/skip2/go-qrcode",
+			"Rev": "cf5f9fa2f0d847edb8e038db7ed975e239095e1a"
+		},
+		{
+			"ImportPath": "github.com/skip2/go-qrcode/bitset",
+			"Rev": "cf5f9fa2f0d847edb8e038db7ed975e239095e1a"
+		},
+		{
+			"ImportPath": "github.com/skip2/go-qrcode/reedsolomon",
+			"Rev": "cf5f9fa2f0d847edb8e038db7ed975e239095e1a"
+		},
+		{
+			"ImportPath": "golang.org/x/image/draw",
+			"Rev": "f315e440302883054d0c2bd85486878cb4f8572c"
+		},
+		{
+			"ImportPath": "golang.org/x/image/font",
+			"Rev": "f315e440302883054d0c2bd85486878cb4f8572c"
+		},
+		{
+			"ImportPath": "golang.org/x/image/font/basicfont",
+			"Rev": "f315e440302883054d0c2bd85486878cb4f8572c"
+		},
+		{
+			"ImportPath": "golang.org/x/image/math/f64",
+			"Rev": "f315e440302883054d0c2bd85486878cb4f8572c"
+		},
+		{
+			"ImportPath": "golang.org/x/image/math/fixed",
+			"Rev": "f315e440302883054d0c2bd85486878cb4f8572c"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/internal/debug/api",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/internal/debug/api/retry",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/internal/debug/callback",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/internal/util",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/base",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/core",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/jssdk",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/material",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/media",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/menu",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/message/callback/request",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/message/callback/response",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/message/mass",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/message/mass/mass2all",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/message/mass/preview",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/message/template",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/mp/oauth2",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/oauth2",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		},
+		{
+			"ImportPath": "gopkg.in/chanxuehong/wechat.v2/util",
+			"Rev": "dd1c7bb6907013264fb4550bc2d2a8c0177a3841"
+		}
+	]
+}
