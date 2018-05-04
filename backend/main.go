@@ -85,6 +85,9 @@ func main() {
 	materialVideo := MaterialVideo{}
 	materialVideo.Register(wsContainer)
 
+	materialAudio := MaterialAudio{}
+	materialAudio.Register(wsContainer)
+
 	mediaPicture := MediaPicture{}
 	mediaPicture.Register(wsContainer)
 

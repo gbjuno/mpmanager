@@ -1,11 +1,10 @@
-package main
+package tools
 
 import (
 	//	"github.com/emicklei/go-restful"
-	"fmt"
+
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
@@ -179,19 +178,6 @@ func (MaterialVideo) TableName() string {
 	return "material_video"
 }
 
-type MaterialAudio struct {
-	ID           int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
-	Day          time.Time `gorm:"column:day;not null;unique_index:day_company_place;default:NOW()" json:"day"`
-	Title        string    `gorm:"column:title;not nul" json:"title"`
-	Introduction string    `gorm:"column:introduction" json:"introduction"`
-	MediaId      string    `gorm:"column:media_id" json:"media_id"`
-	Url          string    `gorm:"column:url;not null" json:"url"`
-}
-
-func (MaterialAudio) TableName() string {
-	return "material_audio"
-}
-
 type MediaPicture struct {
 	Url string `gorm:"-" json:"url"`
 }
@@ -251,23 +237,4 @@ type TemplatePage struct {
 type Response struct {
 	Status string `json:"status"`
 	Error  string `json:"error"`
-}
-
-func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
-	var err error
-	db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", dbuser, dbpass, dbip, dbport, dbname))
-	if err != nil {
-		glog.Fatalf("cannot initialize database connection, err %s", err)
-	}
-	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &MaterialVideo{}, &MaterialAudio{}, &Chapter{}, &News{}, &GroupSend{}, &TemplatePage{})
-	db.Debug().Model(&Country{}).AddForeignKey("town_id", "towns(id)", "SET NULL", "SET NULL")
-	db.Debug().Model(&Company{}).AddForeignKey("country_id", "countries(id)", "SET NULL", "SET NULL")
-	db.Debug().Model(&User{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
-	db.Debug().Model(&MonitorPlace{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
-	db.Debug().Model(&MonitorPlace{}).AddForeignKey("monitor_type_id", "monitor_types(id)", "SET NULL", "CASCADE")
-	db.Debug().Model(&Picture{}).AddForeignKey("user_id", "users(id)", "SET NULL", "SET NULL")
-	db.Debug().Model(&Picture{}).AddForeignKey("monitor_place_id", "monitor_places(id)", "CASCADE", "CASCADE")
-	db.Debug().Model(&Summary{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
-	db.Debug().Model(&TodaySummary{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
-	db.Debug().Model(&TodaySummary{}).AddForeignKey("monitor_place_id", "monitor_places(id)", "CASCADE", "CASCADE")
 }
