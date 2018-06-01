@@ -1,0 +1,20 @@
+{
+    "template_list": [
+        {
+            "template_id": "9FnS1S9W4t-JyEbHW0LCWWk9nkutiyvrB9Mql5TVF-w",
+            "title": "订阅模板消息",
+            "primary_industry": "",
+            "deputy_industry": "",
+            "content": "{{content.DATA}}",
+            "example": ""
+        },
+        {
+            "template_id": "GeqKR9W_VPVS8hX6FUT-R10hkvoAQ6w4ZCGF1WDvIMc",
+            "title": "业务处理通知",
+            "primary_industry": "政府与公共事业",
+            "deputy_industry": "政府|公共事业|非盈利机构",
+            "content": "{{first.DATA}}\n业务名称：{{keyword1.DATA}}\n处理时间：{{keyword2.DATA}}\n处理状态：{{keyword3.DATA}}\n{{remark.DATA}}",
+            "example": "您好，因您之前提交的办理机构有误，现您的申请部门已移交至XX部门。\r\n业务名称：XXXXXX\r\n处理时间：YY-MM-DD\r\n处理状态：未处理\r\n请耐心等待业务负责人处理。"
+        }
+    ]
+}

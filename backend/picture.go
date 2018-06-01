@@ -56,15 +56,15 @@ func sendPictureJudgementMsg(monitor_place_id int, comment string) {
 		return
 	}
 
-	first := Keyword{Value: "您好，本日贵企业上传的拍照图片不及格"}
-	remark := Keyword{Value: fmt.Sprintf("错误原因: %s\n需要重新整改再进行拍照，请您尽快处理", comment)}
+	first := Keyword{Value: fmt.Sprintf("您好，本日贵企业%s上传的监控地点照片不及格", company.Name)}
+	remark := Keyword{Value: fmt.Sprintf("错误原因: %s\n需要重新整改再进行拍照,请您尽快处理,谢谢", comment)}
 
 	userList := make([]User, 0)
 	db.Debug().Where("company_id = ?", company.ID).Find(&userList)
 
-	k1 := Keyword{Value: company.Name}
+	k1 := Keyword{Value: "监控地点拍照"}
 	k2 := Keyword{Value: todayStrCN}
-	k3 := Keyword{Value: monitorPlace.Name}
+	k3 := Keyword{Value: fmt.Sprintf("不及格地点为%s", monitorPlace.Name)}
 	msg := TMsgData{First: first, Keyword1: k1, Keyword2: k2, Keyword3: k3, Remark: remark}
 	t := template.TemplateMessage2{TemplateId: wxTemplateId, Data: msg}
 	for _, u := range userList {

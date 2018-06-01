@@ -157,11 +157,11 @@ func sendTemplateMsg() {
 			db.Debug().First(&company, s.CompanyId)
 			users := make([]User, 0)
 			db.Debug().Where("company_id = ?", company.ID).Where("enable = 'T'").Find(&users)
-			k1 := Keyword{Value: company.Name}
+			k1 := Keyword{Value: "监控地点拍照"}
 			k2 := Keyword{Value: todayStrCN}
-			k3 := Keyword{Value: s.UnfinishIds}
-			first := Keyword{Value: "您好，本日贵企业尚需处理如下拍照任务"}
-			remark := Keyword{Value: "请您尽快处理"}
+			k3 := Keyword{Value: fmt.Sprintf("未完成的拍照地点为%s", s.UnfinishIds)}
+			first := Keyword{Value: fmt.Sprintf("您好，本日贵企业%s尚需处理如下安全检查任务", company.Name)}
+			remark := Keyword{Value: "请您尽快处理,谢谢!"}
 			msg := TMsgData{First: first, Keyword1: k1, Keyword2: k2, Keyword3: k3, Remark: remark}
 			t := template.TemplateMessage2{TemplateId: wxTemplateId, Data: msg}
 			for _, u := range users {

@@ -62,11 +62,11 @@ func RegenerateForAllCompany() {
 	total := 0
 	for _, company := range companyList {
 		glog.Infof("regenerateing qrcode pictures for company %s", company.Name)
-		qrcodePath := fmt.Sprintf("https://%s/backend/photo?place=%d", domain, company.ID)
 		//create monitor_place qrcode image
 		monitorPlaceList := make([]tools.MonitorPlace, 0)
 		db.Where("company_id = ?", company.ID).Find(&monitorPlaceList)
 		for _, place := range monitorPlaceList {
+			qrcodePath := fmt.Sprintf("https://%s/backend/photo?place=%d", domain, place.ID)
 			imagePath := (imgRepo + place.QrcodePath)
 			imageBaseDir := imagePath[:strings.LastIndex(imagePath, "/")+1]
 			if _, err := os.Stat(imageBaseDir); os.IsNotExist(err) {
@@ -100,11 +100,11 @@ func RegenerateForCompany(companyid string) {
 
 	glog.Infof("regenerateing qrcode pictures for company %s", company.Name)
 
-	qrcodePath := fmt.Sprintf("https://%s/backend/photo?place=%d", domain, company.ID)
 	//create monitor_place qrcode image
 	monitorPlaceList := make([]tools.MonitorPlace, 0)
 	db.Where("company_id = ?", companyid).Find(&monitorPlaceList)
 	for _, place := range monitorPlaceList {
+		qrcodePath := fmt.Sprintf("https://%s/backend/photo?place=%d", domain, place.ID)
 		imagePath := (imgRepo + place.QrcodePath)
 		imageBaseDir := imagePath[:strings.LastIndex(imagePath, "/")+1]
 		if _, err := os.Stat(imageBaseDir); os.IsNotExist(err) {

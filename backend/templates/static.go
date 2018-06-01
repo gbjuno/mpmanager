@@ -28,7 +28,7 @@ const BIND = `<!DOCTYPE html>
     </div>
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+    <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
     <script type="text/javascript">
     
         $(function(){
@@ -52,7 +52,7 @@ const BIND = `<!DOCTYPE html>
                         var jdata = JSON.parse(data);
                         if (jdata.status) {
                             alert(jdata.message)
-                            window.location.href="https://www.juntengshoes.cn/html/bindsuccess.html"
+                            window.location.href="https://{{ .Domain }}/html/bindsuccess.html"
                         } else {
                             alert(jdata.message)
                         }
@@ -106,8 +106,8 @@ const PHOTO = `<!DOCTYPE html>
     </div>
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/my.js"></script>
+    <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
+    <script src="https://{{ .Domain }}/html/my.js"></script>
     <script type="text/javascript">
         if(!wx){//验证是否存在微信的js组件
             alert("微信接口调用失败，请检查是否引入微信js！");
@@ -182,7 +182,7 @@ const PHOTO = `<!DOCTYPE html>
                                 var jdata = JSON.parse(data)
                                 if(jdata.status) {
                                    alert(jdata.message)
-                                   window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx6eb571f36f6b1c10&redirect_uri=https%3A%2F%2Fwww.juntengshoes.cn%2Fbackend%2Fscanqrcode&response_type=code&scope=snsapi_base&state=scanqrcode#wechat_redirect" 
+                                   window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid={{ .Wxappid }}&redirect_uri=https%3A%2F%2F{{ .Domain }}%2Fbackend%2Fscanqrcode&response_type=code&scope=snsapi_base&state=scanqrcode#wechat_redirect" 
                                 } else {
                                    alert(jdata.message) 
                                }
@@ -242,7 +242,7 @@ const SCANQRCODE = `
 
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+    <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
     <script type="text/javascript">
     if(!wx){//验证是否存在微信的js组件
         alert("微信接口调用失败，请检查是否引入微信js！");
@@ -310,7 +310,7 @@ const NOTICEPAGE = `
     </div>
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+    <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
 </body>
 
 `
@@ -348,7 +348,7 @@ const COMPANYSTAT = `
     {{ end }}</div> 
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+    <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
 </body>
 
 `
@@ -407,7 +407,7 @@ const SUBSCRIBE = `
 </div>
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
-    <script src="https://www.juntengshoes.cn/html/zepto.min.js"></script>
+    <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
 </body>
 </html>
 `

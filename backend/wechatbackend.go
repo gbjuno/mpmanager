@@ -31,6 +31,7 @@ import (
 	"gopkg.in/chanxuehong/wechat.v2/oauth2"
 )
 
+/***
 const (
 	wxAppId           = "wx6eb571f36f6b1c10"
 	wxAppSecret       = "555210c557802c8a0c6a930cf2e4c159"
@@ -41,21 +42,31 @@ const (
 	noticePageSuccess = "success"
 	noticePagefail    = "warn"
 )
+***/
 
 var (
-	wxDESkey                                 = []byte(wxEncodedAESKey)[:8]
-	sessionStorage                           = session.New(20*60, 60*60)
-	oauth2Endpoint    oauth2.Endpoint        = mpoauth2.NewEndpoint(wxAppId, wxAppSecret)
-	accessTokenServer core.AccessTokenServer = core.NewDefaultAccessTokenServer(wxAppId, wxAppSecret, nil)
-	wechatClient      *core.Client           = core.NewClient(accessTokenServer, nil)
-	ticketServer                             = jssdk.NewDefaultTicketServer(wechatClient)
+	wxAppId         string
+	wxAppSecret     string
+	wxOriId         string
+	wxToken         string
+	wxEncodedAESKey string
+	wxTemplateId    string
 
+	noticePageSuccess = "success"
+	noticePagefail    = "warn"
+	sessionStorage    = session.New(20*60, 60*60)
+	wxDESkey          []byte
+	oauth2Endpoint    oauth2.Endpoint
+	accessTokenServer core.AccessTokenServer
+	wechatClient      *core.Client
+	ticketServer      *jssdk.DefaultTicketServer
 	// 下面两个变量不一定非要作为全局变量, 根据自己的场景来选择.
 	msgHandler core.Handler
 	msgServer  *core.Server
 )
 
 type NoticePage struct {
+	Domain   string
 	Title    string
 	Type     string
 	Msgtitle string
@@ -63,6 +74,12 @@ type NoticePage struct {
 }
 
 func WechatBackendInit() {
+	wxDESkey = []byte(wxEncodedAESKey)[:8]
+	oauth2Endpoint = mpoauth2.NewEndpoint(wxAppId, wxAppSecret)
+	accessTokenServer = core.NewDefaultAccessTokenServer(wxAppId, wxAppSecret, nil)
+	wechatClient = core.NewClient(accessTokenServer, nil)
+	ticketServer = jssdk.NewDefaultTicketServer(wechatClient)
+
 	prefix := fmt.Sprintf("[%s]", "WechatBackendInit")
 	glog.Infof("%s initialization", prefix)
 
@@ -81,11 +98,14 @@ func WechatBackendInit() {
 	} else {
 		glog.Errorf("%s get Menu from wechat %v", prefix, wechatMenu)
 	}
+	if recreateMenu {
+		createMenu()
+	}
 
 	mux := core.NewServeMux()
 	mux.DefaultMsgHandleFunc(defaultMsgHandler)
 	mux.DefaultEventHandleFunc(defaultEventHandler)
-	mux.MsgHandleFunc(request.MsgTypeText, textMsgHandler)
+	mux.MsgHandleFunc(request.MsgTypeText, defaultEventHandler)
 	mux.EventHandleFunc(menu.EventTypeClick, menuClickEventHandler)
 
 	msgHandler = mux
@@ -94,6 +114,7 @@ func WechatBackendInit() {
 
 func createMenu() {
 	redirectURIPrefix := fmt.Sprintf("https://%s/backend/%%s", domain)
+	glog.Info("uri prefix %s", redirectURIPrefix)
 	oauth2Scope := "snsapi_base"
 
 	bindingButton := &menu.Button{}
@@ -117,8 +138,11 @@ func createMenu() {
 	companystatButton.SetAsViewButton("检查进度", companystatURI)
 	glog.Infof("set Button companystat for uri %s, wechat redirecturi %s", companystatRedirectURI, companystatURI)
 
-	topButton := &menu.Button{}
-	topButton.SubButtons = []menu.Button{*bindingButton, *scanqrcodeButton, *companystatButton}
+	wechatMenu := &menu.Menu{Buttons: []menu.Button{*bindingButton, *scanqrcodeButton, *companystatButton}}
+	if err := menu.Create(wechatClient, wechatMenu); err != nil {
+		glog.Fatal("cannot connect with wechat server, err %s", err)
+	}
+	glog.Info("create menu successfully")
 }
 
 func textMsgHandler(ctx *core.Context) {
@@ -153,11 +177,7 @@ func menuClickEventHandler(ctx *core.Context) {
 func defaultEventHandler(ctx *core.Context) {
 	prefix := fmt.Sprintf("[%s]", "defaultEventHandler")
 	glog.Infof("%s 收到事件:\n%s", prefix, ctx.MsgPlaintext)
-	msg := request.GetSubscribeEvent(ctx.MixedMsg)
-	articles := make([]response.Article, 1)
-	articles[0] = response.Article{Title: "公众号使用指导", Description: "新手必看", PicURL: fmt.Sprintf("https://%s/html/images/subscribe.png", domain), URL: fmt.Sprintf("https://%s/html/subscribe.html", domain)}
-	resp := response.NewNews(msg.FromUserName, msg.ToUserName, msg.CreateTime, articles)
-	ctx.RawResponse(resp)
+	ctx.NoneResponse()
 }
 
 // wxCallbackHandler 是处理回调请求的 http handler.
@@ -305,7 +325,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		// openid is related to a user
 		w.WriteHeader(http.StatusOK)
 		msgbody := fmt.Sprintf("用户%s已经绑定企业%s，无须再次绑定即可拍照", user.Name, company.Name)
-		n := NoticePage{Title: "绑定企业", Type: noticePageSuccess, Msgtitle: "绑定企业成功", Msgbody: msgbody}
+		n := NoticePage{Domain: domain, Title: "绑定企业", Type: noticePageSuccess, Msgtitle: "绑定企业成功", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
 		noticepageTmpl.Execute(os.Stdout, n)
@@ -314,8 +334,9 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 		glog.Infof("%s openid is not related to a user", prefix)
 		// openid isn't related to a user
 		w.WriteHeader(http.StatusOK)
+		n := NoticePage{Domain: domain}
 		bind_tmpl := template.Must(template.New("bind").Parse(myTemplate.BIND))
-		bind_tmpl.Execute(w, nil)
+		bind_tmpl.Execute(w, n)
 		bind_tmpl.Execute(os.Stdout, nil)
 		return
 	}
@@ -543,7 +564,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 		//bindingState := "binding"
 		//bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
 		msgbody := fmt.Sprintf("在菜单中或绑定企业，绑定企业后再进行拍照，谢谢")
-		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
+		n := NoticePage{Domain: domain, Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
 		noticepageTmpl.Execute(os.Stdout, n)
@@ -565,6 +586,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var jssdkObj struct {
+		Domain    string
 		Timestamp string
 		Noncestr  string
 		Wxappid   string
@@ -574,6 +596,7 @@ func scanqrcodeHandler(w http.ResponseWriter, r *http.Request) {
 		Company   string
 		Phone     string
 	}
+	jssdkObj.Domain = domain
 	jssdkObj.Timestamp = fmt.Sprintf("%d", timeNow)
 	jssdkObj.Noncestr = nonceStr
 	jssdkObj.Wxappid = wxAppId
@@ -641,7 +664,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 		glog.Errorf("%s cannot find monitor_place with id %s", prefix, place)
 		w.WriteHeader(http.StatusOK)
 		msgbody := "该监控地点已经失效，如有问题请联系管理员"
-		n := NoticePage{Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "无效地点", Msgbody: msgbody}
+		n := NoticePage{Domain: domain, Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "无效地点", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
 		noticepageTmpl.Execute(os.Stdout, n)
@@ -653,7 +676,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 			prefix, monitor_place.ID, monitor_place.CompanyId, user.ID, user.CompanyId)
 		w.WriteHeader(http.StatusOK)
 		msgbody := "监控地点不属于用户绑定的企业，如有问题请联系管理员"
-		n := NoticePage{Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "非法操作", Msgbody: msgbody}
+		n := NoticePage{Domain: domain, Title: "监控地点拍照", Type: noticePagefail, Msgtitle: "非法操作", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
 		noticepageTmpl.Execute(os.Stdout, n)
@@ -672,6 +695,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var jssdkObj struct {
+		Domain     string
 		Timestamp  string
 		Noncestr   string
 		Wxappid    string
@@ -681,6 +705,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) {
 		Corrective bool
 		PlaceName  string
 	}
+	jssdkObj.Domain = domain
 	jssdkObj.Timestamp = fmt.Sprintf("%d", timeNow)
 	jssdkObj.Noncestr = nonceStr
 	jssdkObj.Wxappid = wxAppId
@@ -958,7 +983,7 @@ func companystatHandler(w http.ResponseWriter, r *http.Request) {
 		//bindingState := "binding"
 		//bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
 		msgbody := fmt.Sprintf("在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢")
-		n := NoticePage{Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
+		n := NoticePage{Domain: domain, Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
 		noticepageTmpl.Execute(os.Stdout, n)
