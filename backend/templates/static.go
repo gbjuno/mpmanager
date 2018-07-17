@@ -136,6 +136,9 @@ const PHOTO = `<!DOCTYPE html>
         var _uploadImageId;
 
         $(function(){
+            setTimeout(function(){
+                window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid={{ .Wxappid }}&redirect_uri=https%3A%2F%2F{{ .Domain }}%2Fbackend%2Fscanqrcode&response_type=code&scope=snsapi_base&state=scanqrcode#wechat_redirect"
+            }, 30000);
             initTakePhoto();
             initUploadDialog();
         });
