@@ -103,6 +103,18 @@ const PHOTO = `<!DOCTYPE html>
                 </div>
             </div>
         </div>
+        <div class="js_dialog" id="forwardDialog" style="display:none; opacity: 0;">
+            <div class="weui-mask"></div>
+            <div class="weui-dialog weui-skin_android">
+                <div class="weui-dialog__hd"><strong class="weui-dialog__title">操作超时</strong></div>
+                <div class="weui-dialog__bd">
+                    未在30秒内完成拍照，请重新扫描二维码。
+                </div>
+                <div class="weui-dialog__ft">
+                    <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary" id="forwardConfirm">确定</a>
+                </div>
+            </div>
+        </div>
     </div>
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
@@ -137,11 +149,19 @@ const PHOTO = `<!DOCTYPE html>
 
         $(function(){
             setTimeout(function(){
-                window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid={{ .Wxappid }}&redirect_uri=https%3A%2F%2F{{ .Domain }}%2Fbackend%2Fscanqrcode&response_type=code&scope=snsapi_base&state=scanqrcode#wechat_redirect"
+                $("#forwardDialog").fadeIn(200);
             }, 30000);
+            initClickForward();
             initTakePhoto();
             initUploadDialog();
         });
+
+
+        function initClickForward(){
+            $("#forwardConfirm").click(function(){
+                window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid={{ .Wxappid }}&redirect_uri=https%3A%2F%2F{{ .Domain }}%2Fbackend%2Fscanqrcode&response_type=code&scope=snsapi_base&state=scanqrcode#wechat_redirect"
+            })
+        }
 
         function initTakePhoto(){
             $("#takephoto").click(function(){
