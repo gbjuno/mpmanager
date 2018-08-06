@@ -51,11 +51,12 @@ func GenerateQrcodeImage(url string, comment string, savePath string) error {
 		return errors.New(errmsg)
 	}
 
-	if len(comment) > 30 {
-		comment_part1 := comment[:30]
-		comment_part2 := comment[30:]
-		dc.DrawStringAnchored(comment_part1, 125, 270, 0.5, 0.5)
-		dc.DrawStringAnchored(comment_part2, 125, 290, 0.5, 0.5)
+	commentRune := []rune(comment)
+	if len(commentRune) > 14 {
+		comment_part1 := commentRune[:14]
+		comment_part2 := commentRune[14:]
+		dc.DrawStringAnchored(string(comment_part1), 125, 270, 0.5, 0.5)
+		dc.DrawStringAnchored(string(comment_part2), 125, 290, 0.5, 0.5)
 	} else {
 		dc.DrawStringAnchored(comment, 125, 270, 0.5, 0.5)
 	}
