@@ -108,7 +108,7 @@ const PHOTO = `<!DOCTYPE html>
             <div class="weui-dialog weui-skin_android">
                 <div class="weui-dialog__hd"><strong class="weui-dialog__title">操作超时</strong></div>
                 <div class="weui-dialog__bd">
-                    未在30秒内完成拍照，请重新扫描二维码。
+                    未在2分钟内完成拍照，请重新扫描二维码。
                 </div>
                 <div class="weui-dialog__ft">
                     <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary" id="forwardConfirm">确定</a>
@@ -150,7 +150,7 @@ const PHOTO = `<!DOCTYPE html>
         $(function(){
             setTimeout(function(){
                 $("#forwardDialog").fadeIn(200);
-            }, 30000);
+            }, 120000);
             initClickForward();
             initTakePhoto();
             initUploadDialog();
