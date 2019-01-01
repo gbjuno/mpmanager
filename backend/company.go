@@ -18,6 +18,12 @@ type CompanyList struct {
 	Companies []Company `json:"companies"`
 }
 
+type CompanyRelaxPeriodWithCompany struct {
+	CompanyId           int                  `json:"company_id"`
+	Count               int                  `json:"count"`
+	CompanyRelaxPeriods []CompanyRelaxPeriod `json:"company_relax_periods"`
+}
+
 type UserListWithCompany struct {
 	CompanyId int    `json:"company_id"`
 	Count     int    `json:"count"`
@@ -34,6 +40,7 @@ func (c Company) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(c.findCompany))
+	//	ws.Route(ws.GET("/excel?date={date}").To(c.exportCompany))
 	ws.Route(ws.GET("/?pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}/{scope}").To(c.findCompany))
@@ -297,7 +304,7 @@ func (c Company) updateCompany(request *restful.Request, response *restful.Respo
 		company.Enable = "T"
 	}
 
-	//find comopany and update
+	//find company and update
 	db.Debug().Model(&realCompany).Update(company)
 	glog.Infof("%s update company with id %d successfully and return", prefix, realCompany.ID)
 	response.WriteHeaderAndEntity(http.StatusOK, realCompany)
@@ -346,3 +353,69 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 		return
 	}
 }
+
+/*
+func (c Company) exportCompany(request *restful.Request, response *restful.Response) {
+		prefix := fmt.Sprintf("[%s] [exportSummary]", request.Request.RemoteAddr)
+		glog.Infof("%s GET %s", prefix, request.Request.URL)
+
+		companyList := make([]Company{},0)
+		db.Debug().Find(&companyList)
+
+			f := excelize.NewFile()
+			f.SetCellValue("Sheet1", "A1", "公司")
+			f.SetCellValue("Sheet1", "B1", "创建日期")
+			f.SetCellValue("Sheet1", "C1", "最近30天完成率")
+			f.SetCellValue("Sheet1", "D1", "最近30天连续拍照完成天数")
+			f.SetCellValue("Sheet1", "E1", "本月完成率")
+			f.SetCellValue("Sheet1", "F1", "本月连续拍照完成天数")
+			f.SetCellValue("Sheet1", "E1", "本年完成率")
+			f.SetCellValue("Sheet1", "F1", "本年连续拍照完成天数")
+			for index, s := range summaryList.Summaries {
+				if s.IsFinish == "T" {
+					f.SetCellValue("Sheet1", fmt.Sprintf("E%d", index+2), "是")
+				} else {
+					f.SetCellValue("Sheet1", fmt.Sprintf("E%d", index+2), "否")
+					f.SetCellValue("Sheet1", fmt.Sprintf("F%d", index+2), s.UnfinishIds)
+				}
+				company := Company{}
+				db.Debug().Where("id = ?", s.CompanyId).First(&company)
+				f.SetCellValue("Sheet1", fmt.Sprintf("D%d", index+2), company.Name)
+				country := Country{}
+				db.Debug().Where("id = ?", company.CountryId).First(&country)
+				f.SetCellValue("Sheet1", fmt.Sprintf("C%d", index+2), country.Name)
+				town := Town{}
+				db.Debug().Where("id = ?", country.TownId).First(&town)
+				f.SetCellValue("Sheet1", fmt.Sprintf("B%d", index+2), town.Name)
+				f.SetCellValue("Sheet1", fmt.Sprintf("A%d", index+2), fmt.Sprintf("%d%02d%02d", s.Day.Year(), s.Day.Month(), s.Day.Day()))
+			}
+
+			t := time.Now()
+			saveFileName := fmt.Sprintf("/tmp/summary_%d%02d%02d_%d.xlsx", t.Year(), t.Month(), t.Day(), t.Nanosecond())
+			if err := f.SaveAs(saveFileName); err != nil {
+				errmsg := fmt.Sprintf("cannot save file, err %s", err)
+				glog.Errorf("%s %s", prefix, errmsg)
+				response.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			xlsx, err := os.Open(saveFileName)
+			if err != nil {
+				errmsg := fmt.Sprintf("cannot open file, err %s", err)
+				glog.Errorf("%s %s", prefix, errmsg)
+				response.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			defer xlsx.Close()
+
+			response.Header().Set("Content-Type", "application/octet-stream")
+			response.Header().Set("Content-Disposition", "attachment; filename=summary.xlsx")
+			response.WriteHeader(http.StatusOK)
+			io.Copy(response, xlsx)
+			return
+		}
+		return
+	}
+
+}
+*/

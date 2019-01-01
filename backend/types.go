@@ -50,10 +50,109 @@ type Company struct {
 	Summaries      []Summary      `gorm:"ForeignKey:CompanyId" json:"-"`
 	TodaySummaries []TodaySummary `gorm:"ForeignKey:CompanyId" json:"-"`
 	Enable         string         `gorm:"column:enable;size:1;default:'T';not null" json:"enable"`
+	//全部
+	TotalDaysAll               int     `gorm:"column:total_days_all;default:0;" json:"total_days_all"`
+	RelaxDaysAll               int     `gorm:"column:relax_days_all;default:0;" json:"relax_days_all"`
+	MaxContinuousFinishDaysAll int     `gorm:"column:max_continuous_finish_days_all;default:0;" json:"max_continuous_finish_days_all"`
+	ContinuousFinishDaysAll    int     `gorm:"column:continuous_finish_days_all;default:0;" json:"continuous_finish_days_all"`
+	FinishDaysAll              int     `gorm:"column:finish_days_all;default:0;" json:"finish_days_all"`
+	FinishPercentageAll        float64 `gorm:"column:finish_percentage_all;default:0;" json:"finish_percentage_all"`
+	//最近365天
+	TotalDaysInLast365days               int     `gorm:"column:total_days_last_365_days;default:0;" json:"total_days_last_365_days"`
+	RelaxDaysInLast365days               int     `gorm:"column:relax_days_last_365_days;default:0;" json:"relax_days_last_365_days"`
+	MaxContinuousFinishDaysInLast365days int     `gorm:"column:max_continuous_finish_days_last_365_days;default:0;" json:"max_continuous_finish_days_last_365_days"`
+	ContinuousFinishDaysInLast365days    int     `gorm:"column:continuous_finish_days_last_365_days;default:0;" json:"continuous_finish_days_last_365_days"`
+	FinishDaysInLast365days              int     `gorm:"column:finish_days_last_365_days;default:0;" json:"finish_days_last_365_days"`
+	FinishPercentageInLast365days        float64 `gorm:"column:finish_percentage_last_365_days;default:0;" json:"finish_percentage_last_365_days"`
+	//最近182天
+	TotalDaysInLast182days               int     `gorm:"column:total_days_last_182_days;default:0;" json:"total_days_last_182_days"`
+	RelaxDaysInLast182days               int     `gorm:"column:relax_days_last_182_days;default:0;" json:"relax_days_last_182_days"`
+	MaxContinuousFinishDaysInLast182days int     `gorm:"column:max_continuous_finish_days_last_182_days;default:0;" json:"max_continuous_finish_days_last_182_days"`
+	ContinuousFinishDaysInLast182days    int     `gorm:"column:continuous_finish_days_last_182_days;default:0;" json:"continuous_finish_days_last_182_days"`
+	FinishDaysInLast182days              int     `gorm:"column:finish_days_last_182_days;default:0;" json:"finish_days_last_182_days"`
+	FinishPercentageInLast182days        float64 `gorm:"column:finish_percentage_last_182_days;default:0;" json:"finish_percentage_last_182_days"`
+	//最近90天
+	TotalDaysInLast90days               int     `gorm:"column:total_days_last_90_days;default:0;" json:"total_days_last_90_days"`
+	RelaxDaysInLast90days               int     `gorm:"column:relax_days_last_90_days;default:0;" json:"relax_days_last_90_days"`
+	MaxContinuousFinishDaysInLast90days int     `gorm:"column:max_continuous_finish_days_last_90_days;default:0;" json:"max_continuous_finish_days_last_90_days"`
+	ContinuousFinishDaysInLast90days    int     `gorm:"column:continuous_finish_days_last_90_days;default:0;" json:"continuous_finish_days_last_90_days"`
+	FinishDaysInLast90days              int     `gorm:"column:finish_days_last_90_days;default:0;" json:"finish_days_last_90_days"`
+	FinishPercentageInLast90days        float64 `gorm:"column:finish_percentage_last_90_days;default:0;" json:"finish_percentage_last_90_days"`
+	//最近30天
+	TotalDaysInLast30days               int     `gorm:"column:total_days_last_30_days;default:0;" json:"total_days_last_30_days"`
+	RelaxDaysInLast30days               int     `gorm:"column:relax_days_last_30_days;default:0;" json:"relax_days_last_30_days"`
+	MaxContinuousFinishDaysInLast30days int     `gorm:"column:max_continuous_finish_days_last_30_days;default:0;" json:"max_continuous_finish_days_last_30_days"`
+	ContinuousFinishDaysInLast30days    int     `gorm:"column:continuous_finish_days_last_30_days;default:0;" json:"continuous_finish_days_last_30_days"`
+	FinishDaysInLast30days              int     `gorm:"column:finish_days_last_30_days;default:0;" json:"finish_days_last_30_days"`
+	FinishPercentageInLast30days        float64 `gorm:"column:finish_percentage_last_30_days;default:0;" json:"finish_percentage_last_30_days"`
 }
 
 func (Company) TableName() string {
 	return "companies"
+}
+
+//每月的完成率报告
+type CompanyMonthStat struct {
+	UpdateAt                         time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	CompanyID                        int       `gorm:"column:company_id;primary_key;not null" json:"company_id"`
+	Date                             time.Time `gorm:"column:date;primary_key;not null;" json:"date"`
+	CompanyName                      string    `gorm:"-" json:"company_name"`
+	TotalDays                        int       `gorm:"column:total_days;default:0;" json:"total_days"`
+	RelaxDays                        int       `gorm:"column:relax_days;default:0;" json:"relax_days"`
+	MaxContinuousFinishDaysThisMonth int       `gorm:"column:max_continuous_finish_days_this_month;default:0;" json:"max_continuous_finish_days_this_month"`
+	ContinuousFinishDaysThisMonth    int       `gorm:"column:continuous_finish_days_this_month;default:0;" json:"continuous_finish_days_this_month"`
+	FinishDaysThisMonth              int       `gorm:"column:finish_days_this_month;default:0;" json:"finish_days_this_month"`
+	FinishPercentageThisMonth        float64   `gorm:"column:finish_percentage_this_month;default:0;" json:"finish_percentage_this_month"`
+}
+
+func (CompanyMonthStat) TableName() string {
+	return "company_month_stat"
+}
+
+//每年的完成率报告
+type CompanyYearStat struct {
+	UpdateAt                        time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	CompanyID                       int       `gorm:"column:company_id;primary_key;not null" json:"company_id"`
+	Date                            time.Time `gorm:"column:date;primary_key;not null;" json:"date"`
+	CompanyName                     string    `gorm:"-" json:"company_name"`
+	TotalDays                       int       `gorm:"column:total_days;default:0;" json:"total_days"`
+	RelaxDays                       int       `gorm:"column:relax_days;default:0;" json:"relax_days"`
+	MaxContinuousFinishDaysThisYear int       `gorm:"column:max_continuous_finish_days_this_year;default:0;" json:"max_continuous_finish_days_this_year"`
+	ContinuousFinishDaysThisYear    int       `gorm:"column:continuous_finish_days_this_year;default:0;" json:"continuous_finish_days_this_year"`
+	FinishDaysThisYear              int       `gorm:"column:finish_days_this_year;default:0;" json:"finish_days_this_year"`
+	FinishPercentageThisYear        float64   `gorm:"column:finish_percentage_this_year;default:0;" json:"finish_percentage_this_year`
+}
+
+func (CompanyYearStat) TableName() string {
+	return "company_year_stat"
+}
+
+//全局公共假期
+type GlobalRelaxPeriod struct {
+	ID       int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	CreateAt time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
+	UpdateAt time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	StartAt  time.Time `gorm:"column:start_at;not null;" json:"start_at"`
+	EndAt    time.Time `gorm:"column:end_at;not null;" json:"end_at"`
+}
+
+func (GlobalRelaxPeriod) TableName() string {
+	return "global_relax_period"
+}
+
+//公司休息假期的时间
+type CompanyRelaxPeriod struct {
+	ID          int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	CreateAt    time.Time `gorm:"column:create_at;not null;default:NOW()" json:"create_at"`
+	UpdateAt    time.Time `gorm:"column:update_at;not null;" json:"update_at"`
+	CompanyId   int       `gorm:"column:company_id;not null" json:"company_id"`
+	CompanyName string    `gorm:"-" json:"company_name"`
+	StartAt     time.Time `gorm:"column:start_at;not null;" json:"start_at"`
+	EndAt       time.Time `gorm:"column:end_at;not null;" json:"end_at"`
+}
+
+func (CompanyRelaxPeriod) TableName() string {
+	return "company_relax_period"
 }
 
 type User struct {
@@ -133,6 +232,7 @@ type Summary struct {
 	CompanyName string    `gorm:"column:company_name;not null" json:"company_name"`
 	IsFinish    string    `gorm:"column:is_finish;string;size:1;not null" json:"finish"`
 	UnfinishIds string    `gorm:"column:unfinish_ids" json:"unfinish_ids"`
+	RelaxDay    string    `gorm:"column:relax_day;default:'F';" json:"relax_day"`
 }
 
 func (Summary) TableName() string {
@@ -259,7 +359,7 @@ func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
 	if err != nil {
 		glog.Fatalf("cannot initialize database connection, err %s", err)
 	}
-	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &MaterialVideo{}, &MaterialAudio{}, &Chapter{}, &News{}, &GroupSend{}, &TemplatePage{})
+	db.Debug().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").AutoMigrate(&Town{}, &Country{}, &Company{}, &User{}, &MonitorType{}, &MonitorPlace{}, &Picture{}, &Summary{}, &TodaySummary{}, &MaterialPicture{}, &MaterialVideo{}, &MaterialAudio{}, &Chapter{}, &News{}, &GroupSend{}, &TemplatePage{}, &GlobalRelaxPeriod{}, &CompanyRelaxPeriod{}, &CompanyMonthStat{}, &CompanyYearStat{})
 	db.Debug().Model(&Country{}).AddForeignKey("town_id", "towns(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&Company{}).AddForeignKey("country_id", "countries(id)", "SET NULL", "SET NULL")
 	db.Debug().Model(&User{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
@@ -270,4 +370,5 @@ func InitializeDB(dbuser, dbpass, dbip, dbport, dbname string) {
 	db.Debug().Model(&Summary{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
 	db.Debug().Model(&TodaySummary{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
 	db.Debug().Model(&TodaySummary{}).AddForeignKey("monitor_place_id", "monitor_places(id)", "CASCADE", "CASCADE")
+	db.Debug().Model(&CompanyRelaxPeriod{}).AddForeignKey("company_id", "companies(id)", "CASCADE", "CASCADE")
 }

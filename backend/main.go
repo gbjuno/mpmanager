@@ -198,15 +198,22 @@ func main() {
 	templatePage := TemplatePage{}
 	templatePage.Register(wsContainer)
 
+	companyRelaxPeriod := CompanyRelaxPeriod{}
+	companyRelaxPeriod.Register(wsContainer)
+
+	globalRelaxPeriod := GlobalRelaxPeriod{}
+	globalRelaxPeriod.Register(wsContainer)
+
+	refreshCompanyFinishStat()
+	refreshTodaySummary()
+	refreshSummary()
+	refreshSummaryStat()
+
 	go func() {
 		glog.Infof("starting cronjob system")
 		jobWorker()
 		glog.Infof("cronjob system end")
 	}()
-
-	refreshTodaySummary()
-	refreshSummary()
-	refreshSummaryStat()
 
 	go func() {
 		glog.Infof("starting restful webserver on localhost:%s", restport)

@@ -98,7 +98,9 @@ func WechatBackendInit() {
 	} else {
 		glog.Errorf("%s get Menu from wechat %v", prefix, wechatMenu)
 	}
+
 	if recreateMenu {
+		menu.Delete(wechatClient)
 		createMenu()
 	}
 
@@ -264,7 +266,7 @@ func bindingHandler(w http.ResponseWriter, r *http.Request) {
 
 	//request isn't redirected by wechat, return notice page
 	if code == "" || state == "" {
-		glog.Infof("%s request isn't redirect by weixin, return notice page")
+		glog.Infof("%s request isn't redirect by weixin, return notice page", prefix)
 		w.WriteHeader(http.StatusOK)
 		return
 	}

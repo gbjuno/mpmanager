@@ -10,6 +10,318 @@ import (
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/template"
 )
 
+var monthDay [13]int = [13]int{0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+
+func getDaysOfMonth(month time.Month, isLeapYear bool) int {
+	if int(month) == 2 {
+		if isLeapYear {
+			return 29
+		} else {
+			return 28
+		}
+	}
+	return monthDay[int(month)]
+}
+
+//全局：连续拍照完成天数，完成拍照天数，拍照完成率
+//今年：连续拍照完成天数，完成拍照天数，拍照完成率
+//本月：连续拍照完成天数，完成拍照天数，拍照完成率
+//最近30天：连续拍照完成天数，完成拍照天数，拍照完成率
+func refreshCompanyFinishStat() {
+	prefix := fmt.Sprintf("[%s]", "refreshCompanyFinishStat")
+
+	companies := make([]Company, 0)
+	companyMap := make(map[int]*Company)
+	db.Debug().Find(&companies)
+	for index := range companies {
+		companyMap[companies[index].ID] = &companies[index]
+		companies[index].ContinuousFinishDaysAll = 0
+		companies[index].ContinuousFinishDaysInLast365days = 0
+		companies[index].ContinuousFinishDaysInLast182days = 0
+		companies[index].ContinuousFinishDaysInLast90days = 0
+		companies[index].ContinuousFinishDaysInLast30days = 0
+		companies[index].MaxContinuousFinishDaysAll = 0
+		companies[index].MaxContinuousFinishDaysInLast365days = 0
+		companies[index].MaxContinuousFinishDaysInLast182days = 0
+		companies[index].MaxContinuousFinishDaysInLast90days = 0
+		companies[index].MaxContinuousFinishDaysInLast30days = 0
+		companies[index].FinishDaysAll = 0
+		companies[index].FinishDaysInLast365days = 0
+		companies[index].FinishDaysInLast182days = 0
+		companies[index].FinishDaysInLast90days = 0
+		companies[index].FinishDaysInLast30days = 0
+	}
+
+	timeNow := time.Now()
+	thisYear, thisMonth, thisDay := timeNow.Date()
+	today := time.Date(thisYear, thisMonth, thisDay, 0, 0, 0, 0, time.Local)
+	firstOfThisYear := time.Date(thisYear, time.January, 1, 0, 0, 0, 0, time.Local)
+	firstOfLast365days := today.Add(-365 * 24 * time.Duration(time.Second*3600))
+	firstOfLast182days := today.Add(-182 * 24 * time.Duration(time.Second*3600))
+	firstOfLast90days := today.Add(-90 * 24 * time.Duration(time.Second*3600))
+	firstOfLast30days := today.Add(-30 * 24 * time.Duration(time.Second*3600))
+
+	totalDaysInLast365Days := 365.0
+	totalDaysInLast182Days := 182.0
+	totalDaysInLast90Days := 90.0
+	totalDaysInLast30Days := 30.0
+
+	companyMonthStatMap := make(map[int]map[string]*CompanyMonthStat)
+	companyYearStatMap := make(map[int]map[string]*CompanyYearStat)
+
+	summaries := make([]Summary, 0)
+	db.Debug().Find(&summaries, "(day < ?)", getDateStr(timeNow))
+	glog.Infof("%s summary must match (day < %s)", prefix, getDateStr(timeNow))
+	glog.Infof("%s get %d matched summary", prefix, len(summaries))
+	for _, s := range summaries {
+		sYear, sMonth, _ := s.Day.Date()
+		sYearStr := fmt.Sprintf("%d", sYear)
+		sMonthStr := fmt.Sprintf("%d-%02d", sYear, sMonth)
+		if _, ok := companyYearStatMap[s.CompanyId]; !ok {
+			companyYearStatMap[s.CompanyId] = make(map[string]*CompanyYearStat)
+		}
+		sYearLeap := false
+		if (sYear%400 == 0) || (sYear%4 == 0 && sYear%100 != 0) {
+			sYearLeap = true
+		}
+		companyCreateAt := companyMap[s.CompanyId].CreateAt
+		companyCreateDay := time.Date(companyCreateAt.Year(), companyCreateAt.Month(), companyCreateAt.Day(), 0, 0, 0, 0, time.Local)
+		if _, ok := companyYearStatMap[s.CompanyId][sYearStr]; !ok {
+			companyYearStat := CompanyYearStat{}
+			companyYearStat.CompanyID = s.CompanyId
+			companyYearStat.Date = time.Date(s.Day.Year(), time.January, 1, 0, 0, 0, 0, time.Local)
+			//4种情况
+			if companyCreateDay.Year() == thisYear {
+				//1. 今年创建, 统计今年的情况
+				companyYearStat.TotalDays = int(today.Sub(companyCreateDay) / 3600 / 24)
+			} else if thisYear == sYear {
+				//2. 非今年创建，统计今年的情况
+				companyYearStat.TotalDays = int(today.Sub(firstOfThisYear) / 3600 / 24)
+			} else if companyCreateDay.Year() == sYear {
+				//3. 非今年创建，如果统计的数据和创建的日期在同一年
+				if sYearLeap {
+					companyYearStat.TotalDays = 366 - companyCreateDay.YearDay() + 1
+				} else {
+					companyYearStat.TotalDays = 365 - companyCreateDay.YearDay() + 1
+				}
+			} else {
+				//4. 非今年创建，如果统计的数据和创建的日期不在同一年
+				if sYearLeap {
+					companyYearStat.TotalDays = 366
+				} else {
+					companyYearStat.TotalDays = 365
+				}
+			}
+			companyYearStatMap[s.CompanyId][sYearStr] = &companyYearStat
+		}
+		companyYearStat := companyYearStatMap[s.CompanyId][sYearStr]
+
+		if _, ok := companyMonthStatMap[s.CompanyId]; !ok {
+			companyMonthStatMap[s.CompanyId] = make(map[string]*CompanyMonthStat)
+		}
+		if _, ok := companyMonthStatMap[s.CompanyId][sMonthStr]; !ok {
+			companyMonthStat := CompanyMonthStat{}
+			companyMonthStat.CompanyID = s.CompanyId
+			companyMonthStat.Date = time.Date(s.Day.Year(), s.Day.Month(), 1, 0, 0, 0, 0, time.Local)
+			//3种情况
+			if companyCreateDay.Year() == thisYear && companyCreateDay.Month() == thisMonth {
+				//1. 本月创建, 统计本月的情况
+				companyMonthStat.TotalDays = int(today.Sub(companyCreateDay) / 3600 / 24)
+			}
+			if companyCreateDay.Year() == sYear && companyCreateDay.Month() == sMonth {
+				//2. 创建月份即统计月份, 统计本月的情况
+				companyMonthStat.TotalDays = getDaysOfMonth(sMonth, sYearLeap) - companyCreateAt.Day() + 1
+			} else {
+				//3. 统计普通月份（统计的月份不是创建的月，也不是本月)
+				companyMonthStat.TotalDays = getDaysOfMonth(sMonth, sYearLeap)
+			}
+			companyMonthStatMap[s.CompanyId][sMonthStr] = &companyMonthStat
+		}
+		companyMonthStat := companyMonthStatMap[s.CompanyId][sMonthStr]
+
+		if s.RelaxDay == "T" || s.IsFinish == "T" {
+			if s.RelaxDay == "T" {
+				companyYearStat.RelaxDays++
+			}
+			companyYearStat.FinishDaysThisYear++
+			companyYearStat.ContinuousFinishDaysThisYear++
+			if companyYearStat.MaxContinuousFinishDaysThisYear < companyYearStat.ContinuousFinishDaysThisYear {
+				companyYearStat.MaxContinuousFinishDaysThisYear = companyYearStat.ContinuousFinishDaysThisYear
+			}
+
+			if s.RelaxDay == "T" {
+				companyMonthStat.RelaxDays++
+			}
+			companyMonthStat.FinishDaysThisMonth++
+			companyMonthStat.ContinuousFinishDaysThisMonth++
+			if companyMonthStat.MaxContinuousFinishDaysThisMonth < companyMonthStat.ContinuousFinishDaysThisMonth {
+				companyMonthStat.MaxContinuousFinishDaysThisMonth = companyMonthStat.ContinuousFinishDaysThisMonth
+			}
+
+			if s.RelaxDay == "T" {
+				companyMap[s.CompanyId].RelaxDaysAll++
+			}
+			companyMap[s.CompanyId].FinishDaysAll++
+			companyMap[s.CompanyId].ContinuousFinishDaysAll++
+			if companyMap[s.CompanyId].MaxContinuousFinishDaysAll < companyMap[s.CompanyId].ContinuousFinishDaysAll {
+				companyMap[s.CompanyId].MaxContinuousFinishDaysAll = companyMap[s.CompanyId].ContinuousFinishDaysAll
+			}
+
+			if !s.Day.Before(firstOfLast365days) {
+				if s.RelaxDay == "T" {
+					companyMap[s.CompanyId].RelaxDaysInLast365days++
+				}
+				companyMap[s.CompanyId].FinishDaysInLast365days++
+				companyMap[s.CompanyId].ContinuousFinishDaysInLast365days++
+				if companyMap[s.CompanyId].MaxContinuousFinishDaysInLast365days < companyMap[s.CompanyId].ContinuousFinishDaysInLast365days {
+					companyMap[s.CompanyId].MaxContinuousFinishDaysInLast365days = companyMap[s.CompanyId].ContinuousFinishDaysInLast365days
+				}
+				if !s.Day.Before(firstOfLast182days) {
+					if s.RelaxDay == "T" {
+						companyMap[s.CompanyId].RelaxDaysInLast182days++
+					}
+					companyMap[s.CompanyId].FinishDaysInLast182days++
+					companyMap[s.CompanyId].ContinuousFinishDaysInLast182days++
+					if companyMap[s.CompanyId].MaxContinuousFinishDaysInLast182days < companyMap[s.CompanyId].ContinuousFinishDaysInLast182days {
+						companyMap[s.CompanyId].MaxContinuousFinishDaysInLast182days = companyMap[s.CompanyId].ContinuousFinishDaysInLast182days
+					}
+					if !s.Day.Before(firstOfLast90days) {
+						if s.RelaxDay == "T" {
+							companyMap[s.CompanyId].RelaxDaysInLast90days++
+						}
+						companyMap[s.CompanyId].FinishDaysInLast90days++
+						companyMap[s.CompanyId].ContinuousFinishDaysInLast90days++
+						if companyMap[s.CompanyId].MaxContinuousFinishDaysInLast90days < companyMap[s.CompanyId].ContinuousFinishDaysInLast90days {
+							companyMap[s.CompanyId].MaxContinuousFinishDaysInLast90days = companyMap[s.CompanyId].ContinuousFinishDaysInLast90days
+						}
+						if !s.Day.Before(firstOfLast30days) {
+							if s.RelaxDay == "T" {
+								companyMap[s.CompanyId].RelaxDaysInLast30days++
+							}
+							companyMap[s.CompanyId].FinishDaysInLast30days++
+							companyMap[s.CompanyId].ContinuousFinishDaysInLast30days++
+							if companyMap[s.CompanyId].MaxContinuousFinishDaysInLast30days < companyMap[s.CompanyId].ContinuousFinishDaysInLast30days {
+								companyMap[s.CompanyId].MaxContinuousFinishDaysInLast30days = companyMap[s.CompanyId].ContinuousFinishDaysInLast30days
+							}
+						}
+					}
+				}
+			}
+		} else {
+			companyYearStat.ContinuousFinishDaysThisYear = 0
+			companyMonthStat.ContinuousFinishDaysThisMonth = 0
+			companyMap[s.CompanyId].ContinuousFinishDaysAll = 0
+			companyMap[s.CompanyId].ContinuousFinishDaysInLast365days = 0
+			companyMap[s.CompanyId].ContinuousFinishDaysInLast182days = 0
+			companyMap[s.CompanyId].ContinuousFinishDaysInLast90days = 0
+			companyMap[s.CompanyId].ContinuousFinishDaysInLast30days = 0
+		}
+	}
+	glog.Infof("%s scan summary finish", prefix)
+
+	totalMonthRecord := 0
+	for companyID := range companyMonthStatMap {
+		glog.Infof("%s monthStat companyID=%d start calcuating", prefix, companyID)
+		for _, companyMonthStat := range companyMonthStatMap[companyID] {
+			totalMonthRecord++
+			companyMonthStat.FinishPercentageThisMonth = float64(companyMonthStat.FinishDaysThisMonth) / float64(companyMonthStat.TotalDays)
+			glog.Infof("%s monthStat companyID=%d month=%d-%02d totalDays=%d relaxDays=%d finishDays=%d maxContinuousFinishDays=%d continuousFinishDays=%d finishPercentage=%v", prefix, companyMonthStat.CompanyID, companyMonthStat.Date.Year(), companyMonthStat.Date.Month(), companyMonthStat.TotalDays, companyMonthStat.RelaxDays, companyMonthStat.FinishDaysThisMonth, companyMonthStat.MaxContinuousFinishDaysThisMonth, companyMonthStat.ContinuousFinishDaysThisMonth, companyMonthStat.FinishPercentageThisMonth)
+			db.Debug().Save(companyMonthStat)
+		}
+	}
+	glog.Infof("%s finish calculating companyMonthStatMap stat, update %d records", prefix, totalMonthRecord)
+
+	totalYearRecord := 0
+	for companyID := range companyYearStatMap {
+		glog.Infof("%s yearStat companyID=%d start calcuating", prefix, companyID)
+		for _, companyYearStat := range companyYearStatMap[companyID] {
+			totalYearRecord++
+			companyYearStat.FinishPercentageThisYear = float64(companyYearStat.FinishDaysThisYear) / float64(companyYearStat.TotalDays)
+			glog.Infof("%s yearStat companyID=%d year=%d totalDays=%d relaxDays=%d finishDays=%d maxContinuousFinishDays=%d continuousFinishDays=%d finishPercentage=%v", prefix, companyYearStat.CompanyID, companyYearStat.Date.Year(), companyYearStat.TotalDays, companyYearStat.RelaxDays, companyYearStat.FinishDaysThisYear, companyYearStat.MaxContinuousFinishDaysThisYear, companyYearStat.ContinuousFinishDaysThisYear, companyYearStat.FinishPercentageThisYear)
+			db.Debug().Save(companyYearStat)
+		}
+	}
+	glog.Infof("%s finish calculating companyYearStatMap stat, update %d records", prefix, totalYearRecord)
+
+	bar := int(len(companies) / 10)
+	for index := range companies {
+		if index%bar == 0 {
+			glog.Infof("%s calculating company progressing %d %%", prefix, 10*(index/bar))
+		}
+		companyCreateAt := companies[index].CreateAt
+		companyCreateDay := time.Date(companyCreateAt.Year(), companyCreateAt.Month(), companyCreateAt.Day(), 0, 0, 0, 0, time.Local)
+
+		totalDaysSinceCreate := today.Sub(companyCreateDay).Seconds() / 3600 / 24
+		glog.Infof("%s id=%d, finish_days_all=%v, total_days_all=%v", prefix, companies[index].ID, companies[index].FinishDaysAll, totalDaysSinceCreate)
+		companies[index].FinishPercentageAll = float64(companies[index].FinishDaysAll) / float64(int(totalDaysSinceCreate))
+		companies[index].TotalDaysAll = int(totalDaysSinceCreate)
+
+		if totalDaysSinceCreate < totalDaysInLast365Days {
+			totalDaysInLast365Days = totalDaysSinceCreate
+		}
+		glog.Infof("%s id=%d, finish_days_last_365_days=%v, total_days_last_365_days=%v", prefix, companies[index].ID, companies[index].FinishDaysInLast365days, totalDaysInLast365Days)
+		companies[index].FinishPercentageInLast365days = float64(companies[index].FinishDaysInLast365days) / totalDaysInLast365Days
+		companies[index].TotalDaysInLast365days = int(totalDaysInLast365Days)
+
+		if totalDaysSinceCreate < totalDaysInLast182Days {
+			totalDaysInLast182Days = totalDaysSinceCreate
+		}
+		glog.Infof("%s id=%d, finish_days_last_182_days=%v, total_days_last_182_days=%v", prefix, companies[index].ID, companies[index].FinishDaysInLast182days, totalDaysInLast182Days)
+		companies[index].FinishPercentageInLast182days = float64(companies[index].FinishDaysInLast182days) / totalDaysInLast182Days
+		companies[index].TotalDaysInLast182days = int(totalDaysInLast182Days)
+
+		if totalDaysSinceCreate < totalDaysInLast90Days {
+			totalDaysInLast90Days = totalDaysSinceCreate
+		}
+		glog.Infof("%s id=%d, finish_days_last_90_days=%v, total_days_last_90_days=%v", prefix, companies[index].ID, companies[index].FinishDaysInLast90days, totalDaysInLast90Days)
+		companies[index].FinishPercentageInLast90days = float64(companies[index].FinishDaysInLast90days) / totalDaysInLast90Days
+		companies[index].TotalDaysInLast90days = int(totalDaysInLast90Days)
+
+		if totalDaysSinceCreate < totalDaysInLast30Days {
+			totalDaysInLast30Days = totalDaysSinceCreate
+		}
+		glog.Infof("%s id=%d, finish_days_last_30_days=%v, total_days_last_30_days=%v", prefix, companies[index].ID, companies[index].FinishDaysInLast30days, totalDaysInLast30Days)
+		companies[index].FinishPercentageInLast30days = float64(companies[index].FinishDaysInLast30days) / totalDaysInLast30Days
+		companies[index].TotalDaysInLast30days = int(totalDaysInLast30Days)
+
+		db.Debug().Model(&companies[index]).Select([]string{
+			"relax_days_all", "total_days_all", "max_continuous_finish_days_all", "continuous_finish_days_all", "finish_days_all", "finish_percentage_all",
+			"relax_days_last_365_days", "total_days_last_365_days", "max_continuous_finish_days_last_365_days", "continuous_finish_days_last_365_days", "finish_days_last_365_days", "finish_percentage_last_365_days",
+			"relax_days_last_182_days", "total_days_last_182_days", "max_continuous_finish_days_last_182_days", "continuous_finish_days_last_182_days", "finish_days_last_182_days", "finish_percentage_last_182_days",
+			"relax_days_last_90_days", "total_days_last_90_days", "max_continuous_finish_days_last_90_days", "continuous_finish_days_last_90_days", "finish_days_last_90_days", "finish_percentage_last_90_days",
+			"relax_days_last_30_days", "total_days_last_30_days", "max_continuous_finish_days_last_30_days", "continuous_finish_days_last_30_days", "finish_days_last_30_days", "finish_percentage_last_30_days",
+		}).Update(&companies[index])
+	}
+	glog.Infof("%s finish calculating company stat", prefix)
+}
+
+//假期更新确保唯一和准确性
+func refreshRelaxPeriod() {
+	global_relax_period_list := make([]GlobalRelaxPeriod, 0)
+	db.Debug().Find(&global_relax_period_list)
+	for _, global_relax_period := range global_relax_period_list {
+		summaries := make([]Summary, 0)
+		startAt := getDateStr(global_relax_period.StartAt)
+		endAt := getDateStr(global_relax_period.EndAt)
+		db.Debug().Find(&summaries, "(day between '?' and '?')", startAt, endAt)
+		for _, s := range summaries {
+			db.Model(&s).Update("relax_day", 'T')
+		}
+	}
+
+	company_relax_period_list := make([]CompanyRelaxPeriod, 0)
+	db.Debug().Find(&company_relax_period_list)
+	for _, company_relax_period := range company_relax_period_list {
+		summaries := make([]Summary, 0)
+		startAt := getDateStr(company_relax_period.StartAt)
+		endAt := getDateStr(company_relax_period.EndAt)
+		db.Debug().Find(&summaries, "company_id = ? AND (day between '?' and '?')", company_relax_period.CompanyId, startAt, endAt)
+		for _, s := range summaries {
+			db.Model(&s).Update("relax_day", 'T')
+		}
+	}
+}
+
 func refreshTodaySummary() {
 	prefix := fmt.Sprintf("[%s]", "refreshTodaySummary")
 	loc, _ := time.LoadLocation("Local")
@@ -45,6 +357,7 @@ func refreshTodaySummary() {
 	}
 }
 
+//判断是否有新公司，新公司会插入一行
 func refreshSummary() {
 	prefix := fmt.Sprintf("[%s]", "refreshSummary")
 	loc, _ := time.LoadLocation("Local")
@@ -69,6 +382,7 @@ func refreshSummary() {
 	}
 }
 
+//更新公司的上传照片情况
 func refreshSummaryStat() {
 	prefix := fmt.Sprintf("[%s]", "refreshSummaryStat")
 	timeNow := time.Now()
@@ -184,9 +498,11 @@ func sendTemplateMsg() {
 func jobWorker() {
 	c := cron.New()
 	c.AddFunc("0 0 * * * *", refreshTodaySummary)
+	c.AddFunc("0 */2 * * * *", refreshRelaxPeriod)
+	c.AddFunc("0 */5 * * * *", refreshCompanyFinishStat)
 	c.AddFunc("0 */30 * * * *", refreshSummary)
 	c.AddFunc("0 */2 * * * *", refreshSummaryStat)
-	c.AddFunc("0 0 12 * * *", sendTemplateMsg)
+	c.AddFunc("0 0 14 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 16 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 18 * * *", sendTemplateMsg)
 	c.AddFunc("0 0 20 * * *", sendTemplateMsg)
