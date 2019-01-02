@@ -363,7 +363,7 @@ const COMPANYSTAT = `
     <div class="weui-grids">
     {{ range .MonitorPlaceSummaryList }}
     {{ if eq .EverUpload "T" }}
-        <a href="/backend/photolist?id={{ .MonitorPlaceID }}" class="weui-grid">
+        <a href=""style="background-image:url(./backend/photolist?id={{ .MonitorPlaceID }}" class="weui-grid">
     {{ else }}
         <a href="" class="weui-grid">
     {{ end }}
