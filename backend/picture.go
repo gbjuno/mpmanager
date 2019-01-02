@@ -14,6 +14,7 @@ import (
 	"gopkg.in/chanxuehong/wechat.v2/mp/message/template"
 )
 
+
 type PictureList struct {
 	Count    int       `json:"count"`
 	Pictures []Picture `json:"pictures"`
@@ -236,6 +237,9 @@ func (p Picture) updatePicture(request *restful.Request, response *restful.Respo
 	}
 
 	//find picture and update
+	if picture.Judgement == "B" {
+		realPicture.Judgement = "B"
+	}
 	realPicture.JudgeComment = picture.JudgeComment
 	db.Debug().Save(&realPicture)
 	glog.Infof("%s update picture with id %d on database", prefix, realPicture.ID)

@@ -56,6 +56,7 @@ func refreshCompanyFinishStat() {
 	thisYear, thisMonth, thisDay := timeNow.Date()
 	today := time.Date(thisYear, thisMonth, thisDay, 0, 0, 0, 0, time.Local)
 	firstOfThisYear := time.Date(thisYear, time.January, 1, 0, 0, 0, 0, time.Local)
+	firstOfThisMonth := time.Date(thisYear, thisMonth, 1, 0, 0, 0, 0, time.Local)
 	firstOfLast365days := today.Add(-365 * 24 * time.Duration(time.Second*3600))
 	firstOfLast182days := today.Add(-182 * 24 * time.Duration(time.Second*3600))
 	firstOfLast90days := today.Add(-90 * 24 * time.Duration(time.Second*3600))
@@ -93,10 +94,10 @@ func refreshCompanyFinishStat() {
 			//4种情况
 			if companyCreateDay.Year() == thisYear {
 				//1. 今年创建, 统计今年的情况
-				companyYearStat.TotalDays = int(today.Sub(companyCreateDay) / 3600 / 24)
+				companyYearStat.TotalDays = int(today.Sub(companyCreateDay).Seconds() / 3600 / 24)
 			} else if thisYear == sYear {
 				//2. 非今年创建，统计今年的情况
-				companyYearStat.TotalDays = int(today.Sub(firstOfThisYear) / 3600 / 24)
+				companyYearStat.TotalDays = int(today.Sub(firstOfThisYear).Seconds() / 3600 / 24)
 			} else if companyCreateDay.Year() == sYear {
 				//3. 非今年创建，如果统计的数据和创建的日期在同一年
 				if sYearLeap {
@@ -123,16 +124,18 @@ func refreshCompanyFinishStat() {
 			companyMonthStat := CompanyMonthStat{}
 			companyMonthStat.CompanyID = s.CompanyId
 			companyMonthStat.Date = time.Date(s.Day.Year(), s.Day.Month(), 1, 0, 0, 0, 0, time.Local)
-			//3种情况
+			//4种情况
 			if companyCreateDay.Year() == thisYear && companyCreateDay.Month() == thisMonth {
-				//1. 本月创建, 统计本月的情况
-				companyMonthStat.TotalDays = int(today.Sub(companyCreateDay) / 3600 / 24)
-			}
-			if companyCreateDay.Year() == sYear && companyCreateDay.Month() == sMonth {
-				//2. 创建月份即统计月份, 统计本月的情况
-				companyMonthStat.TotalDays = getDaysOfMonth(sMonth, sYearLeap) - companyCreateAt.Day() + 1
+				//1. 公司本月创建, 统计本月的情况
+				companyMonthStat.TotalDays = int(today.Sub(companyCreateDay).Seconds() / 3600 / 24)
+			} else if companyCreateDay.Year() == sYear && companyCreateDay.Month() == sMonth {
+				//2. 统计公司创建的月份的情况
+				companyMonthStat.TotalDays = getDaysOfMonth(sMonth, sYearLeap) - companyCreateDay.Day() + 1
+			} else if thisYear == sYear && thisMonth == sMonth {
+				//3. 统计本月(未结束)
+				companyMonthStat.TotalDays = int(today.Sub(firstOfThisMonth).Seconds() / 3600 / 24)
 			} else {
-				//3. 统计普通月份（统计的月份不是创建的月，也不是本月)
+				//4. 统计普通月份（统计的月份不是公司创建的月，也不是本月)
 				companyMonthStat.TotalDays = getDaysOfMonth(sMonth, sYearLeap)
 			}
 			companyMonthStatMap[s.CompanyId][sMonthStr] = &companyMonthStat

@@ -362,7 +362,11 @@ const COMPANYSTAT = `
 
     <div class="weui-grids">
     {{ range .MonitorPlaceSummaryList }}
+    {{ if eq .EverUpload "T" }}
+        <a href="/backend/photolist?id={{ .MonitorPlaceID }}" class="weui-grid">
+    {{ else }}
         <a href="" class="weui-grid">
+    {{ end }}
             <div class="weui-grid__icon">
                 {{ if eq .IsUpload "T" }}<i class="weui-icon-success-no-circle"></i>{{ else }}<i class="weui-icon-warn"></i>{{ end }}
             </div>
@@ -373,7 +377,39 @@ const COMPANYSTAT = `
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
 </body>
+`
 
+const PHOTOLIST = `
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>本日拍照具体地点</title>
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
+    <link rel="stylesheet" href="/html/weui.css">
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+    <style>@-moz-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-webkit-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@-o-keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}@keyframes nodeInserted{from{opacity:0.99;}to{opacity:1;}}embed,object{animation-duration:.001s;-ms-animation-duration:.001s;-moz-animation-duration:.001s;-webkit-animation-duration:.001s;-o-animation-duration:.001s;animation-name:nodeInserted;-ms-animation-name:nodeInserted;-moz-animation-name:nodeInserted;-webkit-animation-name:nodeInserted;-o-animation-name:nodeInserted;}</style>
+</head>
+<body>
+    <div class="weui-cell">
+        <div class="weui-cell__bd">
+            <p>{{ .MonitorPlaceName }}</p>
+        </div>
+        <div class="weui-cell__ft">{{ .CompanyName }}</div>
+    </div>
+    <div class="weui-gallery" style="display: block">
+        <span class="weui-gallery__img">
+             <img src="{{ .PictureURL }}" />
+        </span>
+        <div class="weui-gallery__opr">
+             <a href="javascript:;" class="weui-btn weui-btn_default" id="showToast">{{ .JudgeComment }}</a>
+        </div>
+    </div>
+    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+    <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
+    <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
+</body>
 `
 
 const SUBSCRIBE = `

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/golang/glog"
@@ -903,7 +904,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func companystatHandler(w http.ResponseWriter, r *http.Request) {
-	prefix := fmt.Sprintf("[%s]", "photoHandler")
+	prefix := fmt.Sprintf("[%s]", "companystatHandler")
 	glog.Infof("%s %s %s", prefix, r.Method, r.RequestURI)
 
 	oauth2RedirectURI := fmt.Sprintf("https://%s/backend/companystat", domain)
@@ -984,8 +985,8 @@ func companystatHandler(w http.ResponseWriter, r *http.Request) {
 		//bindingRedirectURI := fmt.Sprintf(redirectURIPrefix, "binding")
 		//bindingState := "binding"
 		//bindingURI := mpoauth2.AuthCodeURL(wxAppId, bindingRedirectURI, oauth2Scope, bindingState)
-		msgbody := fmt.Sprintf("在菜单中点击绑定企业，绑定企业后再进行拍照，谢谢")
-		n := NoticePage{Domain: domain, Title: "扫描监控地点二维码", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
+		msgbody := fmt.Sprintf("在菜单中点击绑定企业，绑定企业后再进行检查进度，谢谢")
+		n := NoticePage{Domain: domain, Title: "检查进度", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
 		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
 		noticepageTmpl.Execute(w, n)
 		noticepageTmpl.Execute(os.Stdout, n)
@@ -999,5 +1000,92 @@ func companystatHandler(w http.ResponseWriter, r *http.Request) {
 	companystatTmpl.Execute(w, cs)
 	companystatTmpl.Execute(os.Stdout, cs)
 	glog.Infof("%s end of companystat", prefix)
+	return
+}
+
+func photoListHandler(w http.ResponseWriter, r *http.Request) {
+	prefix := fmt.Sprintf("[%s]", "photoListHandler")
+	glog.Infof("%s %s %s", prefix, r.Method, r.RequestURI)
+
+	var openId string
+	var validSession bool = false
+
+	cookie, err := r.Cookie("sid")
+	//no cookie sid
+	if err == nil {
+		glog.Infof("%s get cookie sid %s", prefix, cookie.Value)
+		openId, err = parseSession(cookie.Value)
+		if err == nil {
+			validSession = true
+			glog.Infof("%s session is valid, user openid %s", prefix, openId)
+		}
+	} else {
+		glog.Infof("%s no cookie sid", prefix)
+	}
+
+	if !validSession {
+		glog.Infof("%s openid is not related to a user", prefix)
+		msgbody := fmt.Sprintf("在菜单中点击绑定企业，绑定企业后再进行检查进度，谢谢")
+		n := NoticePage{Domain: domain, Title: "检查进度", Type: noticePagefail, Msgtitle: "用户未绑定企业", Msgbody: msgbody}
+		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
+		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
+		return
+	}
+
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		glog.Errorf("%s cannot parse url querystring, err %s", prefix, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	monitorPlaceIDStr := queryValues.Get("id")
+	monitorPlaceID, err := strconv.Atoi(monitorPlaceIDStr)
+	if err != nil {
+		glog.Infof("%s openid is not related to a user", prefix)
+		msgbody := fmt.Sprintf("不存在对应的地点，请联系管理员")
+		n := NoticePage{Domain: domain, Title: "检查进度", Type: noticePagefail, Msgtitle: "不存在检查地点", Msgbody: msgbody}
+		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
+		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
+		return
+	}
+
+	monitorPlace := MonitorPlace{}
+	db.First(&monitorPlace, "id = ?", monitorPlaceID)
+	if monitorPlace.ID == 0 {
+		glog.Infof("%s openid is not related to a user", prefix)
+		msgbody := fmt.Sprintf("不存在对应的地点，请联系管理员")
+		n := NoticePage{Domain: domain, Title: "检查进度", Type: noticePagefail, Msgtitle: "不存在检查地点", Msgbody: msgbody}
+		noticepageTmpl := template.Must(template.New("noticepage").Parse(myTemplate.NOTICEPAGE))
+		noticepageTmpl.Execute(w, n)
+		noticepageTmpl.Execute(os.Stdout, n)
+		return
+	}
+
+	company := Company{}
+	db.Debug().First(&company, "id = ?", monitorPlace.CompanyId)
+
+	picture := Picture{}
+	db.Debug().Order("create_at desc").First(&picture, "monitor_place_id = ?", monitorPlaceID)
+
+	var photolist struct {
+		MonitorPlaceName string
+		CompanyName      string
+		PictureURL       string
+		JudgeComment     string
+	}
+	photolist.MonitorPlaceName = monitorPlace.Name
+	photolist.CompanyName = company.Name
+	photolist.PictureURL = picture.FullURI
+	photolist.JudgeComment = picture.JudgeComment
+
+	photolistTmpl := template.Must(template.New("photolist").Parse(myTemplate.PHOTOLIST))
+
+	w.WriteHeader(http.StatusOK)
+	photolistTmpl.Execute(w, photolist)
+	photolistTmpl.Execute(os.Stdout, photolist)
+	glog.Infof("%s end of photolist", prefix)
 	return
 }

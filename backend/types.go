@@ -216,7 +216,7 @@ type Picture struct {
 	FullPath       string    `gorm:"column:full_path" json:"full_path"`
 	ThumbURI       string    `gorm:"column:thumb_uri" json:"thumb_uri"`
 	FullURI        string    `gorm:"column:full_uri" json:"full_uri"`
-	Judgement      string    `gorm:"column:judgement;size:1;not null;default:'T'" json:"judgement"`
+	Judgement      string    `gorm:"column:judgement;size:1;not null;default:'T'" json:"judgement"` // T: 一般的照片 F:有问题的照片 B: 好的照片
 	JudgeComment   string    `gorm:"column:comment" json:"judgecomment"`
 	UserId         int       `gorm:"column:user_id;index" json:"user_id"`
 }

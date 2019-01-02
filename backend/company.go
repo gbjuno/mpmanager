@@ -3,11 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
@@ -40,8 +43,7 @@ func (c Company) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/company").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(c.findCompany))
-	//	ws.Route(ws.GET("/excel?date={date}").To(c.exportCompany))
-	ws.Route(ws.GET("/?pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompany))
+	ws.Route(ws.GET("/?output={output}&month={month}&year={year}&pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}").To(c.findCompany))
 	ws.Route(ws.GET("/{company_id}/{scope}").To(c.findCompany))
 	ws.Route(ws.POST("").To(c.createCompany))
@@ -58,6 +60,11 @@ func (c Company) findCompany(request *restful.Request, response *restful.Respons
 	pageSize := request.QueryParameter("pageSize")
 	pageNo := request.QueryParameter("pageNo")
 	order := request.QueryParameter("order")
+	output := request.QueryParameter("output")
+	if output == "excel" {
+		c.exportCompany(request, response)
+		return
+	}
 
 	var searchCompany *gorm.DB = db.Debug()
 
@@ -354,68 +361,235 @@ func (c Company) deleteCompany(request *restful.Request, response *restful.Respo
 	}
 }
 
-/*
 func (c Company) exportCompany(request *restful.Request, response *restful.Response) {
-		prefix := fmt.Sprintf("[%s] [exportSummary]", request.Request.RemoteAddr)
-		glog.Infof("%s GET %s", prefix, request.Request.URL)
+	prefix := fmt.Sprintf("[%s] [exportSummary]", request.Request.RemoteAddr)
+	glog.Infof("%s GET %s", prefix, request.Request.URL)
+	monthStr := request.QueryParameter("month")
+	yearStr := request.QueryParameter("year")
 
-		companyList := make([]Company{},0)
-		db.Debug().Find(&companyList)
-
-			f := excelize.NewFile()
-			f.SetCellValue("Sheet1", "A1", "公司")
-			f.SetCellValue("Sheet1", "B1", "创建日期")
-			f.SetCellValue("Sheet1", "C1", "最近30天完成率")
-			f.SetCellValue("Sheet1", "D1", "最近30天连续拍照完成天数")
-			f.SetCellValue("Sheet1", "E1", "本月完成率")
-			f.SetCellValue("Sheet1", "F1", "本月连续拍照完成天数")
-			f.SetCellValue("Sheet1", "E1", "本年完成率")
-			f.SetCellValue("Sheet1", "F1", "本年连续拍照完成天数")
-			for index, s := range summaryList.Summaries {
-				if s.IsFinish == "T" {
-					f.SetCellValue("Sheet1", fmt.Sprintf("E%d", index+2), "是")
-				} else {
-					f.SetCellValue("Sheet1", fmt.Sprintf("E%d", index+2), "否")
-					f.SetCellValue("Sheet1", fmt.Sprintf("F%d", index+2), s.UnfinishIds)
-				}
-				company := Company{}
-				db.Debug().Where("id = ?", s.CompanyId).First(&company)
-				f.SetCellValue("Sheet1", fmt.Sprintf("D%d", index+2), company.Name)
-				country := Country{}
-				db.Debug().Where("id = ?", company.CountryId).First(&country)
-				f.SetCellValue("Sheet1", fmt.Sprintf("C%d", index+2), country.Name)
-				town := Town{}
-				db.Debug().Where("id = ?", country.TownId).First(&town)
-				f.SetCellValue("Sheet1", fmt.Sprintf("B%d", index+2), town.Name)
-				f.SetCellValue("Sheet1", fmt.Sprintf("A%d", index+2), fmt.Sprintf("%d%02d%02d", s.Day.Year(), s.Day.Month(), s.Day.Day()))
-			}
-
-			t := time.Now()
-			saveFileName := fmt.Sprintf("/tmp/summary_%d%02d%02d_%d.xlsx", t.Year(), t.Month(), t.Day(), t.Nanosecond())
-			if err := f.SaveAs(saveFileName); err != nil {
-				errmsg := fmt.Sprintf("cannot save file, err %s", err)
-				glog.Errorf("%s %s", prefix, errmsg)
-				response.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			xlsx, err := os.Open(saveFileName)
-			if err != nil {
-				errmsg := fmt.Sprintf("cannot open file, err %s", err)
-				glog.Errorf("%s %s", prefix, errmsg)
-				response.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			defer xlsx.Close()
-
-			response.Header().Set("Content-Type", "application/octet-stream")
-			response.Header().Set("Content-Disposition", "attachment; filename=summary.xlsx")
-			response.WriteHeader(http.StatusOK)
-			io.Copy(response, xlsx)
+	var month int
+	var year int
+	var err error
+	if monthStr != "" {
+		month, err = strconv.Atoi(monthStr)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot get company stat, month %d is not integer", month)
+			returnmsg := fmt.Sprintf("提供的参数month不正确")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 			return
 		}
+	}
+
+	if yearStr != "" {
+		year, err = strconv.Atoi(yearStr)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot get company stat, year %d is not integer", year)
+			returnmsg := fmt.Sprintf("提供的参数year不正确")
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
+			return
+		}
+	}
+
+	if month != 0 && year == 0 {
+		errmsg := fmt.Sprintf("cannot get company stat, please provide year")
+		returnmsg := fmt.Sprintf("没有提供的参数year")
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeaderAndEntity(http.StatusInternalServerError, Response{Status: "error", Error: returnmsg})
 		return
 	}
 
+	if month == 0 && year != 0 {
+		f := excelize.NewFile()
+		f.SetCellValue("Sheet1", "A1", "公司")
+		f.SetCellValue("Sheet1", "B1", "创建日期")
+		f.SetCellValue("Sheet1", "C1", "统计天数")
+		f.SetCellValue("Sheet1", "D1", "休假天数")
+		f.SetCellValue("Sheet1", "E1", "拍照完成天数(包括休假期)")
+		f.SetCellValue("Sheet1", "F1", "最大连续拍照完成天数(包括休假期)")
+		f.SetCellValue("Sheet1", "G1", "完成率(包括休假期)")
+		companyYearStatList := make([]CompanyYearStat, 0)
+		db.Debug().Find(&companyYearStatList, "date = ?", fmt.Sprintf("%d-01-01 00:00:00", year))
+		line := 1
+		for _, stat := range companyYearStatList {
+			company := Company{}
+			db.First(&company, "id = ?", stat.CompanyID)
+			if company.Enable == "F" {
+				continue
+			}
+			line++
+			f.SetCellValue("Sheet1", fmt.Sprintf("A%d", line), company.Name)
+			f.SetCellValue("Sheet1", fmt.Sprintf("B%d", line), company.CreateAt)
+			f.SetCellValue("Sheet1", fmt.Sprintf("C%d", line), stat.TotalDays)
+			f.SetCellValue("Sheet1", fmt.Sprintf("D%d", line), stat.RelaxDays)
+			f.SetCellValue("Sheet1", fmt.Sprintf("E%d", line), stat.FinishDaysThisYear)
+			f.SetCellValue("Sheet1", fmt.Sprintf("F%d", line), stat.MaxContinuousFinishDaysThisYear)
+			f.SetCellValue("Sheet1", fmt.Sprintf("G%d", line), fmt.Sprintf("%.3f", stat.FinishPercentageThisYear))
+		}
+
+		t := time.Now()
+		saveFileName := fmt.Sprintf("/tmp/company_year_stat_%d%02d%02d_%d.xlsx", t.Year(), t.Month(), t.Day(), t.Nanosecond())
+		if err := f.SaveAs(saveFileName); err != nil {
+			errmsg := fmt.Sprintf("cannot save file, err %s", err)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		xlsx, err := os.Open(saveFileName)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot open file, err %s", err)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer xlsx.Close()
+
+		response.Header().Set("Content-Type", "application/octet-stream")
+		response.Header().Set("Content-Disposition", "attachment; filename=summary.xlsx")
+		response.WriteHeader(http.StatusOK)
+		io.Copy(response, xlsx)
+
+		return
+	}
+
+	if month != 0 && year != 0 {
+		f := excelize.NewFile()
+		f.SetCellValue("Sheet1", "A1", "公司")
+		f.SetCellValue("Sheet1", "B1", "创建日期")
+		f.SetCellValue("Sheet1", "C1", "统计天数")
+		f.SetCellValue("Sheet1", "D1", "休假天数")
+		f.SetCellValue("Sheet1", "E1", "拍照完成天数(包括休假期)")
+		f.SetCellValue("Sheet1", "F1", "最大连续拍照完成天数(包括休假期)")
+		f.SetCellValue("Sheet1", "G1", "完成率(包括休假期)")
+		companyMonthStatList := make([]CompanyMonthStat, 0)
+		db.Debug().Find(&companyMonthStatList, "date = ?", fmt.Sprintf("%d-%02d-01 00:00:00", year, month))
+		line := 1
+		for _, stat := range companyMonthStatList {
+			company := Company{}
+			db.First(&company, "id = ?", stat.CompanyID)
+			if company.Enable == "F" {
+				continue
+			}
+			line++
+			f.SetCellValue("Sheet1", fmt.Sprintf("A%d", line), company.Name)
+			f.SetCellValue("Sheet1", fmt.Sprintf("B%d", line), company.CreateAt)
+			f.SetCellValue("Sheet1", fmt.Sprintf("C%d", line), stat.TotalDays)
+			f.SetCellValue("Sheet1", fmt.Sprintf("D%d", line), stat.RelaxDays)
+			f.SetCellValue("Sheet1", fmt.Sprintf("E%d", line), stat.FinishDaysThisMonth)
+			f.SetCellValue("Sheet1", fmt.Sprintf("F%d", line), stat.MaxContinuousFinishDaysThisMonth)
+			f.SetCellValue("Sheet1", fmt.Sprintf("G%d", line), fmt.Sprintf("%.3f", stat.FinishPercentageThisMonth))
+		}
+
+		t := time.Now()
+		saveFileName := fmt.Sprintf("/tmp/company_month_stat_%d%02d%02d_%d.xlsx", t.Year(), t.Month(), t.Day(), t.Nanosecond())
+		if err := f.SaveAs(saveFileName); err != nil {
+			errmsg := fmt.Sprintf("cannot save file, err %s", err)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		xlsx, err := os.Open(saveFileName)
+		if err != nil {
+			errmsg := fmt.Sprintf("cannot open file, err %s", err)
+			glog.Errorf("%s %s", prefix, errmsg)
+			response.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer xlsx.Close()
+
+		response.Header().Set("Content-Type", "application/octet-stream")
+		response.Header().Set("Content-Disposition", "attachment; filename=summary.xlsx")
+		response.WriteHeader(http.StatusOK)
+		io.Copy(response, xlsx)
+		return
+	}
+
+	companyList := make([]Company, 0)
+	db.Debug().Find(&companyList, "enable = 'T'")
+
+	f := excelize.NewFile()
+	f.SetCellValue("Sheet1", "A1", "公司")
+	f.SetCellValue("Sheet1", "B1", "创建日期")
+	f.SetCellValue("Sheet1", "C1", "最近30天统计天数")
+	f.SetCellValue("Sheet1", "D1", "最近30天休假天数")
+	f.SetCellValue("Sheet1", "E1", "最近30天拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "F1", "最近30天最大连续拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "G1", "最近30天完成率(包括休假期)")
+	f.SetCellValue("Sheet1", "H1", "最近90天统计天数")
+	f.SetCellValue("Sheet1", "I1", "最近90天休假天数")
+	f.SetCellValue("Sheet1", "J1", "最近90天拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "K1", "最近90天最大连续拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "L1", "最近90天完成率(包括休假期)")
+	f.SetCellValue("Sheet1", "M1", "最近182天统计天数")
+	f.SetCellValue("Sheet1", "N1", "最近182天休假天数")
+	f.SetCellValue("Sheet1", "O1", "最近182天拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "P1", "最近182天最大连续拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "Q1", "最近182天完成率(包括休假期)")
+	f.SetCellValue("Sheet1", "R1", "最近365天统计天数")
+	f.SetCellValue("Sheet1", "S1", "最近365天休假天数")
+	f.SetCellValue("Sheet1", "T1", "最近365天拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "U1", "最近365天最大连续拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "V1", "最近365天完成率(包括休假期)")
+	f.SetCellValue("Sheet1", "W1", "历史统计天数")
+	f.SetCellValue("Sheet1", "X1", "历史休假天数")
+	f.SetCellValue("Sheet1", "Y1", "历史拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "Z1", "历史最大连续拍照完成天数(包括休假期)")
+	f.SetCellValue("Sheet1", "AA1", "历史完成率(包括休假期)")
+
+	for index, company := range companyList {
+		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", index+2), company.Name)
+		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", index+2), company.CreateAt)
+		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", index+2), company.TotalDaysInLast30days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", index+2), company.RelaxDaysInLast30days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", index+2), company.FinishDaysInLast30days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", index+2), company.MaxContinuousFinishDaysInLast30days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", index+2), fmt.Sprintf("%.3f", company.FinishPercentageInLast30days))
+		f.SetCellValue("Sheet1", fmt.Sprintf("H%d", index+2), company.TotalDaysInLast90days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("I%d", index+2), company.RelaxDaysInLast90days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("J%d", index+2), company.FinishDaysInLast90days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("K%d", index+2), company.MaxContinuousFinishDaysInLast90days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("L%d", index+2), fmt.Sprintf("%.3f", company.FinishPercentageInLast90days))
+		f.SetCellValue("Sheet1", fmt.Sprintf("M%d", index+2), company.TotalDaysInLast182days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("N%d", index+2), company.RelaxDaysInLast182days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("O%d", index+2), company.FinishDaysInLast182days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("P%d", index+2), company.MaxContinuousFinishDaysInLast182days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("Q%d", index+2), fmt.Sprintf("%.3f", company.FinishPercentageInLast182days))
+		f.SetCellValue("Sheet1", fmt.Sprintf("R%d", index+2), company.TotalDaysInLast365days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("S%d", index+2), company.RelaxDaysInLast365days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("T%d", index+2), company.FinishDaysInLast365days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("U%d", index+2), company.MaxContinuousFinishDaysInLast365days)
+		f.SetCellValue("Sheet1", fmt.Sprintf("V%d", index+2), fmt.Sprintf("%.3f", company.FinishPercentageInLast365days))
+		f.SetCellValue("Sheet1", fmt.Sprintf("W%d", index+2), company.TotalDaysAll)
+		f.SetCellValue("Sheet1", fmt.Sprintf("X%d", index+2), company.RelaxDaysAll)
+		f.SetCellValue("Sheet1", fmt.Sprintf("Y%d", index+2), company.FinishDaysAll)
+		f.SetCellValue("Sheet1", fmt.Sprintf("Z%d", index+2), company.MaxContinuousFinishDaysAll)
+		f.SetCellValue("Sheet1", fmt.Sprintf("AA%d", index+2), fmt.Sprintf("%.3f", company.FinishPercentageAll))
+	}
+
+	t := time.Now()
+	saveFileName := fmt.Sprintf("/tmp/company_stat_%d%02d%02d_%d.xlsx", t.Year(), t.Month(), t.Day(), t.Nanosecond())
+	if err := f.SaveAs(saveFileName); err != nil {
+		errmsg := fmt.Sprintf("cannot save file, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	xlsx, err := os.Open(saveFileName)
+	if err != nil {
+		errmsg := fmt.Sprintf("cannot open file, err %s", err)
+		glog.Errorf("%s %s", prefix, errmsg)
+		response.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer xlsx.Close()
+
+	response.Header().Set("Content-Type", "application/octet-stream")
+	response.Header().Set("Content-Disposition", "attachment; filename=summary.xlsx")
+	response.WriteHeader(http.StatusOK)
+	io.Copy(response, xlsx)
+	return
 }
-*/

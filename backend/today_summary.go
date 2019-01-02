@@ -18,6 +18,7 @@ type MonitorPlaceSummary struct {
 	IsUpload         string `json:"is_upload"`
 	Judgement        string `json:"judgement"`
 	EverJudge        string `json:"ever_judge"`
+	EverUpload       string `json:"ever_upload"`
 }
 
 type CompanySummary struct {
@@ -61,7 +62,11 @@ func getTodaySummaryWithCompanyId(company_id int) (*CompanySummary, error) {
 	companySummary.CompanyName = company.Name
 	monitorPlaceSummaryList := make([]*MonitorPlaceSummary, 0)
 	for _, t := range todaySummaryList {
-		m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Judgement: t.Judgement, EverJudge: t.EverJudge}
+		everUpload := "F"
+		if t.EverJudge == "T" || t.IsUpload == "T" {
+			everUpload = "T"
+		}
+		m := MonitorPlaceSummary{MonitorPlaceID: t.MonitorPlaceId, MonitorPlaceName: t.MonitorPlaceName, IsUpload: t.IsUpload, Judgement: t.Judgement, EverJudge: t.EverJudge, EverUpload: everUpload}
 		monitorPlaceSummaryList = append(monitorPlaceSummaryList, &m)
 	}
 	companySummary.MonitorPlaceSummaryList = monitorPlaceSummaryList

@@ -204,12 +204,12 @@ func main() {
 	globalRelaxPeriod := GlobalRelaxPeriod{}
 	globalRelaxPeriod.Register(wsContainer)
 
-	refreshCompanyFinishStat()
-	refreshTodaySummary()
-	refreshSummary()
-	refreshSummaryStat()
-
 	go func() {
+		refreshCompanyFinishStat()
+		refreshTodaySummary()
+		refreshSummary()
+		refreshSummaryStat()
+
 		glog.Infof("starting cronjob system")
 		jobWorker()
 		glog.Infof("cronjob system end")
@@ -232,8 +232,8 @@ func main() {
 	http.HandleFunc("/backend/scanqrcode", scanqrcodeHandler)
 	http.HandleFunc("/backend/companystat", companystatHandler)
 	http.HandleFunc("/backend/photo", photoHandler)
+	http.HandleFunc("/backend/photolist", photoListHandler)
 	http.HandleFunc("/backend/download", downloadHandler)
 	http.HandleFunc("/backend/excel", excelHandler)
 	glog.Info(http.ListenAndServe(fmt.Sprintf(":%s", wxport), nil))
-
 }
