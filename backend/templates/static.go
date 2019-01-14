@@ -266,6 +266,8 @@ const SCANQRCODE = `
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
+
+
     <script type="text/javascript">
     if(!wx){//验证是否存在微信的js组件
         alert("微信接口调用失败，请检查是否引入微信js！");
@@ -363,12 +365,13 @@ const COMPANYSTAT = `
     <div class="weui-grids">
     {{ range .MonitorPlaceSummaryList }}
     {{ if eq .EverUpload "T" }}
-        <a href=""style="background-image:url(./backend/photolist?id={{ .MonitorPlaceID }}" class="weui-grid">
-    {{ else }}
-        <a href="" class="weui-grid">
+        <div class="weui-gallery" id="gallery__{{ .MonitorPlaceID }}" style="opacity: 0; display: none;">
+            <span class="weui-gallery__img" id="galleryImg__{{ .MonitorPlaceID }}" style="background-image:url(./backend/photolist?id={{ .MonitorPlaceID }})"></span>
+        </div>
     {{ end }}
+        <a href="" class="weui-grid">
             <div class="weui-grid__icon">
-                {{ if eq .IsUpload "T" }}<i class="weui-icon-success-no-circle"></i>{{ else }}<i class="weui-icon-warn"></i>{{ end }}
+                {{ if eq .IsUpload "T" }}<i id="icon__{{ .MonitorPlaceID }}" class="weui-icon-success-no-circle"></i>{{ else }}<i class="weui-icon-warn"></i>{{ end }}
             </div>
             <p class="weui-grid__label">{{ .MonitorPlaceName }}</p>
         </a>
@@ -376,6 +379,23 @@ const COMPANYSTAT = `
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
+
+    <script>
+        
+    $(function(){
+        var $everUploadClass = $(".weui-icon-success-no-circle"), $currentGallery;
+
+        $everUploadClass.on("click", function(){
+            var iconId = $(this).attr("id");
+            var placeId = iconId.split("__")[1];
+            $currentGallery = $("#gallery__" + placeId);
+            $currentGallery.fadeIn(100);
+        });
+        $currentGallery.on("click", function(){
+            $currentGallery.fadeOut(100);
+        });
+    });
+    </script>
 </body>
 `
 
