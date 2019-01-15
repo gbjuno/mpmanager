@@ -380,7 +380,7 @@ const COMPANYSTAT = `
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
     <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
 
-    <script>
+    <script type="text/javascript">
         
     $(function(){
         var $everUploadClass = $(".weui-icon-success-no-circle"), $currentGallery;
