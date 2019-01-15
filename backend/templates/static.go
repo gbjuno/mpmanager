@@ -369,7 +369,7 @@ const COMPANYSTAT = `
             <span class="weui-gallery__img" id="galleryImg__{{ .MonitorPlaceID }}" style="background-image:url(./backend/photolist?id={{ .MonitorPlaceID }})"></span>
         </div>
     {{ end }}
-        <a href="" class="weui-grid">
+        <a class="weui-grid">
             <div class="weui-grid__icon">
                 {{ if eq .IsUpload "T" }}<i id="icon__{{ .MonitorPlaceID }}" class="weui-icon-success-no-circle"></i>{{ else }}<i class="weui-icon-warn"></i>{{ end }}
             </div>
@@ -378,24 +378,24 @@ const COMPANYSTAT = `
     {{ end }}</div> 
     <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script src="https://res.wx.qq.com/open/libs/weuijs/1.0.0/weui.min.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            var $everUploadClass = $(".weui-icon-success-no-circle"), $currentGallery;
+
+            $everUploadClass.on("click", function(){
+                var iconId = $(this).attr("id");
+                var placeId = iconId.split("__")[1];
+                $currentGallery = $("#gallery__" + placeId);
+                $currentGallery.fadeIn(100);
+            });
+            $currentGallery.on("click", function(){
+                $currentGallery.fadeOut(100);
+            });
+        });
+    </script>
     <script src="https://{{ .Domain }}/html/zepto.min.js"></script>
 
-    <script type="text/javascript">
-        
-    $(function(){
-        var $everUploadClass = $(".weui-icon-success-no-circle"), $currentGallery;
-
-        $everUploadClass.on("click", function(){
-            var iconId = $(this).attr("id");
-            var placeId = iconId.split("__")[1];
-            $currentGallery = $("#gallery__" + placeId);
-            $currentGallery.fadeIn(100);
-        });
-        $currentGallery.on("click", function(){
-            $currentGallery.fadeOut(100);
-        });
-    });
-    </script>
+    
 </body>
 `
 
