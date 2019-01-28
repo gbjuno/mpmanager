@@ -37,13 +37,11 @@ class PasteNoStyleControls extends Component {
     this.setState({visible: true, disabled: true,plantext : ""})
     // let that=this;
     //   setTimeout(()=>{
-    //     console.log("this.refs.nostyletext",that.refs.noStyleText)
     //     ReactDom.findDOMNode(that.refs.noStyleText).focus();
     //   },1000);
   }
 
   handleCancel(e) {
-    // console.log(e);
     this.setState({visible: false});
     this.state.plantext = "";
     this.forceUpdate();

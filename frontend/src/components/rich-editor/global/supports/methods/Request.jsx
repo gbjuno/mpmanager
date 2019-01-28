@@ -40,7 +40,6 @@ const AJAX = {
       return arr.join("&");
     },
     requestData(urlObj, data = {}, onSuccess = function() {
-      //console.log("onSuccess");
     }, onError = function() {
       console.warn("！！！！！！！！！！服务器或接口返回出错！！！！！！！！！！");
     }, method = "post", isAsync = true) {
@@ -70,7 +69,6 @@ const AJAX = {
               message.error("数据返回出错，请通知技术部排查，参考原因：“" + e.toString() + "”；返回数据：“" + (xhr.responseText.length > 20
                 ? xhr.responseText.substr(0, 20) + "……(详见控制台)"
                 : xhr.responseText) + "”", 10);
-              //console.log("错误返回数据xhr.responseText：“",xhr.responseText,"”");
               return false;
             }
             if (data.rc == "405") {
@@ -106,7 +104,6 @@ const AJAX = {
       }
       xhr.open(method, urlObj.url, isAsync); // false是同步 true是异步 // "demo.php?rand="+Math.random()+"&name=ga&ga",
       if (method === "post") {
-    //console.log("urlObj.Authorization", urlObj.Authorization, !!urlObj.Authorization);
         xhr.setRequestHeader("Content-Type", content_type);
         if (!!urlObj.Authorization) {
           xhr.setRequestHeader("Authorization", urlObj.Authorization);
@@ -133,7 +130,6 @@ const AJAX = {
         : {}, {
         "tokenID": tokenID
       }, data); //合并
-  //console.log("fetchData url data:", urlObj.url, JSON.stringify(data))
       fetch(urlObj.url + "?tokenID=" + tokenID, {
         method: "POST",
         body: JSON.stringify(data) //type:1 新增用户；2 启动次数; day:1今日；2 昨日；
@@ -141,7 +137,6 @@ const AJAX = {
 
         return res.json();
       }).then((theData) => {
-    //console.log("fetchData theData", theData);
         if (theData.rc === "400") { //需要确认是否是400标示权限有更新
           // hashHistory.push("/login");
           message.info("验证您的权限设置有更新，请重新登陆", 10);

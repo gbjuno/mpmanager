@@ -28,7 +28,6 @@ class ArticleForm extends React.Component {
 
     receiveHtml = (content) => {
         const { handleArticleAttribute } = this.props
-        console.log("recieved HTML content", content);
 
         handleArticleAttribute('content', content)
         this.setState({responseList:[]});
@@ -76,7 +75,6 @@ class ArticleForm extends React.Component {
     saveArticle = () => {
         const { fetchData } = this.props
         const { article } = this.props.wechatLocal
-        console.log('the saving article ####', article)
         if(article){
             const { title, digest, author, content, thumb_media_id } = article
             if(!title){
@@ -109,20 +107,15 @@ class ArticleForm extends React.Component {
         const { fileList, imageUrl, coverLoading, responseImageList, responseVideoList, videoUploading } = this.state
         const { wechatLocal } = this.props
 
-        if(wechatLocal)console.log('ba xiao shuo xie wan', responseImageList)
-        if(wechatLocal)console.log('ba xiao shuo xie wan', responseVideoList)
-
         let policy = "";
 
         const uploadImageProps = {
             name: 'uploadImage',
             action: config.WECHAT_UPLOAD_METERIAL_IMAGE,
             onStart: (file) => {
-                console.log('onStart', file.name);
                 // this.refs.inner.abort(file);
             },
             onSuccess: (file) => {
-                console.log('onSuccess', file);
                 this.setState({
                     responseImageList: [{
                         key: file.media_id,
@@ -131,10 +124,10 @@ class ArticleForm extends React.Component {
                 })
             },
             onProgress: (step, file) => {
-                console.log('onProgress', Math.round(step.percent), file.name);
+                
             },
             onError: (err) => {
-                console.log('onError', err);
+                
             },
             withCredentials: true,
             listType: 'picture',
@@ -150,11 +143,11 @@ class ArticleForm extends React.Component {
             action: `${config.WECHAT_UPLOAD_METERIAL_VIDEO}?title=t_${new Date().getMilliseconds()}&introduction=i_${new Date().getMilliseconds()}`,
             // action: `${config.WECHAT_UPLOAD_METERIAL_VIDEO}`,
             onStart: (file) => {
-                console.log('onStart', file.name);
+                
                 // this.refs.inner.abort(file);
             },
             onSuccess: (file) => {
-                console.log('onSuccess', file);
+                
                 this.setState({
                     responseVideoList: this.state.responseVideoList.concat({
                         key: file.media_id,
@@ -167,13 +160,12 @@ class ArticleForm extends React.Component {
                 this.setState({
                     videoUploading: true,
                 })
-                console.log('onProgress', Math.round(step.percent), file.name);
+                
             },
             onError: (err) => {
                 this.setState({
                     videoUploading: false,
                 })
-                console.log('onError', err);
             },
             withCredentials: true,
             listType: 'picture',

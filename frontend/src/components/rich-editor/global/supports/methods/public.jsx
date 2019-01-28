@@ -38,7 +38,6 @@ export default {
 
             if (last_qiniu_token_time) {
                 if ((timestamp - last_qiniu_token_time) < 3500) {
-                    //console.log("time not out ");
                     mark = true;
                 }
             }
@@ -59,7 +58,6 @@ export default {
           return token;
         },
         getQiniuToken: function(uploadConfig,type = 'image', params) {
-            //console.log("getQiniuToken");
             let token = "";
             let url;
             if (type == 'image') {
@@ -73,20 +71,16 @@ export default {
             } else {
                 url = uploadConfig.QINIU_IMG_TOKEN_URL;
             }
-            //console.log("token_url",url);
             AJAX.requestData({
                 url: url,
                 method: 'post',
                 isAsync: true,
                 defaultData: {}
             }, params, (data) => {
-                //console.log(data); data = JSON.parse(data);
                 token = data.uptoken;
-                //console.log("token=", token);
                 localStorage.setItem("qiniu_" + type + "_token", token);
                 localStorage.setItem("last_qiniu_token_time_" + type, Date.parse(new Date()) / 1000);
             }, () => {
-                //console.log("err:", err);
                 return false;
             });
             return token;

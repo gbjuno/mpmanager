@@ -42,8 +42,6 @@ const BIND = `<!DOCTYPE html>
             $("#submit").click(function(){
                 var phoneVal = $("#phone").val();
                 var passwordVal = $("#password").val();
-                console.log(phoneVal);
-                console.log(passwordVal);
                 $.post("/backend/confirm",{
                     phone:phoneVal,
                     password:passwordVal
@@ -302,7 +300,6 @@ const SCANQRCODE = `
                 scanType: ["qrCode"],
                 success: function (res) {
                     var result = res.resultStr;
-                    console.log(result);
                     window.location.href=result;
                 }
             });
@@ -386,7 +383,6 @@ const COMPANYSTAT = `
 
             $everUploadClass.parent().parent().click(function(){
                 var $iconId = $(this).find(".weui-icon-success-no-circle").attr("id");
-                console.log("click a upload icon", $iconId);
                 var placeId = $iconId.split("__")[1];
                 $currentGallery = $("#gallery__" + placeId);
                 $currentGallery.fadeIn(100);

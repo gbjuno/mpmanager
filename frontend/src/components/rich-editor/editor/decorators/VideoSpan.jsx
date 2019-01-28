@@ -45,7 +45,6 @@ export default class VideoSpan extends Component {
     //let {className} = this.props;
     const entity = Entity.get(this.props.entityKey);
     const {src} = entity.getData();
-    //console.log("styles.root: ", styles.root); className = cx(className, styles.root);
     const videoStyle = {
       verticalAlign: 'bottom',
       backgroundImage: `url("${src}")`,
@@ -67,7 +66,6 @@ export default class VideoSpan extends Component {
   }
 
   _onClick() {
-    //console.log('video click');
   }
 
   _handleResize(event : Object, data : Object) {

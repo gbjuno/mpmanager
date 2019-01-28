@@ -10,7 +10,7 @@ export const MOCK_AUTH_ADMIN = MOCK_AUTH + '/admin';                           /
 export const MOCK_AUTH_VISITOR = MOCK_AUTH + '/visitor';                       // 访问权限接口
 
 const PROTOCOL = 'https'
-const HOST = 'www.juntengshoes.cn'
+const HOST = 'www.juntengshoes.club'
 const PORT = 80
 const CONTEXT = 'api'
 const VERSION = 'v1' 
@@ -38,6 +38,7 @@ export const SERVER_HOST = `//${HOST}`
 export const SERVER_URL = `${PROTOCOL}://${HOST}/${CONTEXT}/${VERSION}`
 
 export const LOGIN_URL = SERVER_URL + `/login`
+export const LOGOUT_URL = SERVER_URL + `/logout`
 
 export const TOWN_URL = SERVER_URL + '/town'
 export const TOWN_COUNTRY_URL = townId => `${TOWN_URL}/${townId}/country`

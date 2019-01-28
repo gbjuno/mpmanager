@@ -48,7 +48,6 @@ class VideoStyleControls extends Component {
   }
 
   handleCancel(e) {
-    // console.log(e);
     this.setState({visible: false});
     this.state.videos = [];
     this.forceUpdate();

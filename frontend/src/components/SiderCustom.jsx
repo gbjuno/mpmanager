@@ -19,7 +19,6 @@ class SiderCustom extends Component {
         this.setMenuOpen(this.props);
     }
     componentWillReceiveProps(nextProps) {
-        console.log(nextProps);
         this.onCollapse(nextProps.collapsed);
         this.setMenuOpen(nextProps)
     }
@@ -31,7 +30,6 @@ class SiderCustom extends Component {
         });
     };
     onCollapse = (collapsed) => {
-        console.log(collapsed);
         this.setState({
             collapsed,
             firstHide: collapsed,
@@ -42,12 +40,10 @@ class SiderCustom extends Component {
         this.setState({
             selectedKey: e.key
         });
-        console.log(this.state);
         const { popoverHide } = this.props;     // 响应式布局控制小屏幕点击菜单时隐藏菜单操作
         popoverHide && popoverHide();
     };
     openMenu = v => {
-        console.log(v);
         this.setState({
             openKey: v[v.length - 1],
             firstHide: false,
@@ -80,8 +76,9 @@ class SiderCustom extends Component {
                     <Menu.Item key="/app/ux/gs"><Link to={'/app/ux/gs'}><Icon type="home" /><span className="nav-text">公司管理</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}><Icon type="user" /><span className="nav-text">用户管理</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}><Icon type="environment-o" /><span className="nav-text">地点管理</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/wwc"><Link to={'/app/ux/wwc'}><Icon type="line-chart" /><span className="nav-text">完成率统计</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}><Icon type="line-chart" /><span className="nav-text">统计报表</span></Link></Menu.Item>
-                    <SubMenu
+                    {/* <SubMenu
                         key="/app/wechat"
                         title={<span><Icon type="wechat" /><span className="nav-text">微信管理</span></span>}
                     >
@@ -90,7 +87,7 @@ class SiderCustom extends Component {
                         <Menu.Item key="/app/wechat/sc"><Link to={'/app/wechat/sc'}><Icon type="cloud-o" /><span className="nav-text">素材管理</span></Link></Menu.Item>
                         <Menu.Item key="/app/wechat/xx"><Link to={'/app/wechat/xx'}><Icon type="message" /><span className="nav-text">消息管理</span></Link></Menu.Item>
                         <Menu.Item key="/app/wechat/ym"><Link to={'/app/wechat/ym'}><Icon type="profile" /><span className="nav-text">页面模板</span></Link></Menu.Item>
-                    </SubMenu>
+                    </SubMenu> */}
                 </Menu>
                 <style>
                     {`

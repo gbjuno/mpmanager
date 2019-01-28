@@ -39,7 +39,6 @@ class UploadVideo extends Component {
 
   changeInputVideo(e){
     let value=e.target.value;
-    // console.log("changeInputVideo",value);
     this.setState({inputVideoUrl:value});
   }
 
@@ -63,12 +62,10 @@ class UploadVideo extends Component {
     }
   }
   componentDidMount() {
-    console.log("componentDidMount this.props.fileList:", this.props.fileList);
     var list = [];
     if (!!this.props.fileList) {
       this.props.fileList.copyWithin(list);
     }
-      console.log("componentDidMount list:", list);
     if (!!list) {
       this.setState({files: list});
     }
@@ -88,7 +85,6 @@ class UploadVideo extends Component {
   }
 
   onChange(info) {
-    // console.log("upload onChange this.state.files",this.state.files,info)
     clearTimeout(this.state.upReceiverFun);
     let fileList = info.fileList;
 
@@ -133,16 +129,12 @@ class UploadVideo extends Component {
       return !!file.response||(!!file.url&&file.status=="done")||file.status=="uploading";
     });
     fileList=uniqBy(fileList,"name");
-    // console.log("upload _this.state.files",_this.state.files);
-    // console.log("upload fileList before if",fileList);
     if (!!fileList && fileList.length != 0) {
-      console.log("upload set files as fileList",fileList);
       this.setState({files: fileList});
     }
     _this.forceUpdate();
     this.state.upReceiverFun = setTimeout(() => {
       //限制频繁调用组件制定的cbReceiver
-      // console.log("upload this.state.files",this.state.files)
       if (!!this.state.files && this.state.files.length == 0) {
         return false;
       }
@@ -169,7 +161,6 @@ class UploadVideo extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log('next props...', nextProps)
     clearTimeout(this.state.upReceiverFun);
     if (nextProps.uploadProps) {
 
@@ -178,8 +169,6 @@ class UploadVideo extends Component {
         if (!!nextProps.uploadProps.fileList && nextProps.uploadProps.fileList.length === 0) {
           return false;
         }
-
-        console.log('file List...', nextProps.fileList, this.props.fileList)
 
         if(isEqual(nextProps.fileList, this.props.fileList) && nextProps.fileList.length > 0){
           return false;
@@ -190,7 +179,6 @@ class UploadVideo extends Component {
       }, 1000);
       return false;
     }
-    console.log('sweet...',nextProps.fileList, this.state.files);
     if (isEqual(nextProps.fileList, this.state.files)) {
       return false;
     }
@@ -202,7 +190,6 @@ class UploadVideo extends Component {
       this.forceUpdate();
 
     }
-    // console.log("componentWillReceiveProps 图片有更新：", nextProps.fileList, this.state.files);
     let list = [];
     if (this.state.files.length) {
       list = this.state.files.copyWithin(0);

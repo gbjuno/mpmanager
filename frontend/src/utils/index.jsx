@@ -19,3 +19,28 @@ export const queryString = () => {
     });
     return _queryString;
 };
+
+export const number =  (data, n) =>{
+    let numbers = '';
+    for (var i = 0; i < n; i++) {
+        numbers += '0';
+    }
+    let s = 1 + numbers;
+    // 如果是整数需要添加后面的0
+    let spot = "." + numbers;
+    // Math.round四舍五入  
+    //  parseFloat() 函数可解析一个字符串，并返回一个浮点数。
+    let value = Math.round(parseFloat(data) * s) / s;
+    // 从小数点后面进行分割
+    let d = value.toString().split(".");
+    if (d.length == 1) {
+        value = value.toString() + spot;
+        return value;
+    }
+    if (d.length > 1) {
+        if (d[1].length < 2) {
+            value = value.toString() + "0";
+        }
+        return value;
+    }
+}

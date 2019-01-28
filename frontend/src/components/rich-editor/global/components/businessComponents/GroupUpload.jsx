@@ -77,13 +77,11 @@ class GroupUpload extends Component {
   }
   getPfop(){//持久保存
     let newPicturesObj=this.state.selectedPictureList.map(item=>{
-      // console.log("getPfop.value", item.value);
       if(!!item&&!~item.lastIndexOf("reset")){
         let originKey=(item+"").split("").reverse().join("");
         originKey=originKey.substr(originKey.lastIndexOf("?")+1);
         originKey=originKey.substr(0,originKey.indexOf("/"));
         originKey=originKey.split("").reverse().join("");
-        // console.log("getPfop originKey",originKey);
         let extensionNameItem=originKey.match(/\.[^\.]*/g),extensionName="";
         if (!!extensionNameItem&&extensionNameItem.length>0) {
           extensionName=extensionNameItem[0];
@@ -93,7 +91,6 @@ class GroupUpload extends Component {
           originKey=originKeyItem[0];
         }
         let thumbnail="";
-        // console.log("this.props.atuoSize",this.props.atuoSize);
         if (this.state.isAutoSize) {
           if (this.props.atuoSize[0] == 0 && this.props.atuoSize[1] == 0) {
             thumbnail = `imageMogr2/thumbnail/600x600>|`;
@@ -122,13 +119,10 @@ class GroupUpload extends Component {
         return {originPic:""};
       }
     });
-    // console.log("newPicturesObj a",newPicturesObj);
     newPicturesObj=compact(newPicturesObj);
-    // console.log("newPicturesObj b",newPicturesObj);
     let refObj=clone(newPicturesObj);
     remove(newPicturesObj,item=>{return !item.originPic});
     let removedPic=remove(newPicturesObj,item=>{return !!~item.originPic.lastIndexOf("QN1D")});
-    // console.log("getPfop removedPic",removedPic);
     if (newPicturesObj.length>0) {
       this.getPfopPictures(newPicturesObj);
     }
@@ -139,7 +133,6 @@ class GroupUpload extends Component {
     //   duration: 0,
     // };
     // notification.open(args);
-    // console.log("getPfop refObj",refObj)
     let pictureList=refObj.map(item=>{
       let domain="",picture="";
       if (!!item.originPic) {
@@ -151,7 +144,6 @@ class GroupUpload extends Component {
       }
       return picture
     });
-    // console.log("getPfop pictureList",pictureList);
     // setTimeout(()=>{//防止在持久保存成功前过快加载导致图片显示不出
     message.info(this.props.lang.inPfopProgress,10);
     setTimeout(() => {
@@ -167,7 +159,6 @@ class GroupUpload extends Component {
     });
   }
   gotPfopPictures (theData)  {
-    // console.log("gotPfopPictures theData",theData);
     if (theData.rc == "0") {
       return (dispatch) => {
         // dispatch(gotPfopPicturesSuccessfully(theData.data));
@@ -185,7 +176,6 @@ class GroupUpload extends Component {
     this.state.pictureList = compact(this.state.pictureList.concat(newPictures));
     this.state.pictureList=uniq(this.state.pictureList);
     this.state.selectedPictureList = cloneDeep(this.state.pictureList);
-    // console.log("pictureList", this.state.pictureList);
     this.forceUpdate(); //强制更新
   }
   openModal() {
@@ -195,7 +185,6 @@ class GroupUpload extends Component {
     this.setState({showPictureSeletor: false});
   }
   componentWillReceiveProps(prevProps,nextProps){
-    // console.log("componentWillReceiveProps nextProps",prevProps,nextProps,!!nextProps&&nextProps.hasOwnProperty("imageList"))
     if (!!nextProps&&nextProps.hasOwnProperty("imageList")) {
       this.setState({pictureList:nextProps.imageList,selectedPictureList: cloneDeep(nextProps.imageList)});
     }else {

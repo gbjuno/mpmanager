@@ -68,7 +68,6 @@ class MenuManager extends React.Component {
                     }
                     return b;
                 })
-                console.log('from wechat api---', resData)
                 updateMenu(resData, null)
             })
     }
@@ -108,7 +107,6 @@ class MenuManager extends React.Component {
     }
 
     handleMenuClick = (menu, isSub, isMenuOpacity) => {
-        console.log('ccccccc', menu, isSub, isMenuOpacity)
         if(isMenuOpacity) return
         if(isSub && menu.type === 'new') return
         this.setState({
@@ -125,8 +123,6 @@ class MenuManager extends React.Component {
     handleAddMenu = (menu) => {
         const { updateMenu, wechatLocal } = this.props
         updateMenu(wechatLocal.mergedMenus, menu, true, false)
-
-        console.log('add main menu...', menu)
 
         this.setState({
             selectedMenuKey: menu.frontend_key,
@@ -151,7 +147,6 @@ class MenuManager extends React.Component {
 
     handleDeleteMenu = (selectedMenu) => {
         const { deleteMenu, wechatLocal } = this.props
-        console.log('selected delete menu', selectedMenu)
         deleteMenu(wechatLocal.mergedMenus, selectedMenu)
         this.setState({
             visible: false,
@@ -204,8 +199,6 @@ class MenuManager extends React.Component {
 
     genMenuList = (menusData) => {
         const { selectedMenuKey, selectedMenu } = this.state
-        
-        console.log('fffffff', menusData)
 
         let buttons = [] 
         if(menusData.button){
@@ -300,8 +293,6 @@ class MenuManager extends React.Component {
         const { baseHeight, selectedMenu } = this.state
         const { detailRecord, wechatLocal } = this.props
 
-        console.log('wulun duome langbei douxihuanni menu', wechatLocal)
-        console.log('wulun duome langbei douxihuanni selectedMenu', selectedMenu)
         let menusData = {}
         if(wechatLocal && wechatLocal.mergedMenus){
             menusData = wechatLocal.mergedMenus

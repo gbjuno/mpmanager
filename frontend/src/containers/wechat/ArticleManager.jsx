@@ -177,7 +177,6 @@ class ArticleManager extends React.Component {
 
     handlePreview = (item, e) => {
         e.stopPropagation();
-        console.log('the item url is: =====', item.url)
         window.open(item.url)
     }
 

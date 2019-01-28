@@ -54,16 +54,13 @@ class Test extends React.Component {
     this.getPolicy = this.getPolicy.bind(this);
   }
   receiveHtml(content) {
-    console.log("recieved HTML content", content);
     //清空responseList
     this.setState({responseList:[]});
   }
   componentDidMount() {}
   receiveMarkdown(content) {
-    console.log("recieved markdown content", content);
   }
   receiveRaw(content) {
-    console.log("recieved Raw content", content);
   }
   onChange(info) {
     let currFileList = info.fileList;
@@ -106,7 +103,6 @@ class Test extends React.Component {
     _this.forceUpdate();
   }
   beforeUpload(file) {
-    console.log("beforeUpload like", file);
   }
   getSignature(fileName) {
     let now = new Date();

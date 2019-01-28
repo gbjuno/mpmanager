@@ -32,11 +32,11 @@ class Login extends React.Component {
         e.preventDefault();
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                console.log('Received values of form: ', {...values});
                 const { fetchData } = this.props;
                 fetchData({funcName: 'authLogin', params: {...values}, stateName: 'authStatus'})
                 .then(res => {
                     if(res.data.status === 200){
+                        localStorage.setItem('user', values.Phone)
                         this.setState({
                             redirectToHome: true,
                         })
@@ -61,7 +61,7 @@ class Login extends React.Component {
 
         if(redirectToHome){
             return (
-                <Redirect to="/app/ux/tp"/>
+                <Redirect to="/app/ux/tp" />
             )
         }
 

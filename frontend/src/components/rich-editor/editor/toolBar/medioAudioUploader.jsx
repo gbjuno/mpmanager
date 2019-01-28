@@ -46,7 +46,6 @@ class AudioStyleControls extends Component {
   }
 
   handleCancel(e) {
-    // console.log(e);
     this.setState({visible: false});
     this.state.audios = [];
     this.forceUpdate();

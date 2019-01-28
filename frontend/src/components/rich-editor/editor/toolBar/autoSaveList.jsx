@@ -39,7 +39,6 @@ class AutoSaveControls extends Component {
     this.componentDidMount();
   }
   handleCancel(e) {
-    // console.log(e);
     this.setState({visible: false});
     this.state.list = [];
     this.forceUpdate();
@@ -50,33 +49,28 @@ class AutoSaveControls extends Component {
       return item;
     });
     let content=PRO_COMMON.localDB.getter("$d"+this.state.selectedKeyName);//window.localStorage.getItem("$d"+this.state.selectedKeyName);
-//console.log("content",content)
     this.props.receiveSavedItem(content);
     this.state.list = [];
     this.forceUpdate();
   }
   componentDidMount() {
-//console.log("componentDidMount!");
     let itemList = [];
     for (var i = 0; i < localStorage.length; i++) {
       let keyName = localStorage.key(i);
       if (!~ keyName.lastIndexOf("$d")) {
         continue;
       }
-  //console.log(keyName);
       itemList.push({keyName: keyName.replace("$d","")})
     }
 
     PRO_COMMON.obj.refsKeyTo(itemList)
     if (!!itemList.length) {
-  //console.log("itemList", itemList);
       this.setState({list: itemList});
     } else {
       this.setState({list: []});
     }
   }
   selectRow(record, index) {
-//console.log("selectRow!",record, index)
     this.state.selectedRowKeys = [this.state.list[index].key];
     this.state.selectedKeyName = this.state.list[index].keyName;
     this.forceUpdate();
@@ -103,12 +97,10 @@ class AutoSaveControls extends Component {
     const rowSelection = {
       selectedRowKeys: that.state.selectedRowKeys,
       onChange: (selectedRowKeys, selectedRows) => {
-    //console.log("onChange", selectedRowKeys);
         that.state.selectedRowKeys = selectedRowKeys;
         that.forceUpdate();
       },
       onSelect: function(record, selected, selectedRows) {
-    //console.log("onSelect", record.keyName);
         that.state.selectedKeyName = record.keyName;
       },
       type: "radio"

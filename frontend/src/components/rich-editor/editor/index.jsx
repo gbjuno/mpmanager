@@ -100,7 +100,6 @@ class EditorConcist extends React.Component {
           if(ConvertFormatProps === 'html') {
             contentState = stateFromHTML(originalString);
           } else if (ConvertFormatProps === 'markdown') {
-            // console.log("markdown originalString",originalString)
             contentState = stateFromMD(originalString);
           } else if(ConvertFormatProps === 'raw'){
             originalString=originalString.replace(/\s/g,"")?originalString:"{}";
@@ -125,7 +124,6 @@ class EditorConcist extends React.Component {
         //convert state to object.
         let rawContentState = that.state.editorState.getCurrentContent()
         //const rawContent = convertToRaw(rawContentState);
-        // console.log('rawContentState', rawContentState);
         let content;
         const ConvertFormatProps = that.props.convertFormat;
         if(ConvertFormatProps === 'html') {
@@ -152,7 +150,6 @@ class EditorConcist extends React.Component {
     /*VIDEO/AUDIO/IMAGE*/
     this.logState = () => {
       const content = this.state.editorState.getCurrentContent();
-      //  console.log(convertToRaw(content));
     };
 
     this.addMedia = this._addMedia.bind(this);
@@ -204,8 +201,6 @@ class EditorConcist extends React.Component {
     //   ImageDecorator
     // ]);
      const contentState = stateFromHTML(content);
-    //  console.log("componentDidMount content",content);
-    //  console.log("componentDidMount contentState",JSON.stringify(contentState));
     // let values = EditorState.createWithContent(contentState, decorator);
     // this.state.editorState = values;
     this.state.autoSaveFun=setInterval(()=>{
@@ -225,7 +220,6 @@ class EditorConcist extends React.Component {
     }
     const ConvertFormatProps = this.props.convertFormat;
     let newContent ="";
-    // console.log("ConvertFormatProps",ConvertFormatProps)
     if (ConvertFormatProps==="html") {
       newContent = newProps.importContent.replace(/[\s\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]\>/g,">");
       if (newContent == "undefined" ||!newContent) {
@@ -243,7 +237,6 @@ class EditorConcist extends React.Component {
       VideoDecorator,
       AudioDecorator
     ]);*/
-    // console.log("newContent",newContent)
     let contentState;
     if(ConvertFormatProps === 'html') {
       contentState = stateFromHTML(newContent);
@@ -253,14 +246,10 @@ class EditorConcist extends React.Component {
       let rawContent = JSON.parse(newContent);
       contentState = convertFromRaw(rawContent);
     }
-    // console.log("contentState",contentState)
-    // console.log("componentWillReceiveProps newContent",newContent);
-    // console.log("componentWillReceiveProps contentState",JSON.stringify(contentState));
     let values = EditorState.createWithContent(contentState, decorator);
     this.state.editorState = values;
   }
   componentWillUnmount(){
-    // console.log("componentWillUnmount! this.state.autoSaveFun",this.state.autoSaveFun);
     clearInterval(this.state.autoSaveFun);
   }
   handleOk() {
@@ -290,7 +279,6 @@ class EditorConcist extends React.Component {
   }
 
   _confirmLink(e) {
-    // console.log("_confirmLink urlValue", urlValue)
     const {editorState, urlValue} = this.state;
     const entityKey = Entity.create('LINK', 'MUTABLE', {url: urlValue});
     this.onChange(RichUtils.toggleLink(editorState, editorState.getSelection(), entityKey));
@@ -364,7 +352,6 @@ class EditorConcist extends React.Component {
   }
   _changeMrakdownContent(e){
     let markdownContent = e.target.value;
-    // console.log("markdownContent",markdownContent);
     let contentState = stateFromMD(markdownContent);
     let values = EditorState.createWithContent(contentState, decorator);
     this.state.tempSouceContent=markdownContent;
@@ -373,7 +360,6 @@ class EditorConcist extends React.Component {
   }
 
   _handleKeyCommand(command) {
-    // console.log("command",command);
     const {editorState} = this.state;
     const newState = RichUtils.handleKeyCommand(editorState, command);
     if (command === 'editor-save'&&this.props.autoSave==true) {
@@ -443,10 +429,7 @@ class EditorConcist extends React.Component {
   }
   _handlePastedText(text,sourceString){
     sourceString = this.solidHtml(sourceString);
-    // console.log("_handlePastedText text",text);
-    // console.log("_handlePastedText sourceString",typeof(sourceString),sourceString);
     if (text=="undefined"&&sourceString=="undefined") {
-      // console.log("_handlePastedText return false");
       return false;
     }
     if (sourceString=="undefined"||!sourceString) {
@@ -549,11 +532,9 @@ class EditorConcist extends React.Component {
 
   _addImage(Objects) {
     let that = this;
-    // console.log("Objects Objects", Objects);
     Objects.map((item, i) => {
       setTimeout(() => {
         let imageObj=that.addMedia('image', item);
-        // console.log("imageObj",imageObj,JSON.stringify(imageObj));
         return that.onChange(imageObj);
       }, i * 100);
     })
@@ -586,8 +567,6 @@ class EditorConcist extends React.Component {
     }else if(ConvertFormatProps === 'raw') {
       contentState = convertFromRaw(sourceString);
     }
-    // console.log("_pasteNoStyle sourceString",sourceString);
-    // console.log("_pasteNoStyle contentState",JSON.stringify(contentState));
     let values = EditorState.createWithContent(contentState,decorator);
     this.state.editorState = values;
     this.forceUpdate();
@@ -701,7 +680,6 @@ class EditorConcist extends React.Component {
         className += ' RichEditor-hidePlaceholder';
       }
     }
-    // console.log("this.props.undoRedo",this.props.undoRedo)//https://gist.github.com/deanmcpherson/69f9962b744b273ffb64fe294ab71bc4
 
 // <Affix offsetTop={0} id="text-editor-affix">
 // </Affix>
@@ -765,18 +743,15 @@ const styleMap = {
 };
 
 function getBlockStyle(block) {
-  // console.log("getBlockStyle block",block,JSON.stringify(block))
   let type=block.getType();
   let data=block.getData();
   let text=block.getText();
-  // console.log("getBlockStyle get data",JSON.stringify(data))
   let mergedStyle="";
   switch (type) {
     case 'blockquote':
       mergedStyle= 'RichEditor-blockquote';
       break;
   }
-  // console.log("getBlockStyle mergingStyle",mergedStyle)
   if (!data.has("textAlignment")) {
     return mergedStyle;
   }
@@ -794,14 +769,11 @@ function getBlockStyle(block) {
       mergedStyle += ' RichEditor-alignment-justify';
       break;
   }
-  // console.log("getBlockStyle mergedStyle",mergedStyle)
   return mergedStyle;
 }
 
 function mediaBlockRenderer(block) {
-  // console.log("block",block); console.log("1111111block.getType() ",block.getType());
   if (block.getType() === 'atomic') {
-    // console.log("11112222block.getType() ",block.getType());
     return {component: Media, editable: false};
   }
 
@@ -813,7 +785,6 @@ const Audio = (props) => {
 };
 
 const Image = (props) => {
-  //   console.log("props",props.src);
   return <img src={props.src} className="media"/>;
 };
 
@@ -825,8 +796,6 @@ const Media = (props) => {
   const entity = Entity.get(props.block.getEntityAt(0));
   const {src} = entity.getData();
   const type = entity.getType();
-  // console.log("Media type",src);
-  // console.log("Media entity",type);
   let media;
   if (type === 'audio') {
     media = <Audio src={src}/>;

@@ -308,9 +308,7 @@ class MarkupGenerator {
         return `<a${attrString}>${content}</a>`;
       } else if (entityType != null && entityType === ENTITY_TYPE.IMAGE) {
         let attrs = DATA_TO_ATTR.hasOwnProperty(entityType) ? DATA_TO_ATTR[entityType](entityType, entity) : null;
-        // console.log("renderBlockContent attrs",attrs);
         let attrString = stringifyAttrs(attrs);
-        // console.log("renderBlockContent attrString",attrString);
         return `<img${attrString}/>`;
       }  else if (entityType != null && entityType === ENTITY_TYPE.VIDEO) {
         let attrs = DATA_TO_ATTR.hasOwnProperty(entityType) ? DATA_TO_ATTR[entityType](entityType, entity) : null;

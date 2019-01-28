@@ -45,7 +45,6 @@ export default class AudioSpan extends Component {
     //let {className} = this.props;
     const entity = Entity.get(this.props.entityKey);
     const {src} = entity.getData();
-    //console.log("styles.root: ", styles.root); className = cx(className, styles.root);
     const audioStyle = {
       verticalAlign: 'bottom',
       backgroundImage: `url("${src}")`,
@@ -67,7 +66,6 @@ export default class AudioSpan extends Component {
   }
 
   _onClick() {
-    //console.log('audio click');
   }
 
   _handleResize(event : Object, data : Object) {

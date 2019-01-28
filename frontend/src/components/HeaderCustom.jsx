@@ -1,15 +1,18 @@
 /**
- * Created by hao.cheng on 2017/4/13.
+ * Created by Jingle Chen on 2018/12/31.
  */
 import React, { Component } from 'react';
 import { Menu, Icon, Layout, Badge, Popover } from 'antd';
 import screenfull from 'screenfull';
-import { gitOauthToken, gitOauthInfo } from '../axios';
+import * as _ from 'lodash'
 import { queryString } from '../utils';
+import * as config from '../axios/config'
 import avater from '../style/imgs/b1.png';
 import SiderCustom from './SiderCustom';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
+import { withRouter, Redirect } from 'react-router-dom';
+import { bindActionCreators } from 'redux';
+import { fetchData, receiveData } from '@/action';
 const { Header } = Layout;
 const SubMenu = Menu.SubMenu;
 const MenuItemGroup = Menu.ItemGroup;
@@ -21,37 +24,6 @@ class HeaderCustom extends Component {
     };
     componentDidMount() {
         const QueryString = queryString();
-        // if (QueryString.hasOwnProperty('code')) {
-        //     console.log(QueryString);
-        //     const _user = JSON.parse(localStorage.getItem('user'));
-        //     !_user && gitOauthToken(QueryString.code).then(res => {
-        //         console.log(res);
-        //         gitOauthInfo(res.access_token).then(info => {
-        //             this.setState({
-        //                 user: info
-        //             });
-        //             localStorage.setItem('user', JSON.stringify(info));
-        //         });
-        //     });
-        //     _user && this.setState({
-        //         user: _user
-        //     });
-        // }
-        const _user = JSON.parse(localStorage.getItem('user')) || '测试';
-        if (!_user && QueryString.hasOwnProperty('code')) {
-            gitOauthToken(QueryString.code).then(res => {
-                gitOauthInfo(res.access_token).then(info => {
-                    this.setState({
-                        user: info
-                    });
-                    localStorage.setItem('user', JSON.stringify(info));
-                });
-            });
-        } else {
-            this.setState({
-                user: _user
-            });
-        }
     };
     screenFull = () => {
         if (screenfull.enabled) {
@@ -60,12 +32,31 @@ class HeaderCustom extends Component {
 
     };
     menuClick = e => {
-        console.log(e);
         e.key === 'logout' && this.logout();
     };
-    logout = () => {
-        localStorage.removeItem('user');
-        this.props.router.push('/login')
+    logout = () => {  
+        const { fetchData } = this.props
+        const user = localStorage.getItem('user')
+
+        fetchData({funcName: 'authLogout', params: {'Phone': user}, stateName: 'authStatus'})
+                .then(res => {
+                    console.log('res--->', res)
+                    if(res.data.status === 200){
+                        // this.setState({
+                        //     redirectToLogin: true,
+                        // })
+                        console.log('退出成功')
+                        window.location.href = config.PAGE_CONTEXT
+                        localStorage.removeItem('user');
+                    }
+                }).catch(err => {
+                    let errRes = err.response
+                    if(errRes && errRes.data && errRes.data.status === 'error'){
+                        // message.error(errRes.data.error)
+                    }
+                });
+        // localStorage.removeItem('user');
+        // this.props.router.push('/login')
     };
     popoverHide = () => {
         this.setState({
@@ -75,8 +66,24 @@ class HeaderCustom extends Component {
     handleVisibleChange = (visible) => {
         this.setState({ visible });
     };
+
+    hideUser = (user) => {
+        if(!_.isEmpty(user) && user.length === 11){
+            return user.substring(0,3) + '****' + user.substring(7,11)
+        }
+        return user
+    }
+
     render() {
+        const { redirectToLogin } = this.state;
         const { responsive, path } = this.props;
+
+        if(redirectToLogin){
+            return (
+                <Redirect to="/" />
+            )
+        }
+
         return (
             <Header style={{ background: '#fff', padding: 0, height: 65 }} className="custom-theme" >
                 {
@@ -109,8 +116,7 @@ class HeaderCustom extends Component {
                     */}
                     <SubMenu title={<span className="avatar"><img src={avater} alt="头像" /><i className="on bottom b-white" /></span>}>
                         <MenuItemGroup title="用户中心">
-                            <Menu.Item key="setting:1">你好 - {this.props.user.userName}</Menu.Item>
-                            <Menu.Item key="setting:2">个人信息</Menu.Item>
+                            <Menu.Item key="setting:1">你好 - {this.hideUser(localStorage.getItem('user'))}</Menu.Item>
                             <Menu.Item key="logout"><span onClick={this.logout}>退出登录</span></Menu.Item>
                         </MenuItemGroup>
                     </SubMenu>
@@ -130,5 +136,9 @@ const mapStateToProps = state => {
     const { responsive = {data: {}} } = state.httpData;
     return {responsive};
 };
+const mapDispatchToProps = dispatch => ({
+    fetchData: bindActionCreators(fetchData, dispatch),
+    receiveData: bindActionCreators(receiveData, dispatch)
+});
 
-export default withRouter(connect(mapStateToProps)(HeaderCustom));
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(HeaderCustom));
