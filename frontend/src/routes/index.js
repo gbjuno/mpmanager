@@ -12,6 +12,7 @@ import CompanyManager from '../containers/ux/CompanyManager';
 import PlaceManager from '../containers/ux/PlaceManager';
 import UserManager from '../containers/ux/UserManager';
 import SummaryManager from '../containers/ux/SummaryManager';
+import VacationManager from '../containers/ux/VacationManager';
 import PhotoStatus from '../containers/ux/PhotoStatus';
 import MenuManager from '../containers/wechat/MenuManager';
 import ArticleManager from '../containers/wechat/ArticleManager';
@@ -37,6 +38,7 @@ export default class CRouter extends Component {
                 <Route exact path="/app/ux/gs" component={CompanyManager} />
                 <Route exact path="/app/ux/dd" component={PlaceManager} />
                 <Route exact path="/app/ux/yh" component={UserManager} />
+                <Route exact path="/app/ux/jq" component={VacationManager} />
                 <Route exact path="/app/ux/tj" component={SummaryManager} />
                 <Route exact path="/app/ux/wwc" component={PhotoStatus} />
 
