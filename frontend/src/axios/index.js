@@ -125,7 +125,7 @@ export const newCompany = (company) => {
 }
 
 export const updateCompany = (company) => {
-    return axios.put(config.COMPANY_URL  + "/" + company.id, {...company}, {headers: {Accept: 'application/json'}})
+    return axios.put(config.COMPANY_URL + "/" + company.id, {...company}, {headers: {Accept: 'application/json'}})
         .then(res => res.data);
 }
 
@@ -155,7 +155,7 @@ export const newUser = (user) => {
 }
 
 export const updateUser = (user) => {
-    return axios.put(config.USER_URL  + "/" + user.id, {...user}, {headers: {Accept: 'application/json'}})
+    return axios.put(config.USER_URL + "/" + user.id, {...user}, {headers: {Accept: 'application/json'}})
         .then(res => res.data);
 }
 
@@ -180,7 +180,7 @@ export const newPlace = (place) => {
 }
 
 export const updatePlace = (place) => {
-    return axios.put(config.PLACE_URL  + "/" + place.id, {...place}, {headers: {Accept: 'application/json'}})
+    return axios.put(config.PLACE_URL + "/" + place.id, {...place}, {headers: {Accept: 'application/json'}})
         .then(res => res.data);
 }
 
@@ -194,6 +194,27 @@ export const searchPlaces = (filter={}) => {
     let companyId = filter.companyId
     let url = config.SEARCH_PLACE_URL({companyId})
     return axios.get(url ,{}).then(res => res.data);
+}
+
+// 假期管理API
+export const fetchGlobalVacations = (filter={}) => {
+    let url = config.GLOBAL_VACATION_URL({})
+    return axios.get(url, {}).then(res => res.data).catch(err => {});
+}
+
+export const createOrUpdateGlobalVacations = (vacation) => {
+    let url = config.GLOBAL_VACATION_URL({})
+    return axios.post(url, {...vacation}, {headers: {Accept: 'application/json'}}).then(res => res.data);
+}
+
+export const fetchCompanyVacations = (filter={}) => {
+    let url = config.COMPANY_VACATION_URL(filter)
+    return axios.get(url, {}).then(res => res.data).catch(err => {});
+}
+
+export const createOrUpdateCompanyVacations = (vacation) => {
+    let url = config.SET_COMPANY_VACATION_URL()
+    return axios.post(url, {...vacation}, {headers: {Accept: 'application/json'}}).then(res => res.data);
 }
 
 // 地点类型管理API

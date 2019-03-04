@@ -76,8 +76,8 @@ class SiderCustom extends Component {
                     <Menu.Item key="/app/ux/gs"><Link to={'/app/ux/gs'}><Icon type="home" /><span className="nav-text">公司管理</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/yh"><Link to={'/app/ux/yh'}><Icon type="user" /><span className="nav-text">用户管理</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/dd"><Link to={'/app/ux/dd'}><Icon type="environment-o" /><span className="nav-text">地点管理</span></Link></Menu.Item>
-                    <Menu.Item key="/app/ux/jq"><Link to={'/app/ux/jq'}><Icon type="environment-o" /><span className="nav-text">假期管理</span></Link></Menu.Item>
-                    <Menu.Item key="/app/ux/wwc"><Link to={'/app/ux/wwc'}><Icon type="line-chart" /><span className="nav-text">完成率统计</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/jq"><Link to={'/app/ux/jq'}><Icon type="schedule" /><span className="nav-text">假期管理</span></Link></Menu.Item>
+                    <Menu.Item key="/app/ux/wwc"><Link to={'/app/ux/wwc'}><Icon type="bar-chart" /><span className="nav-text">完成率统计</span></Link></Menu.Item>
                     <Menu.Item key="/app/ux/tj"><Link to={'/app/ux/tj'}><Icon type="line-chart" /><span className="nav-text">统计报表</span></Link></Menu.Item>
                     {/* <SubMenu
                         key="/app/wechat"
