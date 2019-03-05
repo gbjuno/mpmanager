@@ -56,8 +56,10 @@ export const PICTURE_URL = (filter) => SERVER_URL + `/monitor_place?day=${filter
 export const UPDATE_PICTURE_URL = (filter) => SERVER_URL + `/picture/${filter.id}`
 
 export const GLOBAL_VACATION_URL = () => SERVER_URL + `/global_relax_period`
-export const COMPANY_VACATION_URL = (filter) => SERVER_URL + `/company_relax_period/${filter.companyId}`
+export const DELETE_GLOBAL_VACATION_URL = (filter) => SERVER_URL + `/global_relax_period/${filter.periodId}`
+export const COMPANY_VACATION_URL = (filter) => SERVER_URL + `/company_relax_period?company_id=${filter.companyId}`
 export const SET_COMPANY_VACATION_URL = () => SERVER_URL + `/company_relax_period`
+export const DELETE_COMPANY_VACATION_URL = (filter) => SERVER_URL + `/company_relax_period/${filter.periodId}`
 
 
 //上传下载公司地址

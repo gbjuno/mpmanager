@@ -39,7 +39,7 @@ class VacationManager extends React.Component {
         loading: false,
         companiesData: [],
         selectedCompany: '',
-        selectedCompanyId: '',
+        selectedCompanyId: 0,
         selectedRecord:{},
         currentPage: 1,
         visible: false,
@@ -116,8 +116,7 @@ class VacationManager extends React.Component {
             return
         }
         this.setState({
-            selectedCompanyId: record.id,
-            selectedCompany: record.name,
+            selectedPeriodId: record.id,
             selectedRowKeys: selectedRowKeys.length > 0 && selectedRowKeys[0] === record.id ? [] : [record.id],
             selectedRecord: selectedRowKeys.length > 0 && selectedRowKeys[0] === record.id ? {} : record,
         }, () => {
@@ -167,12 +166,20 @@ class VacationManager extends React.Component {
 
     dateCellRender = (moment) => {
         const { selectedVacationArray } = this.state
-        const { globalVacations } = this.props
+        const { globalVacations, companyVacations } = this.props
         if(this.isGlobalVactionRange(globalVacations, moment)){
             return (
                 <div style={{textAlign: 'center'}}>
                     <img alt="假期" src={vacon} />
                     <div>假期</div>
+                </div>
+            )
+        }
+        if(this.isCompanyVactionRange(companyVacations, moment)){
+            return (
+                <div style={{textAlign: 'center'}}>
+                    <img alt="公司假期" src={vaccom} />
+                    <div>公司假期</div>
                 </div>
             )
         }
@@ -290,11 +297,62 @@ class VacationManager extends React.Component {
         }
     }
 
+    cancelVacation = () => {
+        const { selectedPeriodId, selectedCompanyId } = this.state
+        const { fetchData } = this.props
+
+        if(selectedCompanyId === 0) {
+            fetchData({funcName: 'deleteGlobalVacations', params: {periodId: selectedPeriodId}, stateName: 'deleteGlobalVacationsStatus'})
+                .then(res => {
+                    message.success('删除成功')
+                    this.fetchGlobalVacations() 
+                    this.setState({
+                        selectedVacationArray: [],
+                    })
+                }).catch(err => {
+                    let errRes = err.response
+                    if(errRes.data && errRes.data.status === 'error'){
+                        message.error(errRes.data.error)
+                    }
+                });
+        }else{
+            fetchData({funcName: 'deleteCompanyVacations', params: {periodId: selectedPeriodId}, stateName: 'deleteCompanyVacationsStatus'})
+                .then(res => {
+                    message.success('删除成功')
+                    this.fetchCompanyVacations(selectedCompanyId);
+                    this.setState({
+                        selectedVacationArray: [],
+                    })
+                }).catch(err => {
+                    let errRes = err.response
+                    if(errRes.data && errRes.data.status === 'error'){
+                        message.error(errRes.data.error)
+                    }
+                });
+        }
+    }
+
     isGlobalVactionRange = (globalVacations, moment) => {
         let vacations = []
         if (!_.isEmpty(globalVacations) && !_.isEmpty(globalVacations.data)
             && !_.isEmpty(globalVacations.data.global_relax_periods)) {
             vacations = globalVacations.data.global_relax_periods;
+        }
+        let isVacation = false;
+        vacations.forEach(vacation => {
+            if (this.isInVaction(moment, this.convertToMoment(vacation.start_at), this.convertToMoment(vacation.end_at))) {
+                isVacation = true;
+                return;
+            }
+        });
+        return isVacation;
+    }
+
+    isCompanyVactionRange = (companyVacations, moment) => {
+        let vacations = []
+        if (!_.isEmpty(companyVacations) && !_.isEmpty(companyVacations.data)
+            && !_.isEmpty(companyVacations.data.company_relax_periods)) {
+            vacations = companyVacations.data.company_relax_periods;
         }
         let isVacation = false;
         vacations.forEach(vacation => {
@@ -315,8 +373,10 @@ class VacationManager extends React.Component {
         }
         this.setState({
             selectedCompanyId: value,
+            selectedPeriodId: '',
+            selectedRowKeys: [],
+            selectedRecord: [],
         })
-        console.log('renzhen ai ziji bingbushi zisi', value, companyName)
     }
 
     clearCompanyVacations = () => {
@@ -324,22 +384,44 @@ class VacationManager extends React.Component {
     }
 
     render() {
-        const { loading, selectedRowKeys, selectedVacationArray, selectedCompanyId } = this.state;
-        const { companiesData, globalVacations } = this.props
+        const { loading, selectedRowKeys, selectedVacationArray, selectedCompanyId, selectedPeriodId } = this.state;
+        const { companiesData, globalVacations, companyVacations } = this.props
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
             type: 'radio',
         };
 
-        console.log('globalVacations llllll', globalVacations)
-        console.log('selectedCompanyId llllll', selectedCompanyId)
-
+        const vacationColumns = [{
+            title: '假期从',
+            dataIndex: 'start_at',
+            width: '50%',
+            render: (text, record) => {
+                text = moment(new Date(text)).format(CONSTANTS.DATE_DISPLAY_FORMAT)
+                return <a>{text}</a>
+            }
+        },
+        {
+            title: '假期至',
+            dataIndex: 'end_at',
+            width: '50%',
+            render: (text, record) => {
+                text = moment(new Date(text)).format(CONSTANTS.DATE_DISPLAY_FORMAT)
+                return <a>{text}</a>
+            }
+        }];
         
-        let companiesWrappedData = []
-        if (companiesData.data && companiesData.data.companies) {
-            companiesWrappedData = [...companiesData.data.companies.map(item => { item.key = item.id; return item })]
+        let vacationsWrappedData = []
+        if(selectedCompanyId === 0){
+            if (globalVacations.data && globalVacations.data.global_relax_periods) {
+                vacationsWrappedData = [...globalVacations.data.global_relax_periods.map(item => { item.key = item.id; return item })]
+            }
+        }else{
+            if (companyVacations.data && companyVacations.data.company_relax_periods) {
+                vacationsWrappedData = [...companyVacations.data.company_relax_periods.map(item => { item.key = item.id; return item })]
+            }
         }
+        
 
         let options = [];
 
@@ -350,6 +432,7 @@ class VacationManager extends React.Component {
                 disabled: true,
             }
         }
+        const hasSelectedVacation = selectedRowKeys.length > 0 && selectedRowKeys[0] !== -1
 
 
         return (
@@ -364,6 +447,19 @@ class VacationManager extends React.Component {
                 </Col>
                 <Col className="gutter-row" md={6}>
                     <Button type="primary" {...disabled} onClick={this.setVacation}>设置假期</Button>
+                    <Button type="primary" disabled={!hasSelectedVacation} onClick={this.cancelVacation}>删除假期</Button>
+                    <Table rowSelection={rowSelection} columns={vacationColumns} dataSource={vacationsWrappedData}
+                        size="small"
+                        style={{paddingTop: 10}}
+                        onRow={(record) => ({
+                            onClick: () => this.onRowClick(record),
+                        })}
+                        pagination={{
+                            hideOnSinglePage: true,
+                            onChange: this.handlePageChange,
+                            defaultCurrent: 1,
+                        }}
+                    />
                 </Col>
                 </Row>
             </div>
@@ -374,12 +470,10 @@ class VacationManager extends React.Component {
 const mapStateToProps = state => {
     const {
         companiesData = { data: { count: 0, towns: [] } },
-        townsData = { data: { count: 0, towns: [] } },
-        countriesC2Data = { data: { count: 0, countries: [] } },
-        usersInCompany = { data: { count: 0, users: [] } },
+        companyVacations = { data: { count: 0, users: [] } },
         globalVacations = { data: { count: 0, monitor_places: [] } },
     } = state.httpData;
-    return { companiesData, townsData, countriesC2Data, usersInCompany, globalVacations };
+    return { companiesData, companyVacations, globalVacations };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),

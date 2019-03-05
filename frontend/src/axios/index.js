@@ -207,6 +207,11 @@ export const createOrUpdateGlobalVacations = (vacation) => {
     return axios.post(url, {...vacation}, {headers: {Accept: 'application/json'}}).then(res => res.data);
 }
 
+export const deleteGlobalVacations = (filter) => {
+    let url = config.DELETE_GLOBAL_VACATION_URL(filter)
+    return axios.delete(url).then(res => res.data);
+}
+
 export const fetchCompanyVacations = (filter={}) => {
     let url = config.COMPANY_VACATION_URL(filter)
     return axios.get(url, {}).then(res => res.data).catch(err => {});
@@ -215,6 +220,11 @@ export const fetchCompanyVacations = (filter={}) => {
 export const createOrUpdateCompanyVacations = (vacation) => {
     let url = config.SET_COMPANY_VACATION_URL()
     return axios.post(url, {...vacation}, {headers: {Accept: 'application/json'}}).then(res => res.data);
+}
+
+export const deleteCompanyVacations = (filter) => {
+    let url = config.DELETE_COMPANY_VACATION_URL(filter)
+    return axios.delete(url).then(res => res.data);
 }
 
 // 地点类型管理API

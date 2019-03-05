@@ -132,7 +132,7 @@ class VacationSearch extends Component {
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('company', {
-                        initialValue: companiesData[0]? companiesData[0].id:'',
+                        initialValue: 0,
                         rule: [
                             {require: true},
                         ]
