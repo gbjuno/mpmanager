@@ -13,6 +13,7 @@ import { fetchData, receiveData } from '../../action';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import EditableCell from '../../components/cells/EditableCell';
 import PhotoStatusSearch from '../search/PhotoStatusSearch';
+import PhotoStatusDownloader from '../search/PhotoStatusDownloader';
 import * as config from '../../axios/config';
 import { Bar } from '../../components/Charts';
 import DataSet from "@antv/data-set";
@@ -114,32 +115,16 @@ class PhotoStatus extends React.Component {
         }, () => this.fetchData())
     }
 
-    uploadProps = () => {
-        const props =
-            {
-                name: 'uploadFile',
-                action: config.COMPANY_UPLOAD_URL, //TODO: 换成上传地址
-                showUploadList: false,
-                onChange(info) {
-                    if (info.file.status !== 'uploading') {
-                    }
-                    if (info.file.status === 'done') {
-                        message.success(`${info.file.name}上传成功`);
-                    } else if (info.file.status === 'error') {
-                        message.error(`${info.file.name}上传失败`);
-                    }
-                },
-            }
-        return props
-    }
 
-    downloadFile = () => {
-        let url = config.COMPANY_DOWNLOAD_URL; //TODO: 换成下载公司数据url,及相应的文件格式
+    downloadFile = (year, month) => {
+
+        let url = config.COMPANY_REPORT_EXPORT_URL(year, month); 
         const x = new XMLHttpRequest;
         x.open("GET", url, true);
         x.responseType = "blob";
+        x.withCredentials = true;
         x.onload = function (e) {
-            download(x.response, "报表基础数据.xlsx", "application/octet-stream")
+            download(x.response, "完成情况报表.xlsx", "application/octet-stream")
         }
         x.send();
     }
@@ -263,6 +248,7 @@ class PhotoStatus extends React.Component {
             <div className="gutter-example">
                 <BreadcrumbCustom first="完成率统计" />
                 <PhotoStatusSearch fetchData={fetchData} />
+                <PhotoStatusDownloader fetchData={fetchData} exportReport={this.downloadFile}/>
                 <Row gutter={16}>
                 <Col className="gutter-row" md={14}>
                     <Card bordered={false}

@@ -66,6 +66,18 @@ export const DELETE_COMPANY_VACATION_URL = (filter) => SERVER_URL + `/company_re
 export const COMPANY_DOWNLOAD_URL = SERVER_ROOT + '/backend/excel'
 export const COMPANY_UPLOAD_URL = SERVER_ROOT + '/backend/excel'
 
+// 完成情况报表
+export const COMPANY_REPORT_EXPORT_URL = (year, month) => {
+    let BASE = SERVER_URL + `/company/?output=excel`
+    if(year !== undefined){
+        BASE = BASE + `&year=${year}`
+        if(month !== undefined){
+            BASE = BASE + `&month=${month}`
+        }
+    } 
+    return BASE
+}
+
 //微信相关的API路径
 export const WECHAT_MENU_URL = SERVER_URL +'/menu'
 export const WECHAT_ARTICLE_URL = SERVER_URL +'/chapter'
