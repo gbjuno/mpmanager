@@ -38,11 +38,11 @@ class VacationSearch extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        
+
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 let companyId = values.company
-                if(companyId === undefined) {
+                if (companyId === undefined) {
                     message.error('请选择公司')
                     return
                 }
@@ -53,36 +53,33 @@ class VacationSearch extends Component {
 
     searchVacation = (companyId) => {
         const { fetchData, onSearch } = this.props
-        fetchData({funcName: 'searchVacations', params: {companyId}, 
-            stateName: 'vacationsData'})
+        fetchData({
+            funcName: 'searchVacations', params: { companyId },
+            stateName: 'vacationsData'
+        })
             .then(res => {
-                if(onSearch){
+                if (onSearch) {
                     onSearch()
                 }
             })
     }
 
-
-
     onCompanySelect = (value, option) => {
         this.setState({
             isFirst: false,
         })
-        if(this.props.onChange){
+        if (this.props.onChange) {
             let companyName = option.props.children
             this.props.onChange(value, companyName)
         }
     }
 
-
-
-
     fetchCompanyList = () => {
         const { fetchData } = this.props
         const { isFirst } = this.state
 
-        fetchData({funcName: 'fetchCompanies', stateName: 'companiesData', params: {}}).then(res => {
-            if(res === undefined || res.data === undefined || res.data.companies === undefined) return
+        fetchData({ funcName: 'fetchCompanies', stateName: 'companiesData', params: {} }).then(res => {
+            if (res === undefined || res.data === undefined || res.data.companies === undefined) return
             this.setState({
                 companiesData: [...res.data.companies.map(val => {
                     val.key = val.id;
@@ -90,7 +87,7 @@ class VacationSearch extends Component {
                 })],
                 loading: false,
             }, () => {
-                if(isFirst){
+                if (isFirst) {
                     // this.searchPlace(res.data.companies[0].id)
                     // if(this.props.onChange){
                     //     this.props.onChange(res.data.companies[0].id, res.data.companies[0].name)
@@ -101,9 +98,9 @@ class VacationSearch extends Component {
     }
 
 
-    getOptions = ( data=[] ) => {
+    getOptions = (data = []) => {
 
-        if(data && data.length > 0 && data[0].key !== 0){
+        if (data && data.length > 0 && data[0].key !== 0) {
             let startElement = {
                 key: 0,
                 id: 0,
@@ -127,23 +124,23 @@ class VacationSearch extends Component {
         return (
             <Form layout="inline" style={style} onSubmit={this.handleSubmit}>
                 <FormItem
-                    style={{paddingBottom: 13}}
+                    style={{ paddingBottom: 13 }}
                     validateStatus={fileNameError ? 'error' : ''}
                     help={fileNameError || ''}
                 >
                     {getFieldDecorator('company', {
                         initialValue: 0,
                         rule: [
-                            {require: true},
+                            { require: true },
                         ]
                     })(
                         <Select
-                        showSearch
-                        style={{ width: 300 }}
-                        placeholder="请选择公司"
-                        optionFilterProp="children"
-                        onSelect={this.onCompanySelect}
-                        filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                            showSearch
+                            style={{ width: 300 }}
+                            placeholder="请选择公司"
+                            optionFilterProp="children"
+                            onSelect={this.onCompanySelect}
+                            filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                         >
                             {this.getOptions(companiesData)}
                         </Select>
@@ -166,7 +163,7 @@ class VacationSearch extends Component {
 
 const mapStateToProps = state => {
     const { searchFilter } = state
-    return { ...state.httpData, filter: searchFilter};
+    return { ...state.httpData, filter: searchFilter };
 };
 const mapDispatchToProps = dispatch => ({
     receiveData: bindActionCreators(receiveData, dispatch),

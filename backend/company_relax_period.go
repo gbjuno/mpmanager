@@ -22,7 +22,8 @@ func (c CompanyRelaxPeriod) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path(RESTAPIVERSION + "/company_relax_period").Consumes(restful.MIME_JSON).Produces(restful.MIME_JSON).Filter(PasswordAuthenticate)
 	ws.Route(ws.GET("").To(c.findCompanyRelaxPeriod))
-	ws.Route(ws.GET("/?company_id={companyID}&pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompanyRelaxPeriod))
+	ws.Route(ws.GET("?company_id={company_id}&pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompanyRelaxPeriod))
+	ws.Route(ws.GET("/?company_id={company_id}&pageNo={pageNo}&pageSize={pageSize}&order={order}").To(c.findCompanyRelaxPeriod))
 	ws.Route(ws.GET("/{company_relax_period_id}").To(c.findCompanyRelaxPeriod))
 	ws.Route(ws.POST("").To(c.createCompanyRelaxPeriod))
 	ws.Route(ws.PUT("/{company_relax_period_id}").To(c.updateCompanyRelaxPeriod))
@@ -34,7 +35,7 @@ func (c CompanyRelaxPeriod) findCompanyRelaxPeriod(request *restful.Request, res
 	prefix := fmt.Sprintf("[%s] [findCompanyRelaxPeriod]", request.Request.RemoteAddr)
 	glog.Infof("%s GET %s", prefix, request.Request.URL)
 	company_relax_period_id := request.PathParameter("company_relax_period_id")
-	companyID := request.QueryParameter("companyID")
+	companyID := request.QueryParameter("company_id")
 	pageSize := request.QueryParameter("pageSize")
 	pageNo := request.QueryParameter("pageNo")
 	order := request.QueryParameter("order")
@@ -55,10 +56,11 @@ func (c CompanyRelaxPeriod) findCompanyRelaxPeriod(request *restful.Request, res
 
 	company_relax_period_relax_periods := make([]CompanyRelaxPeriod, 0)
 	count := 0
+	glog.Infof("%s find company_relax_period with companyID %s", prefix, companyID)
 	if companyID != "" {
-	        searchCompanyRelaxPeriod = searchCompanyRelaxPeriod.Where("company_id = ?", companyID)
+		searchCompanyRelaxPeriod = searchCompanyRelaxPeriod.Where("company_id = ?", companyID)
 	}
-        searchCompanyRelaxPeriod.Find(&company_relax_period_relax_periods).Count(&count)
+	searchCompanyRelaxPeriod.Find(&company_relax_period_relax_periods).Count(&count)
 	searchCompanyRelaxPeriod = searchCompanyRelaxPeriod.Order("id " + order)
 
 	if company_relax_period_id == "" {

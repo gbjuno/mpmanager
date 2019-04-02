@@ -40,7 +40,7 @@ class VacationManager extends React.Component {
         companiesData: [],
         selectedCompany: '',
         selectedCompanyId: 0,
-        selectedRecord:{},
+        selectedRecord: {},
         currentPage: 1,
         visible: false,
         editable: false,
@@ -48,7 +48,7 @@ class VacationManager extends React.Component {
         pageSize: 10,
         total: 0,
         expandedRowKeys: [],
-        selectedVacationArray:[],
+        selectedVacationArray: [],
     };
     componentDidMount = () => {
         this.start();
@@ -80,7 +80,8 @@ class VacationManager extends React.Component {
     fetchCompanyVacations = (companyId) => {
         const { fetchData } = this.props
         fetchData({
-            funcName: 'fetchCompanyVacations', params: { companyId
+            funcName: 'fetchCompanyVacations', params: {
+                companyId
             }, stateName: 'companyVacations'
         }).then(res => {
             if (res === undefined || res.data === undefined || res.data.companies === undefined) return
@@ -140,21 +141,21 @@ class VacationManager extends React.Component {
     onSelect = (moment) => {
         const { selectedVacationArray } = this.state
         const { globalVacations } = this.props
-        if(this.isGlobalVactionRange(globalVacations, moment)){
+        if (this.isGlobalVactionRange(globalVacations, moment)) {
             return
         }
-        if(selectedVacationArray.length < 1){
+        if (selectedVacationArray.length < 1) {
             selectedVacationArray.push(moment)
-        }else if(selectedVacationArray.length < 2){
-            if(this.compareDate(selectedVacationArray[0], moment) === 0){
+        } else if (selectedVacationArray.length < 2) {
+            if (this.compareDate(selectedVacationArray[0], moment) === 0) {
                 selectedVacationArray.splice(0, 1)
-            }else {
+            } else {
                 selectedVacationArray.push(moment)
             }
-        }else{
-            if(this.compareDate(selectedVacationArray[0], moment) === 0){
+        } else {
+            if (this.compareDate(selectedVacationArray[0], moment) === 0) {
                 selectedVacationArray.splice(1, 1)
-            }else{
+            } else {
                 selectedVacationArray.splice(1, 1)
                 selectedVacationArray.push(moment)
             }
@@ -167,56 +168,56 @@ class VacationManager extends React.Component {
     dateCellRender = (moment) => {
         const { selectedVacationArray } = this.state
         const { globalVacations, companyVacations } = this.props
-        if(this.isGlobalVactionRange(globalVacations, moment)){
+        if (this.isGlobalVactionRange(globalVacations, moment)) {
             return (
-                <div style={{textAlign: 'center'}}>
+                <div style={{ textAlign: 'center' }}>
                     <img alt="假期" src={vacon} />
                     <div>假期</div>
                 </div>
             )
         }
-        if(this.isCompanyVactionRange(companyVacations, moment)){
+        if (this.isCompanyVactionRange(companyVacations, moment)) {
             return (
-                <div style={{textAlign: 'center'}}>
+                <div style={{ textAlign: 'center' }}>
                     <img alt="公司假期" src={vaccom} />
                     <div>公司假期</div>
                 </div>
             )
         }
-        if(selectedVacationArray.length < 1){
-           
+        if (selectedVacationArray.length < 1) {
+
             return
-        } else if(selectedVacationArray.length < 2){
-            if( this.compareDate(selectedVacationArray[0] ,moment) === 0){
+        } else if (selectedVacationArray.length < 2) {
+            if (this.compareDate(selectedVacationArray[0], moment) === 0) {
                 return (
-                    <div style={{textAlign: 'center'}}>
+                    <div style={{ textAlign: 'center' }}>
                         <img alt="假期" src={vacoff} />
                         <div>设为假期</div>
                     </div>
                 )
             }
         } else {
-            if( this.compareDate(selectedVacationArray[0], selectedVacationArray[1]) > 0
+            if (this.compareDate(selectedVacationArray[0], selectedVacationArray[1]) > 0
                 && this.compareDate(selectedVacationArray[0], moment) >= 0
-                && this.compareDate(selectedVacationArray[1], moment) <= 0){
+                && this.compareDate(selectedVacationArray[1], moment) <= 0) {
                 return (
-                    <div style={{textAlign: 'center'}}>
+                    <div style={{ textAlign: 'center' }}>
                         <img alt="假期" src={vacoff} />
                         <div>设为假期</div>
                     </div>
                 )
-            } else if( this.compareDate(selectedVacationArray[0], selectedVacationArray[1]) < 0
+            } else if (this.compareDate(selectedVacationArray[0], selectedVacationArray[1]) < 0
                 && this.compareDate(selectedVacationArray[0], moment) <= 0
-                && this.compareDate(selectedVacationArray[1], moment) >= 0){
+                && this.compareDate(selectedVacationArray[1], moment) >= 0) {
                 return (
-                    <div style={{textAlign: 'center'}}>
+                    <div style={{ textAlign: 'center' }}>
                         <img alt="假期" src={vacoff} />
                         <div>设为假期</div>
                     </div>
                 )
             }
         }
-        
+
     }
 
     isInVaction = (moment, begin, end) => {
@@ -242,15 +243,15 @@ class VacationManager extends React.Component {
     setVacation = () => {
         const { selectedVacationArray, selectedCompanyId } = this.state
         const { fetchData } = this.props
-        
+
         let vacation = {}
-        if(selectedVacationArray.length === 1){
-            vacation ={
+        if (selectedVacationArray.length === 1) {
+            vacation = {
                 start_at: this.formatDateEntry(selectedVacationArray[0]),
                 end_at: this.formatDateEntry(selectedVacationArray[0]),
             }
-        } else if(selectedVacationArray.length === 2){
-            if(this.compareDate(selectedVacationArray[0], selectedVacationArray[1]) > 0){
+        } else if (selectedVacationArray.length === 2) {
+            if (this.compareDate(selectedVacationArray[0], selectedVacationArray[1]) > 0) {
                 vacation = {
                     start_at: this.formatDateEntry(selectedVacationArray[0]),
                     end_at: this.formatDateEntry(selectedVacationArray[1]),
@@ -262,38 +263,38 @@ class VacationManager extends React.Component {
                 }
             }
         }
-        if(selectedCompanyId && selectedCompanyId !== 0){
-            vacation ={
+        if (selectedCompanyId && selectedCompanyId !== 0) {
+            vacation = {
                 ...vacation,
                 company_id: selectedCompanyId,
             }
-            fetchData({funcName: 'createOrUpdateCompanyVacations', params: vacation, stateName: 'createOrUpdateCompanyVacationsStatus'})
-            .then(res => {
-                message.success('设置成功')
-                this.fetchCompanyVacations() 
-                this.setState({
-                    selectedVacationArray: [],
-                })
-            }).catch(err => {
-                let errRes = err.response
-                if(errRes.data && errRes.data.status === 'error'){
-                    message.error(errRes.data.error)
-                }
-            });
+            fetchData({ funcName: 'createOrUpdateCompanyVacations', params: vacation, stateName: 'createOrUpdateCompanyVacationsStatus' })
+                .then(res => {
+                    message.success('设置成功')
+                    this.fetchCompanyVacations()
+                    this.setState({
+                        selectedVacationArray: [],
+                    })
+                }).catch(err => {
+                    let errRes = err.response
+                    if (errRes.data && errRes.data.status === 'error') {
+                        message.error(errRes.data.error)
+                    }
+                });
         } else {
-            fetchData({funcName: 'createOrUpdateGlobalVacations', params: vacation, stateName: 'createOrUpdateGlobalVacationsStatus'})
-            .then(res => {
-                message.success('设置成功')
-                this.fetchGlobalVacations() 
-                this.setState({
-                    selectedVacationArray: [],
-                })
-            }).catch(err => {
-                let errRes = err.response
-                if(errRes.data && errRes.data.status === 'error'){
-                    message.error(errRes.data.error)
-                }
-            });
+            fetchData({ funcName: 'createOrUpdateGlobalVacations', params: vacation, stateName: 'createOrUpdateGlobalVacationsStatus' })
+                .then(res => {
+                    message.success('设置成功')
+                    this.fetchGlobalVacations()
+                    this.setState({
+                        selectedVacationArray: [],
+                    })
+                }).catch(err => {
+                    let errRes = err.response
+                    if (errRes.data && errRes.data.status === 'error') {
+                        message.error(errRes.data.error)
+                    }
+                });
         }
     }
 
@@ -301,22 +302,22 @@ class VacationManager extends React.Component {
         const { selectedPeriodId, selectedCompanyId } = this.state
         const { fetchData } = this.props
 
-        if(selectedCompanyId === 0) {
-            fetchData({funcName: 'deleteGlobalVacations', params: {periodId: selectedPeriodId}, stateName: 'deleteGlobalVacationsStatus'})
+        if (selectedCompanyId === 0) {
+            fetchData({ funcName: 'deleteGlobalVacations', params: { periodId: selectedPeriodId }, stateName: 'deleteGlobalVacationsStatus' })
                 .then(res => {
                     message.success('删除成功')
-                    this.fetchGlobalVacations() 
+                    this.fetchGlobalVacations()
                     this.setState({
                         selectedVacationArray: [],
                     })
                 }).catch(err => {
                     let errRes = err.response
-                    if(errRes.data && errRes.data.status === 'error'){
+                    if (errRes.data && errRes.data.status === 'error') {
                         message.error(errRes.data.error)
                     }
                 });
-        }else{
-            fetchData({funcName: 'deleteCompanyVacations', params: {periodId: selectedPeriodId}, stateName: 'deleteCompanyVacationsStatus'})
+        } else {
+            fetchData({ funcName: 'deleteCompanyVacations', params: { periodId: selectedPeriodId }, stateName: 'deleteCompanyVacationsStatus' })
                 .then(res => {
                     message.success('删除成功')
                     this.fetchCompanyVacations(selectedCompanyId);
@@ -325,7 +326,7 @@ class VacationManager extends React.Component {
                     })
                 }).catch(err => {
                     let errRes = err.response
-                    if(errRes.data && errRes.data.status === 'error'){
+                    if (errRes.data && errRes.data.status === 'error') {
                         message.error(errRes.data.error)
                     }
                 });
@@ -365,10 +366,10 @@ class VacationManager extends React.Component {
     }
 
     onCompanyChange = (value, companyName) => {
-
-        if(value === 0){
+        if (value === 0) {
             this.clearCompanyVacations()
-        }else {
+            this.fetchGlobalVacations()
+        } else {
             this.fetchCompanyVacations(value)
         }
         this.setState({
@@ -380,7 +381,7 @@ class VacationManager extends React.Component {
     }
 
     clearCompanyVacations = () => {
-
+        this.props.companyVacations.data.company_relax_periods = []
     }
 
     render() {
@@ -410,24 +411,24 @@ class VacationManager extends React.Component {
                 return <a>{text}</a>
             }
         }];
-        
+
         let vacationsWrappedData = []
-        if(selectedCompanyId === 0){
+        if (selectedCompanyId === 0) {
             if (globalVacations.data && globalVacations.data.global_relax_periods) {
                 vacationsWrappedData = [...globalVacations.data.global_relax_periods.map(item => { item.key = item.id; return item })]
             }
-        }else{
+        } else {
             if (companyVacations.data && companyVacations.data.company_relax_periods) {
                 vacationsWrappedData = [...companyVacations.data.company_relax_periods.map(item => { item.key = item.id; return item })]
             }
         }
-        
+
 
         let options = [];
 
         const hasSelected = (selectedVacationArray.length > 0)
         let disabled = {}
-        if(!hasSelected){
+        if (!hasSelected) {
             disabled = {
                 disabled: true,
             }
@@ -440,27 +441,27 @@ class VacationManager extends React.Component {
                 <BreadcrumbCustom first="假期管理" />
                 <VacationSearch fetchData={fetchData} onChange={this.onCompanyChange} />
                 <Row gutter={16}>
-                <Col className="gutter-row" md={14}>
-                <LocaleProvider locale={zhCN}>
-                    <Calendar fullscreen onPanelChange={this.onPanelChange} onSelect={this.onSelect} dateCellRender={this.dateCellRender} />
-                </LocaleProvider>
-                </Col>
-                <Col className="gutter-row" md={6}>
-                    <Button type="primary" {...disabled} onClick={this.setVacation}>设置假期</Button>
-                    <Button type="primary" disabled={!hasSelectedVacation} onClick={this.cancelVacation}>删除假期</Button>
-                    <Table rowSelection={rowSelection} columns={vacationColumns} dataSource={vacationsWrappedData}
-                        size="small"
-                        style={{paddingTop: 10}}
-                        onRow={(record) => ({
-                            onClick: () => this.onRowClick(record),
-                        })}
-                        pagination={{
-                            hideOnSinglePage: true,
-                            onChange: this.handlePageChange,
-                            defaultCurrent: 1,
-                        }}
-                    />
-                </Col>
+                    <Col className="gutter-row" md={14}>
+                        <LocaleProvider locale={zhCN}>
+                            <Calendar fullscreen onPanelChange={this.onPanelChange} onSelect={this.onSelect} dateCellRender={this.dateCellRender} />
+                        </LocaleProvider>
+                    </Col>
+                    <Col className="gutter-row" md={6}>
+                        <Button type="primary" {...disabled} onClick={this.setVacation}>设置假期</Button>
+                        <Button type="primary" disabled={!hasSelectedVacation} onClick={this.cancelVacation}>删除假期</Button>
+                        <Table rowSelection={rowSelection} columns={vacationColumns} dataSource={vacationsWrappedData}
+                            size="small"
+                            style={{ paddingTop: 10 }}
+                            onRow={(record) => ({
+                                onClick: () => this.onRowClick(record),
+                            })}
+                            pagination={{
+                                hideOnSinglePage: true,
+                                onChange: this.handlePageChange,
+                                defaultCurrent: 1,
+                            }}
+                        />
+                    </Col>
                 </Row>
             </div>
         );
