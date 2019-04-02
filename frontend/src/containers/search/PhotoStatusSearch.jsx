@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import * as _ from 'lodash'
 import moment from 'moment';
-import { Form, Icon, Input, Button, Select, DatePicker } from 'antd';
+import { Form, Icon, Input, Button, Select, DatePicker, message } from 'antd';
 import { fetchData, receiveData } from '../../action';
 
 const FormItem = Form.Item;
@@ -20,7 +20,7 @@ function hasErrors(fieldsError) {
     return Object.keys(fieldsError).some(field => fieldsError[field]);
 }
 
-class CompanySearch extends Component {
+class PhotoStatusSearch extends Component {
 
     state = {
         townsData: [],
@@ -43,6 +43,16 @@ class CompanySearch extends Component {
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 const { fetchData } = this.props
+                if(_.toString(values.town) === '0'){
+                    fetchData({
+                        funcName: 'fetchCompanies', params: {
+                        }, stateName: 'companiesData'
+                    })
+                }
+                if(_.isEmpty(values.country)){
+                    message.info('请选择村')
+                    return
+                }
                 fetchData({funcName: 'fetchCompaniesByCountryId', params: { 
                     countryId: values.country}, 
                     stateName: 'companiesData'})
@@ -50,17 +60,20 @@ class CompanySearch extends Component {
         });
     };
 
-    onDateChange = (date, dateString) => {
-        const { searchPicture } = this.props
-        if (date === undefined || date === null) return
-        
-    }
 
     onTownChange = (value) => {
         const { form } = this.props
-        this.setState({
-            selectedTownId: value,
-        },() => this.fetchCountryList(value))
+        if(value !== '0') {
+            this.setState({
+                selectedTownId: value,
+            },() => {
+                this.fetchCountryList(value)
+            })
+        }else {
+            this.setState({
+                countriesData: [],
+            })
+        }
         form.setFieldsValue({
             country: undefined,
             company: undefined,
@@ -82,7 +95,7 @@ class CompanySearch extends Component {
         fetchData({funcName: 'fetchTowns', stateName: 'townsData'}).then(res => {
             if(res === undefined || res.data === undefined || res.data.towns === undefined) return
             this.setState({
-                townsData: [...res.data.towns.map(val => {
+                townsData: [{key:0, id:0, name:'全部'},...res.data.towns.map(val => {
                     val.key = val.id;
                     return val;
                 })],
@@ -191,4 +204,4 @@ const mapDispatchToProps = dispatch => ({
     fetchData: bindActionCreators(fetchData, dispatch),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(CompanySearch))
+export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(PhotoStatusSearch))

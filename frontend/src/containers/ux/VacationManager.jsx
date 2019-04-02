@@ -140,8 +140,11 @@ class VacationManager extends React.Component {
 
     onSelect = (moment) => {
         const { selectedVacationArray } = this.state
-        const { globalVacations } = this.props
+        const { globalVacations, companyVacations } = this.props
         if (this.isGlobalVactionRange(globalVacations, moment)) {
+            return
+        }
+        if (this.isCompanyVactionRange(companyVacations, moment)) {
             return
         }
         if (selectedVacationArray.length < 1) {
@@ -271,7 +274,7 @@ class VacationManager extends React.Component {
             fetchData({ funcName: 'createOrUpdateCompanyVacations', params: vacation, stateName: 'createOrUpdateCompanyVacationsStatus' })
                 .then(res => {
                     message.success('设置成功')
-                    this.fetchCompanyVacations()
+                    this.fetchCompanyVacations(selectedCompanyId)
                     this.setState({
                         selectedVacationArray: [],
                     })
@@ -381,7 +384,7 @@ class VacationManager extends React.Component {
     }
 
     clearCompanyVacations = () => {
-        this.props.companyVacations.data.company_relax_periods = []
+        this.fetchCompanyVacations(0)
     }
 
     render() {

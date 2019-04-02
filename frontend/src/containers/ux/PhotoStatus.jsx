@@ -12,7 +12,7 @@ import * as CONSTANTS from '../../constants';
 import { fetchData, receiveData } from '../../action';
 import BreadcrumbCustom from '../../components/BreadcrumbCustom';
 import EditableCell from '../../components/cells/EditableCell';
-import CompanySearch from '../search/CompanySearch';
+import PhotoStatusSearch from '../search/PhotoStatusSearch';
 import * as config from '../../axios/config';
 import { Bar } from '../../components/Charts';
 import DataSet from "@antv/data-set";
@@ -262,7 +262,7 @@ class PhotoStatus extends React.Component {
         return (
             <div className="gutter-example">
                 <BreadcrumbCustom first="完成率统计" />
-                <CompanySearch fetchData={fetchData} />
+                <PhotoStatusSearch fetchData={fetchData} />
                 <Row gutter={16}>
                 <Col className="gutter-row" md={14}>
                     <Card bordered={false}
@@ -283,7 +283,7 @@ class PhotoStatus extends React.Component {
                                         current: currentPage,
                                         defaultCurrent: 1,
                                         pageSize,
-                                        total,
+                                        // total,
                                     }}
                                 />
                         </div>
